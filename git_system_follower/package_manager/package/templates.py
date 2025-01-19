@@ -137,4 +137,5 @@ def _delete_files(source: Path, target: Path, *, is_force: bool) -> None:
             logger.warning(f'\t\tFile {relative_path} exists and does not match the template. '
                            f'Overwrote it from template')
             continue
-        logger.warning(f'\t\tFile {relative_path} exists and does not match the template. Cannot delete. Skip operations')
+        logger.warning(f'\t\tFile {relative_path} exists and does not match the template. '
+                       f'Cannot delete. Skip operations')

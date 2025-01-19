@@ -20,7 +20,9 @@ from gitlab.v4.objects import Project
 
 from git_system_follower.logger import logger
 from git_system_follower.package_manager.errors import UninstallationError
-from git_system_follower.package_manager.typings.cli import PackageCLI, ExtraParam, PackageCLIImage, PackageCLITarGz, PackageCLISource
+from git_system_follower.package_manager.typings.cli import (
+    PackageCLI, ExtraParam, PackageCLIImage, PackageCLITarGz, PackageCLISource
+)
 from git_system_follower.package_manager.typings.package import PackageLocalData
 from git_system_follower.package_manager.download import download
 from git_system_follower.package_manager.git_api.gitlab_api import (

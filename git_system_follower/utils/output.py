@@ -77,7 +77,7 @@ def print_list(
 
 def banner(version: str, *, output_func: Callable = print):
     content = rf"""
-    `?.          
+    `?.
       ( )        ┏┓╻┳ ┏┓╻╻┏┓┳┏┓┏┳┓ ┏┓┏┓╻ ╻ ┏┓┏ ┓┏┓┳┓
        & `?.     ┃┓┃┃ ┗┓┗┃┗┓┃┣ ┃┃┃ ┣ ┃┃┃ ┃ ┃┃┃┃┃┣ ┣┛
        ?   ( )   ┗┛╹╹ ┗┛┗┛┗┛╹┗┛╹ ╹ ╹ ┗┛┗┛┗┛┗┛┗┻┛┗┛┛┗

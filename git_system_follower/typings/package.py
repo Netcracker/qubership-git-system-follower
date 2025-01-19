@@ -18,7 +18,7 @@ from typing import TypedDict
 from pathlib import Path
 from dataclasses import dataclass
 
-from git_system_follower.package_manager.typings.cli import (
+from git_system_follower.typings.cli import (
     PackageCLI, PackageCLIImage, PackageCLITarGz, PackageCLISource
 )
 

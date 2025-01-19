@@ -17,15 +17,15 @@ from pathlib import Path
 from gitlab.v4.objects import Project
 
 from git_system_follower.logger import logger
-from git_system_follower.package_manager.variables import PACKAGE_DIRNAME, SCRIPTS_DIR
-from git_system_follower.package_manager.typings.repository import RepositoryInfo
-from git_system_follower.package_manager.typings.package import PackageLocalData
-from git_system_follower.package_manager.states import PackageState
-from git_system_follower.package_manager.typings.cli import ExtraParam
-from git_system_follower.package_manager.typings.script import ScriptResponse
-from git_system_follower.package_manager.package.script import run_script
-from git_system_follower.package_manager.package.cicd_variables import CICDVariable, get_cicd_variables
-from git_system_follower.package_manager.utils.versions import normalize_version
+from git_system_follower.variables import PACKAGE_DIRNAME, SCRIPTS_DIR
+from git_system_follower.typings.repository import RepositoryInfo
+from git_system_follower.typings.package import PackageLocalData
+from git_system_follower.states import PackageState
+from git_system_follower.typings.cli import ExtraParam
+from git_system_follower.typings.script import ScriptResponse
+from git_system_follower.package.script import run_script
+from git_system_follower.package.cicd_variables import CICDVariable, get_cicd_variables
+from git_system_follower.utils.versions import normalize_version
 
 
 __all__ = ['update']

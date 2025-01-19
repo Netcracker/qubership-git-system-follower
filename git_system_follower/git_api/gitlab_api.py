@@ -22,10 +22,10 @@ from gitlab.v4.objects import Project, ProjectMergeRequest
 import gitlab.exceptions
 
 from git_system_follower.logger import logger
-from git_system_follower.package_manager.errors import RemoteRepositoryError, HashesMismatch
-from git_system_follower.package_manager.states import PackageState
-from git_system_follower.package_manager.states import read_raw_state_file
-from git_system_follower.package_manager.package.cicd_variables import get_cicd_variables
+from git_system_follower.errors import RemoteRepositoryError, HashesMismatch
+from git_system_follower.states import PackageState
+from git_system_follower.states import read_raw_state_file
+from git_system_follower.package.cicd_variables import get_cicd_variables
 from git_system_follower.utils.retry import NeedRetry
 
 

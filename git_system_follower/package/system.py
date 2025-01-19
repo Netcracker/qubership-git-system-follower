@@ -18,7 +18,7 @@ from urllib.parse import urlparse
 
 from gitlab.v4.objects import Project
 
-from git_system_follower.package_manager.develop.api.types import System, ExtraParams
+from git_system_follower.develop.api.types import System, ExtraParams
 
 
 __all__ = ['get_system_info']

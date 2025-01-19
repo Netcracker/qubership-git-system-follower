@@ -19,9 +19,9 @@ from git import Repo
 from gitlab.v4.objects import Project
 
 from git_system_follower.logger import logger
-from git_system_follower.package_manager.variables import REPOS_PATH
-from git_system_follower.package_manager.typings.cli import PackageCLI
-from git_system_follower.package_manager.typings.package import PackageLocalData
+from git_system_follower.variables import REPOS_PATH
+from git_system_follower.typings.cli import PackageCLI
+from git_system_follower.typings.package import PackageLocalData
 
 
 __all__ = ['get_packages_str', 'get_git_repo']

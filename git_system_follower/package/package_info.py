@@ -19,13 +19,13 @@ from typing import TypedDict, Any
 import yaml
 
 from git_system_follower.logger import logger
-from git_system_follower.package_manager.errors import (
+from git_system_follower.errors import (
     PackageNotFoundError, PackageDescriptionFileError, DescriptionSectionError, MaxDependencyDepthError
 )
-from git_system_follower.package_manager.variables import PACKAGE_DIRNAME, PACKAGE_DESCRIPTION_FILE_API
-from git_system_follower.package_manager.typings.cli import PackageCLI, parse_image
-from git_system_follower.package_manager.typings.package import PackageData, PackageLocalData
-from git_system_follower.package_manager.states import PackageState
+from git_system_follower.variables import PACKAGE_DIRNAME, PACKAGE_DESCRIPTION_FILE_API
+from git_system_follower.typings.cli import PackageCLI, parse_image
+from git_system_follower.typings.package import PackageData, PackageLocalData
+from git_system_follower.states import PackageState
 
 
 __all__ = [

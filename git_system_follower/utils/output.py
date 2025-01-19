@@ -16,8 +16,10 @@
 from typing import Mapping, Iterable, Callable, Sequence
 import textwrap
 
+from git_system_follower.typings.package import PackageLocalData
 
-__all__ = ['print_params', 'print_list', 'banner']
+
+__all__ = ['print_params', 'print_list', 'banner', 'print_dependency_tree_one_level']
 
 
 WIDTH = 100
@@ -83,4 +85,28 @@ def banner(version: str, *, output_func: Callable = print):
        ?   ( )   ┗┛╹╹ ┗┛┗┛┗┛╹┗┛╹ ╹ ╹ ┗┛┗┛┗┛┗┛┗┻┛┗┛┛┗
        &         git-system-follower v{version}
       ( )"""
+    output_func(content)
+
+
+def print_dependency_tree_one_level(
+        packages: Iterable[PackageLocalData], title='', *,
+        key: Callable, output_func: Callable = print
+) -> None:
+    """ Print dependency tree
+
+    :param packages: packages which need to print
+    :param title: title of tree
+    :param key: function for filtering the information from the list
+    :param output_func: output function
+    """
+    content = f'{title}:\n'
+    for i, package in enumerate(packages, 1):
+        content += f'{i}. {key(package)}\n'
+        prefix = ' ' * len(str(i)) + '  '  # spaces before connector to level the tree
+        for j, dependency in enumerate(package['dependencies']):
+            connector = '└── ' if j == len(package['dependencies']) - 1 else '├── '
+            content += f'{prefix}{connector}{dependency}\n'
+
+    if content[-1] == '\n':
+        content = content[:-1]
     output_func(content)

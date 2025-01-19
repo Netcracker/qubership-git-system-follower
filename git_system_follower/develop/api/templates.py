@@ -16,10 +16,10 @@
 import json
 from typing import Optional
 
-from git_system_follower.package_manager.develop.api.types import Parameters, ExtraParams, ExtraParam
-from git_system_follower.package_manager.variables import PACKAGE_API_RESULT as __PACKAGE_API_RESULT
-from git_system_follower.package_manager.errors import PackageAPIDevelopmentError, PackageTemplatePolicyError
-from git_system_follower.package_manager.package.templates import (
+from git_system_follower.develop.api.types import Parameters, ExtraParams, ExtraParam
+from git_system_follower.variables import PACKAGE_API_RESULT as __PACKAGE_API_RESULT
+from git_system_follower.errors import PackageAPIDevelopmentError, PackageTemplatePolicyError
+from git_system_follower.package.templates import (
     create_template as __create_template,
     delete_template as __delete_template
 )

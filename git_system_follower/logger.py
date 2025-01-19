@@ -16,7 +16,7 @@ import logging
 
 from colorama import init
 
-from git_system_follower.package_manager.variables import ROOT_DIR
+from git_system_follower.variables import ROOT_DIR
 from git_system_follower.utils.logger import SUCCESS_LEVEL_NUM, SUCCESS_LEVEL_NAME
 from git_system_follower.utils.logger import (get_stream_handler, get_file_handler, success,
                                               disable_info_for_other_loggers)

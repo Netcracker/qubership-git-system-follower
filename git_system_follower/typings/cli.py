@@ -21,7 +21,7 @@ import re
 
 import click
 
-from git_system_follower.package_manager.errors import ParsePackageNameError
+from git_system_follower.errors import ParsePackageNameError
 
 
 __all__ = [

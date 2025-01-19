@@ -99,10 +99,11 @@ scripts are used for different scenarios:
 4. git-system-follower uses (TBD: to rollback or force-forward) in the repository.
 
 All of these scripts may use develop interface for to work with Gear in the repository provided by git-system-follower. You can use it from `from git_system_follower.package_manager.develop.api` like this:
+
 ```python
-from git_system_follower.package_manager.develop.api.types import Parameters
-from git_system_follower.package_manager.develop.api.cicd_variables import CICDVariable, create_variable
-from git_system_follower.package_manager.develop.api.templates import create_template
+from git_system_follower.develop.api.types import Parameters
+from git_system_follower.develop.api.cicd_variables import CICDVariable, create_variable
+from git_system_follower.develop.api.templates import create_template
 ```
 
 For more details on how to develop your package api, see [API reference](../api_reference.md)

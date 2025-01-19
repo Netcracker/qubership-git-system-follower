@@ -14,7 +14,7 @@
 
 from typing import TypedDict
 
-from git_system_follower.package_manager.package.cicd_variables import CICDVariable
+from git_system_follower.package.cicd_variables import CICDVariable
 
 
 __all__ = ['ScriptResponse']

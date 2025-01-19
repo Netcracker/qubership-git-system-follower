@@ -31,14 +31,17 @@ API provided in `cicd_variables.py` module. This module contains functions for e
 :exclamation: When you want to mask a variable, follow [Gitlab Mask a CI/CD variable rules](https://docs.gitlab.com/ee/ci/variables/#mask-a-cicd-variable)
 
 ## Usage in package api
+
 ```python
-from git_system_follower.package_manager.develop.api.cicd_variables import create_variable, delete_variable
+from git_system_follower.develop.api.cicd_variables import create_variable, delete_variable
 ```
 
 ### Examples
+
 ```python
-from git_system_follower.package_manager.develop.api.types import Parameters
-from git_system_follower.package_manager.develop.api.cicd_variables import CICDVariable, create_variable, delete_variable
+from git_system_follower.develop.api.types import Parameters
+from git_system_follower.develop.api.cicd_variables import CICDVariable, create_variable, delete_variable
+
 
 def main(parameters: Parameters):
     delete_variable(parameters, parameters.cicd_variables['KUBE_TOKEN'])

@@ -22,14 +22,14 @@ import json
 
 from gitlab.v4.objects import Project
 
-from git_system_follower.package_manager.errors import PackageApiError
-from git_system_follower.package_manager.variables import PACKAGE_API_RESULT
-from git_system_follower.package_manager.typings.cli import ExtraParam
-from git_system_follower.package_manager.package.cicd_variables import CICDVariable
-from git_system_follower.package_manager.states import PackageState, get_state_file_current_cicd_variables
-from git_system_follower.package_manager.develop.api.types import Parameters, SystemParameters, ExtraParams
-from git_system_follower.package_manager.package.system import get_system_info
-from git_system_follower.package_manager.typings.script import ScriptResponse
+from git_system_follower.errors import PackageApiError
+from git_system_follower.variables import PACKAGE_API_RESULT
+from git_system_follower.typings.cli import ExtraParam
+from git_system_follower.package.cicd_variables import CICDVariable
+from git_system_follower.states import PackageState, get_state_file_current_cicd_variables
+from git_system_follower.develop.api.types import Parameters, SystemParameters, ExtraParams
+from git_system_follower.package.system import get_system_info
+from git_system_follower.typings.script import ScriptResponse
 
 
 __all__ = ['run_script']

@@ -22,10 +22,10 @@ from datetime import datetime
 import yaml
 
 from git_system_follower.logger import logger
-from git_system_follower.package_manager.errors import HashesMismatch
-from git_system_follower.package_manager.typings.package import PackageLocalData
-from git_system_follower.package_manager.typings.script import ScriptResponse
-from git_system_follower.package_manager.package.cicd_variables import CICDVariable
+from git_system_follower.errors import HashesMismatch
+from git_system_follower.typings.package import PackageLocalData
+from git_system_follower.typings.script import ScriptResponse
+from git_system_follower.package.cicd_variables import CICDVariable
 
 
 __all__ = [

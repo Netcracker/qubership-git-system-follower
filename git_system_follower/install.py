@@ -19,31 +19,31 @@ from pprint import pformat
 from gitlab.v4.objects import Project
 
 from git_system_follower.logger import logger
-from git_system_follower.package_manager.errors import InstallationError, PackageNotFoundError, PackageNamePolicyError
-from git_system_follower.package_manager.typings.cli import (
+from git_system_follower.errors import InstallationError, PackageNotFoundError, PackageNamePolicyError
+from git_system_follower.typings.cli import (
     PackageCLI, PackageCLIImage, PackageCLITarGz, PackageCLISource, ExtraParam
 )
-from git_system_follower.package_manager.typings.package import PackageLocalData, PackagesTo
-from git_system_follower.package_manager.download import download
-from git_system_follower.package_manager.package.package_info import get_installed_packages
-from git_system_follower.package_manager.git_api.gitlab_api import (
+from git_system_follower.typings.package import PackageLocalData, PackagesTo
+from git_system_follower.download import download
+from git_system_follower.package.package_info import get_installed_packages
+from git_system_follower.git_api.gitlab_api import (
     get_gitlab, get_project, get_states, create_mr, merge_mr
 )
-from git_system_follower.package_manager.git_api.git_api import checkout_to_new_branch, push_installed_packages
-from git_system_follower.package_manager.git_api.utils import get_packages_str, get_git_repo
-from git_system_follower.package_manager.typings.repository import RepositoryInfo
-from git_system_follower.package_manager.states import (
+from git_system_follower.git_api.git_api import checkout_to_new_branch, push_installed_packages
+from git_system_follower.git_api.utils import get_packages_str, get_git_repo
+from git_system_follower.typings.repository import RepositoryInfo
+from git_system_follower.states import (
     ChangeStatus, PackageState,
     save_state_file, get_package_in_states, add_package_to_state,
     get_created_cicd_variables, update_created_cicd_variables
 )
 from git_system_follower.utils.output import print_list
 from git_system_follower.utils.retry import retry
-from git_system_follower.package_manager.utils.versions import normalize_version
-from git_system_follower.package_manager.package.initer import init
-from git_system_follower.package_manager.package.updater import update
-from git_system_follower.package_manager.package.rollbacker import rollback
-from git_system_follower.package_manager.typings.script import ScriptResponse
+from git_system_follower.utils.versions import normalize_version
+from git_system_follower.package.initer import init
+from git_system_follower.package.updater import update
+from git_system_follower.package.rollbacker import rollback
+from git_system_follower.typings.script import ScriptResponse
 
 
 __all__ = ['install']

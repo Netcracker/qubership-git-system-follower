@@ -25,15 +25,15 @@ import oras.container
 import requests
 import yaml
 
-from git_system_follower.package_manager.variables import IMAGE_PACKAGE_MAP, PACKAGES_PATH, PACKAGE_DIRNAME
+from git_system_follower.variables import IMAGE_PACKAGE_MAP, PACKAGES_PATH, PACKAGE_DIRNAME
 from git_system_follower.logger import logger
-from git_system_follower.package_manager.errors import RemoteRepositoryError, DownloadPackageError, PackageNotFoundError
-from git_system_follower.package_manager.typings.cli import (
+from git_system_follower.errors import RemoteRepositoryError, DownloadPackageError, PackageNotFoundError
+from git_system_follower.typings.cli import (
     PackageCLI, PackageCLITypes, PACKAGE_SUFFIX,
     PackageCLIImage, PackageCLITarGz, PackageCLISource
 )
-from git_system_follower.package_manager.typings.package import PackageLocalData
-from git_system_follower.package_manager.package.package_info import (
+from git_system_follower.typings.package import PackageLocalData
+from git_system_follower.package.package_info import (
     DESCRIPTION_FILENAME, get_package_info, check_dependency_depth, add_dependencies
 )
 from git_system_follower.utils.tmpdir import tempdir

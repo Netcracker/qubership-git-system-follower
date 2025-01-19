@@ -21,7 +21,7 @@ import os
 from cookiecutter.main import cookiecutter
 
 from git_system_follower.logger import logger
-from git_system_follower.package_manager.errors import PackageApiError
+from git_system_follower.errors import PackageApiError
 from git_system_follower.utils.tmpdir import tempdir
 
 

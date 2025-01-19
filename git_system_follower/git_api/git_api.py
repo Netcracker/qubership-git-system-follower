@@ -17,7 +17,7 @@ from git import Repo
 import gitlab
 
 from git_system_follower.logger import logger
-from git_system_follower.package_manager.typings.repository import RepositoryInfo
+from git_system_follower.typings.repository import RepositoryInfo
 
 
 __all__ = ['checkout_to_new_branch', 'push_installed_packages']

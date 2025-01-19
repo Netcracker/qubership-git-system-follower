@@ -19,26 +19,26 @@ from pprint import pformat
 from gitlab.v4.objects import Project
 
 from git_system_follower.logger import logger
-from git_system_follower.package_manager.errors import UninstallationError
-from git_system_follower.package_manager.typings.cli import (
+from git_system_follower.errors import UninstallationError
+from git_system_follower.typings.cli import (
     PackageCLI, ExtraParam, PackageCLIImage, PackageCLITarGz, PackageCLISource
 )
-from git_system_follower.package_manager.typings.package import PackageLocalData
-from git_system_follower.package_manager.download import download
-from git_system_follower.package_manager.git_api.gitlab_api import (
+from git_system_follower.typings.package import PackageLocalData
+from git_system_follower.download import download
+from git_system_follower.git_api.gitlab_api import (
     get_gitlab, get_project, get_states, create_mr, merge_mr
 )
-from git_system_follower.package_manager.git_api.git_api import checkout_to_new_branch, push_installed_packages
-from git_system_follower.package_manager.git_api.utils import get_packages_str, get_git_repo
-from git_system_follower.package_manager.typings.repository import RepositoryInfo
+from git_system_follower.git_api.git_api import checkout_to_new_branch, push_installed_packages
+from git_system_follower.git_api.utils import get_packages_str, get_git_repo
+from git_system_follower.typings.repository import RepositoryInfo
 from git_system_follower.utils.output import print_list
 from git_system_follower.utils.retry import retry
-from git_system_follower.package_manager.states import (
+from git_system_follower.states import (
     ChangeStatus, PackageState,
     save_state_file, get_package_in_states, get_created_cicd_variables
 )
-from git_system_follower.package_manager.package.package_info import get_installed_packages
-from git_system_follower.package_manager.package.deleter import delete
+from git_system_follower.package.package_info import get_installed_packages
+from git_system_follower.package.deleter import delete
 
 
 __all__ = ['uninstall']

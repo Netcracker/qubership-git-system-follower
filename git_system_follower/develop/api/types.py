@@ -18,8 +18,8 @@ from pathlib import Path
 
 from gitlab.v4.objects import Project
 
-from git_system_follower.package_manager.typings.cli import ExtraParam
-from git_system_follower.package_manager.package.cicd_variables import CICDVariable
+from git_system_follower.typings.cli import ExtraParam
+from git_system_follower.package.cicd_variables import CICDVariable
 
 
 __all__ = [

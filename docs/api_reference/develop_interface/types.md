@@ -29,8 +29,12 @@
 API provided in `types.py` module. This module contains classes for easy interaction. You can also use them as type hints in your code.
 
 ## Usage in package api
+
 ```python
-from git_system_follower.package_manager.develop.api.types import Parameters, System, ExtraParam, ExtraParams, CICDVariable, CICDVariables
+from git_system_follower.develop.api.types import (
+   Parameters, System, ExtraParam, ExtraParams, 
+   CICDVariable, CICDVariables
+)
 ```
 
 ## Classes description

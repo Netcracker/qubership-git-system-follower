@@ -17,10 +17,10 @@ import json
 
 from gitlab.base import RESTObject
 
-from git_system_follower.package_manager.variables import PACKAGE_API_RESULT as __PACKAGE_API_RESULT
-from git_system_follower.package_manager.develop.api.types import Parameters
-from git_system_follower.package_manager.errors import PackageCICDVariablePolicyError
-from git_system_follower.package_manager.package.cicd_variables import (
+from git_system_follower.variables import PACKAGE_API_RESULT as __PACKAGE_API_RESULT
+from git_system_follower.develop.api.types import Parameters
+from git_system_follower.errors import PackageCICDVariablePolicyError
+from git_system_follower.package.cicd_variables import (
     CICDVariable,
     create_variable as __create_variable,
     delete_variable as __delete_variable

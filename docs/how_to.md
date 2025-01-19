@@ -29,5 +29,5 @@
 Here you will find short answers to "How do I ...?" types questions.
 
 ## Quicklinks
-* [What should be considered when developing a package](how_to/)
+* [What should be considered when developing a package](how_to/gear_development_cases.md)
 * [Gear development with semantic-release Tips and Tricks](how_to/integration_with_semantic_release.md)

@@ -31,17 +31,18 @@ API provided in `templates.py` module. This module contains functions for easy i
 
 ## Usage in package api
 ```python
-from git_system_follower.package_manager.develop.api.templates import create_template, update_template, delete_template
+from git_system_follower.develop.api.templates import create_template, update_template, delete_template
 ```
 
 ### Examples
 ```python
-from git_system_follower.package_manager.develop.api.types import Parameters
-from git_system_follower.package_manager.develop.api.templates import create_template, delete_template
+from git_system_follower.develop.api.types import Parameters
+from git_system_follower.develop.api.templates import create_template, delete_template
+
 
 def main(parameters: Parameters):
-    delete_template(parameters)
-    create_template(parameters, 'default')
+   delete_template(parameters)
+   create_template(parameters, 'default')
 ```
 
 ## Functions description

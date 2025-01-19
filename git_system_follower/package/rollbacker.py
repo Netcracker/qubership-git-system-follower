@@ -13,13 +13,13 @@
 # limitations under the License.
 
 from git_system_follower.logger import logger
-from git_system_follower.package_manager.typings.repository import RepositoryInfo
-from git_system_follower.package_manager.typings.package import PackageLocalData
-from git_system_follower.package_manager.states import PackageState
-from git_system_follower.package_manager.typings.cli import ExtraParam
-from git_system_follower.package_manager.typings.script import ScriptResponse
-from git_system_follower.package_manager.package.deleter import delete
-from git_system_follower.package_manager.package.initer import init
+from git_system_follower.typings.repository import RepositoryInfo
+from git_system_follower.typings.package import PackageLocalData
+from git_system_follower.states import PackageState
+from git_system_follower.typings.cli import ExtraParam
+from git_system_follower.typings.script import ScriptResponse
+from git_system_follower.package.deleter import delete
+from git_system_follower.package.initer import init
 
 
 __all__ = ['rollback']

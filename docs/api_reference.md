@@ -30,5 +30,6 @@ git-system-follower provides an interface for developers for creating/deleting C
 and generate/update/delete a `cookiecutter` template in a repository branch
 
 ## General information
-git-system-follower always calls `main` function from package api with `parameters` argument which are of type `Parameters` from `git_system_follower.package_manager.develop.api.types`
+git-system-follower always calls `main` function from package api with `parameters` argument which are of type
+`Parameters` from `git_system_follower.develop.api.types`
 

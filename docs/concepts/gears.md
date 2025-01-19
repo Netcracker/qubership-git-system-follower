@@ -98,7 +98,8 @@ scripts are used for different scenarios:
 3. git-system-follower uses `update.py` to update in the repository.
 4. git-system-follower uses (TBD: to rollback or force-forward) in the repository.
 
-All of these scripts may use develop interface for to work with Gear in the repository provided by git-system-follower. You can use it from `from git_system_follower.package_manager.develop.api` like this:
+All of these scripts may use develop interface for to work with Gear in the repository provided by git-system-follower.
+You can use it from `from git_system_follower.develop.api` like this:
 
 ```python
 from git_system_follower.develop.api.types import Parameters

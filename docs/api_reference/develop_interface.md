@@ -26,7 +26,7 @@
 
 ---
 
-Here you find information about what is contained in `git_system_follower.package_manager.develop.api`
+Here you find information about what is contained in `git_system_follower.develop.api`
 
 ## Quicklinks
 * [types Module](develop_interface/types.md)  

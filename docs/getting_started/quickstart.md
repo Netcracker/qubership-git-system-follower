@@ -71,7 +71,7 @@ Before this command, exporting the variable with the token to the repository:
 export GSF_GIT_TOKEN=<your token>
 ```
 
-After that run the `install` ommand
+After that run the `install` command
 ```bash
 gsf packages install --repo <your repo> \
                      --branch <your branch> \

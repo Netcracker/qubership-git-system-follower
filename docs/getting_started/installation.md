@@ -35,7 +35,7 @@ git-system-follower is python package, you can install it with any python packag
 ## From pre-build python package
 :exclamation: **THE PACKAGE HASN'T BEEN RELEASED YET**. Install git-system-follower release version:
 ```bash
-pip install <TBD AFTER OPEN SOURCE> git-system-follower
+pip install <TBD AFTER OPEN SOURCE>
 ```
 
 ## From Source
@@ -43,6 +43,6 @@ Building git-system-follower from source is slightly more work
 
 You must have a working Python virtual environment
 ```bash
-git clone <TBD AFTER OPEN SOURCE>
+git clone https://github.com/Netcracker/qubership-git-system-follower.git
 pip install -e git-system-follower/
 ```

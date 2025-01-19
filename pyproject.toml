@@ -23,8 +23,23 @@ oras = "0.2.24"
 git-system-follower = "git_system_follower.cli:cli"
 gsf = "git_system_follower.cli:cli"
 
-[tool.poetry.group.test.dependencies]
-pytest = "^6.0.0"
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.4"
+ruff = "^0.9.1"
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+output-format = "github"
+
+[tool.ruff.lint]
+# See list of rules at: https://docs.astral.sh/ruff/rules/
+select = ["E", "F", "W", "C90"]
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests"
+]
 
 [build-system]
 requires = ["poetry-core"]

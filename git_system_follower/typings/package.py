@@ -27,9 +27,7 @@ __all__ = ['PackageType', 'PackageData', 'PackageLocalData', 'PackagesTo']
 
 
 class PackageType(Enum):
-    gitlab_pipeline = 1
-    docker_image = 2
-    python_package = 3
+    gitlab_ci_pipeline = 1
 
 
 class PackageData(TypedDict):

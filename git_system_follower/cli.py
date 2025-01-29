@@ -140,8 +140,8 @@ def install_command(
     help='Gitlab repository url', metavar='URL'
 )
 @click.option(
-    '-b', '--branches', type=str, required=True, multiple=True,
-    help='Branches in which to uninstall the gears', metavar='BRANCH'
+    '-b', '--branch', 'branches', type=str, required=True, multiple=True,
+    help='Branches in which to uninstall the gears', metavar='BRANCH...'
 )
 @click.option(
     '-t', '--token', type=str, envvar='GSF_GIT_TOKEN', required=True,

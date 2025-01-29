@@ -23,8 +23,7 @@ import gitlab.exceptions
 
 from git_system_follower.logger import logger
 from git_system_follower.errors import RemoteRepositoryError, HashesMismatch
-from git_system_follower.states import PackageState
-from git_system_follower.states import read_raw_state_file
+from git_system_follower.states import StateFile
 from git_system_follower.package.cicd_variables import get_cicd_variables
 from git_system_follower.utils.retry import NeedRetry
 
@@ -64,7 +63,7 @@ def get_project(instance: Gitlab, url: str) -> Project:
     return project
 
 
-def get_states(project: Project, branches: tuple[str, ...]) -> dict[str, list[PackageState]]:
+def get_states(project: Project, branches: tuple[str, ...]) -> dict[str, StateFile]:
     """ Get states files using GitLab REST API
 
     :param project: GitLab project
@@ -81,9 +80,9 @@ def get_states(project: Project, branches: tuple[str, ...]) -> dict[str, list[Pa
 
         try:
             raw = project.files.raw(file_path='.state.yaml', ref=branch)
-            states[branch] = read_raw_state_file(raw, cicd_variables)
+            states[branch] = StateFile(raw=raw, current_cicd_variables=cicd_variables)
         except gitlab.exceptions.GitlabGetError:
-            states[branch] = []
+            states[branch] = StateFile()
         except HashesMismatch as error:
             logger.critical(f'Hashes do not match for {branch} branch. Most likely, someone changed the state file '
                             f'manually, this is forbidden by package manager policy. Please reset everything back to '
@@ -115,7 +114,8 @@ def create_mr(
 def merge_mr(project: Project, mr: ProjectMergeRequest) -> dict:
     total = 0
     while mr.merge_status == 'checking':
-        logger.debug(f'Waiting to be able to merge ({WAIT} sec)'), sleep(WAIT)
+        logger.debug(f'Waiting to be able to merge ({WAIT} sec)')
+        sleep(WAIT)
         mr = project.mergerequests.get(mr.iid)
         total += WAIT
         if total > MAX_WAIT:

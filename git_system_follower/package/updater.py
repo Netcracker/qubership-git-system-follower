@@ -33,7 +33,7 @@ __all__ = ['update']
 
 def update(
         package: PackageLocalData, repo: RepositoryInfo, state: PackageState, *,
-        created_cicd_variables: list[str], extras: tuple[ExtraParam, ...], is_force: bool
+        created_cicd_variables: tuple[str, ...], extras: tuple[ExtraParam, ...], is_force: bool
 ) -> ScriptResponse:
     logger.info('==> Package update')
     workdir = Path(repo.git.working_dir)
@@ -71,7 +71,7 @@ def get_version_dirs(package: PackageLocalData, start_version: str) -> tuple[Pat
 def run_update_script(
         script_dir: Path, workdir: Path, project: Project, current_cicd_variables: dict[str, CICDVariable],
         state: PackageState, *,
-        created_cicd_variables: list[str], extras: tuple[ExtraParam, ...], is_force: bool
+        created_cicd_variables: tuple[str, ...], extras: tuple[ExtraParam, ...], is_force: bool
 ) -> ScriptResponse:
     logger.info('\tRunning update package api')
     path = script_dir / 'update.py'

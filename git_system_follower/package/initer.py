@@ -31,7 +31,7 @@ __all__ = ['init']
 
 def init(
         package: PackageLocalData, repo: RepositoryInfo, *,
-        created_cicd_variables: list[str], extras: tuple[ExtraParam, ...], is_force: bool
+        created_cicd_variables: tuple[str, ...], extras: tuple[ExtraParam, ...], is_force: bool
 ) -> ScriptResponse:
     logger.info('==> Package initialization')
     workdir = Path(repo.git.working_dir)
@@ -50,7 +50,7 @@ def init(
 
 def run_init_script(
         script_dir: Path, workdir: Path, project: Project, current_cicd_variables: dict[str, CICDVariable], *,
-        created_cicd_variables: list[str], extras: tuple[ExtraParam, ...], is_force: bool
+        created_cicd_variables: tuple[str, ...], extras: tuple[ExtraParam, ...], is_force: bool
 ) -> ScriptResponse:
     logger.info('\tRunning init package api')
     path = script_dir / 'init.py'

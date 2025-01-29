@@ -32,7 +32,7 @@ __all__ = ['delete']
 
 def delete(
         package: PackageLocalData, repo: RepositoryInfo, state: PackageState, *,
-        created_cicd_variables: list[str], extras: tuple[ExtraParam, ...], is_force: bool
+        created_cicd_variables: tuple[str, ...], extras: tuple[ExtraParam, ...], is_force: bool
 ) -> ScriptResponse:
     logger.info('==> Package deletion')
     workdir = Path(repo.git.working_dir)
@@ -52,7 +52,7 @@ def delete(
 def run_delete_script(
         script_dir: Path, workdir: Path, project: Project, current_cicd_variables: dict[str, CICDVariable],
         state: PackageState, *,
-        created_cicd_variables: list[str], extras: tuple[ExtraParam, ...], is_force: bool
+        created_cicd_variables: tuple[str, ...], extras: tuple[ExtraParam, ...], is_force: bool
 ) -> ScriptResponse:
     logger.info('\tRunning delete package api')
     path = script_dir / 'delete.py'

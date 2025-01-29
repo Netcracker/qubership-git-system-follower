@@ -26,7 +26,7 @@ from git_system_follower.errors import PackageApiError
 from git_system_follower.variables import PACKAGE_API_RESULT
 from git_system_follower.typings.cli import ExtraParam
 from git_system_follower.package.cicd_variables import CICDVariable
-from git_system_follower.states import PackageState, get_state_file_current_cicd_variables
+from git_system_follower.states import PackageState, filter_cicd_variables_by_state
 from git_system_follower.develop.api.types import Parameters, SystemParameters, ExtraParams
 from git_system_follower.package.system import get_system_info
 from git_system_follower.typings.script import ScriptResponse
@@ -43,7 +43,7 @@ def run_script(
         path: Path, workdir: Path, project: Project, all_cicd_variables: dict[str, CICDVariable],
         used_template: str | None, *,
         extras: tuple[ExtraParam, ...], is_force: bool, state: PackageState | None = None,
-        created_cicd_variables: list[str]
+        created_cicd_variables: tuple[str, ...]
 ) -> ScriptResponse:
     """ Run script (package api): init/update/delete
 
@@ -62,7 +62,7 @@ def run_script(
         raise PackageApiError(f'No script file. Path: {path}')
 
     template_variables = get_template_variables(state)
-    cicd_variables = get_state_file_current_cicd_variables(state, all_cicd_variables)
+    cicd_variables = filter_cicd_variables_by_state(state, all_cicd_variables)
     created_cicd_vars_in_other_pkgs = _fetch_cicd_vars_except_package(created_cicd_variables, cicd_variables)
     response = execute_package_api(
         path, workdir, project, used_template,
@@ -81,7 +81,7 @@ def get_template_variables(state: PackageState | None) -> dict[str, str]:
     return state['template_variables']
 
 
-def _fetch_cicd_vars_except_package(all_vars_names: list[str], pkg_variables: list[CICDVariable]) -> list[str]:
+def _fetch_cicd_vars_except_package(all_vars_names: tuple[str, ...], pkg_variables: list[CICDVariable]) -> list[str]:
     """ Get created CI/CD variables except current package
 
     :param all_vars_names: all CI/CD variables names created in repository

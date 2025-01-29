@@ -27,7 +27,7 @@ __all__ = ['rollback']
 
 def rollback(
         package: PackageLocalData, old_package: PackageLocalData, repo: RepositoryInfo, state: PackageState, *,
-        created_cicd_variables: list[str], extras: tuple[ExtraParam, ...], is_force: bool
+        created_cicd_variables: tuple[str, ...], extras: tuple[ExtraParam, ...], is_force: bool
 ) -> ScriptResponse:
     logger.info('==> Package rollback')
     delete(old_package, repo, state, created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force)

@@ -23,14 +23,13 @@ from git_system_follower.errors import (
     PackageNotFoundError, PackageDescriptionFileError, DescriptionSectionError, MaxDependencyDepthError
 )
 from git_system_follower.variables import PACKAGE_DIRNAME, PACKAGE_DESCRIPTION_FILE_API
-from git_system_follower.typings.cli import PackageCLI, parse_image
+from git_system_follower.typings.cli import parse_image
 from git_system_follower.typings.package import PackageData, PackageLocalData
-from git_system_follower.states import PackageState
 
 
 __all__ = [
     'DESCRIPTION_FILENAME',
-    'get_installed_packages', 'get_package_info', 'add_dependencies', 'check_dependency_depth'
+    'get_package_info', 'add_dependencies', 'check_dependency_depth'
 ]
 
 
@@ -68,19 +67,6 @@ def add_dependencies(
         else:
             packages.append(dependency)
     return packages
-
-
-def get_installed_packages(states: dict[str, list[PackageState]]) -> set[PackageCLI]:
-    """ Getting information about installed packages
-
-    :param states: current states in GitLab repository branches
-    :return: installed packages set
-    """
-    installed_packages = set()
-    for package_states in states.values():
-        for package_state in package_states:
-            installed_packages.add(PackageCLI(name=package_state['name'], version=package_state['version']))
-    return installed_packages
 
 
 def get_package_info(directory: Path, name: str) -> PackageLocalData:

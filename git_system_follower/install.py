@@ -25,7 +25,6 @@ from git_system_follower.typings.cli import (
 )
 from git_system_follower.typings.package import PackageLocalData, PackagesTo
 from git_system_follower.download import download
-from git_system_follower.package.package_info import get_installed_packages
 from git_system_follower.git_api.gitlab_api import (
     get_gitlab, get_project, get_states, create_mr, merge_mr
 )
@@ -33,9 +32,8 @@ from git_system_follower.git_api.git_api import checkout_to_new_branch, push_ins
 from git_system_follower.git_api.utils import get_packages_str, get_git_repo
 from git_system_follower.typings.repository import RepositoryInfo
 from git_system_follower.states import (
-    ChangeStatus, PackageState,
-    save_state_file, get_package_in_states, add_package_to_state,
-    get_created_cicd_variables, update_created_cicd_variables
+    ChangeStatus, PackageState, StateFile,
+    get_installed_packages, update_created_cicd_variables,
 )
 from git_system_follower.utils.output import print_list
 from git_system_follower.utils.retry import retry
@@ -69,16 +67,17 @@ def install(
     logger.info('Processing branches')
     for i, branch in enumerate(branches, 1):
         logger.info(f'[{i}/{len(branches)}] Processing {branch} branch')
-        logger.debug(f'Current state in {branch} branch:\n{pformat(states[branch])}')
-        managing_branch(
-            project, branch, token, packages, states, extras=extras, commit_message=commit_message, is_force=is_force
+        logger.debug(f'Current state in {branch} branch:\n{states[branch]}')
+        states[branch] = managing_branch(
+            project, branch, token, packages, states[branch],
+            extras=extras, commit_message=commit_message, is_force=is_force
         )
     logger.success('Installation complete')
 
 
 def get_packages(
         packages_cli: tuple[PackageCLIImage | PackageCLITarGz | PackageCLISource, ...],
-        states: dict[str, list[PackageState]]
+        states: dict[str, StateFile]
 ) -> PackagesTo:
     """ Getting information about packages to install and rollback (delete+init)
 
@@ -144,19 +143,19 @@ def _is_necessary_package_to_rollback(package_cli: PackageCLI, installed_package
 
 @retry(output_func=logger.info, error_output_func=logger.error)
 def managing_branch(
-        project: Project, branch: str, token: str, packages: PackagesTo, states: dict[str, list[PackageState]], *,
+        project: Project, branch: str, token: str, packages: PackagesTo, state: StateFile, *,
         extras: tuple[ExtraParam, ...], commit_message: str, is_force: bool
-) -> None:
+) -> StateFile:
     repo = RepositoryInfo(gitlab=project, git=get_git_repo(project, token))
     checkout_to_new_branch(repo.git, branch)
 
     logger.info(':: Installing packages')
-    state, status = processing_branch(
-        packages, repo, states[branch].copy(), extras=extras, commit_message=commit_message, is_force=is_force
+    state = processing_branch(
+        packages, repo, state, extras=extras, commit_message=commit_message, is_force=is_force
     )
-    if status == ChangeStatus.no_change:
+    if state.status() == ChangeStatus.no_change:
         logger.debug(f'No changes in {repo.git.active_branch.name} branch. Skip create/merge merge request')
-        return
+        return state
     logger.info(':: Creating merge request')
     mr = create_mr(
         repo.gitlab, repo.git.active_branch.name, branch, title=commit_message,
@@ -164,58 +163,55 @@ def managing_branch(
     )
     logger.info(':: Merging merge request')
     merge_mr(repo.gitlab, mr)
-    states[branch] = state
+    return state
 
 
 def processing_branch(
-        packages: PackagesTo, repo: RepositoryInfo, state: list[PackageState], *,
+        packages: PackagesTo, repo: RepositoryInfo, state: StateFile, *,
         extras: tuple[ExtraParam, ...], commit_message: str, is_force: bool
-) -> tuple[list[PackageState], ChangeStatus]:
-    state, status = install_packages(packages, repo, state, extras=extras, is_force=is_force)
+) -> StateFile:
+    state = install_packages(packages, repo, state, extras=extras, is_force=is_force)
 
-    if status == ChangeStatus.changed:
-        logger.debug(f'Updated state in {repo.git.active_branch.name} branch:\n{pformat(state)}')
+    if state.status() == ChangeStatus.changed:
+        logger.debug(f'Updated state in {repo.git.active_branch.name} branch:\n{state}')
         directory = Path(repo.git.working_dir)
-        save_state_file(directory, state)
+        state.save(directory)
 
         push_installed_packages(repo, commit_message)
         branch_url = repo.gitlab.branches.get(str(repo.git.active_branch)).web_url
         logger.success(f'Changes have been pushed to {repo.git.active_branch.name} branch (url: {branch_url})')
     else:
         logger.info(f'No changes in {repo.git.active_branch.name} branch. Skip push')
-    return state, status
+    return state
 
 
 def install_packages(
-        packages: PackagesTo, repo: RepositoryInfo, states: list[PackageState], *,
+        packages: PackagesTo, repo: RepositoryInfo, state: StateFile, *,
         extras: tuple[ExtraParam, ...], is_force: bool
-) -> tuple[list[PackageState], ChangeStatus]:
-    result_status = ChangeStatus.no_change
-    created_cicd_variables = get_created_cicd_variables(states)
+) -> StateFile:
+    created_cicd_variables = state.get_all_created_cicd_variables()
     for i, package in enumerate(packages.install, 1):
         logger.info(f"({i}/{len(packages.install)}) Installing {package['name']}@{package['version']} package")
-        state = get_package_in_states(package, states, is_delete=False)
+        package_state = state.get_package(package, for_delete=False)
         try:
-            response, status = install_package(
-                package, packages.rollback, repo, state,
+            response = install_package(
+                package, packages.rollback, repo, package_state,
                 created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force
             )
-            states = add_package_to_state(package, response, state, states)
+            state.add_package(package, response, package_state)
             created_cicd_variables = update_created_cicd_variables(created_cicd_variables, response)
         except Exception:
             logger.critical(f"An error came out at one stage of installation. "
                             f"Installation {package['name']}@{package['version']} aborted.")
             raise InstallationError('Installation failed in one of the steps. Please check log above')
-        if status == ChangeStatus.changed:
-            result_status = ChangeStatus.changed
-    return states, result_status
+    return state
 
 
 def install_package(
         package: PackageLocalData, additional_packages: tuple[PackageLocalData, ...],
         repo: RepositoryInfo, state: PackageState | None, *,
-        created_cicd_variables: list[str], extras: tuple[ExtraParam, ...], is_force: bool
-) -> tuple[ScriptResponse | None, ChangeStatus]:
+        created_cicd_variables: tuple[str, ...], extras: tuple[ExtraParam, ...], is_force: bool
+) -> ScriptResponse | None:
     """ Install package in repository
 
     :param package: package to be installed
@@ -225,17 +221,17 @@ def install_package(
     :param created_cicd_variables: list of created CI/CD variables in previous package installations
     :param extras: extra parameters to be passed to package api
     :param is_force: forced installation
-    :return: script response; change status: if there are any changes in repository
+    :return: script response
     """
     if state is None:
         response = init(package, repo, created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force)
-        return response, ChangeStatus.changed
+        return response
 
     state_version = normalize_version(state['version'])
     package_version = normalize_version(package['version'])
     if state_version == package_version:
         logger.info(f"{package['name']}@{package['version']} package is already installed")
-        return None, ChangeStatus.no_change
+        return
 
     if state_version < package_version:
         logger.debug(f"Installation version is higher the version installed in the repository "
@@ -243,7 +239,7 @@ def install_package(
         response = update(
             package, repo, state, created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force
         )
-        return response, ChangeStatus.changed
+        return response
 
     logger.debug(f"Installation version is lower the version installed in the repository "
                  f"({package['version']} < {state['version']}). Rollback version")
@@ -260,4 +256,4 @@ def install_package(
         package, old_package, repo, state,
         created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force
     )
-    return response, ChangeStatus.changed
+    return response

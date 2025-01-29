@@ -19,6 +19,7 @@ from pathlib import Path
 import hashlib
 from datetime import datetime
 from pprint import pformat
+import base64
 
 import yaml
 
@@ -33,6 +34,7 @@ from git_system_follower.package.cicd_variables import CICDVariable
 __all__ = [
     'ChangeStatus', 'PackageState', 'StateFile',
     'get_installed_packages', 'filter_cicd_variables_by_state', 'update_created_cicd_variables',
+    'mask_data', 'unmask_data'
 ]
 
 
@@ -77,8 +79,9 @@ class StateFile:
         """
         self.__change_status = ChangeStatus.no_change
         if raw is None:
-            computed_hash = self.__get_hash([])
-            self.__content = StateFileContent(hash=computed_hash, packages=[])
+            packages = []
+            computed_hash = self.__get_hash(packages)
+            self.__content = StateFileContent(hash=computed_hash, packages=packages)
             return
 
         content: StateFileContent = yaml.safe_load(raw)
@@ -196,7 +199,7 @@ class StateFile:
         new_state = PackageState(
             name=package['name'], version=package['version'],
             used_template=response['template'],
-            template_variables=response['template_variables'],
+            template_variables={name: mask_data(value) for name, value in response['template_variables'].items()},
             last_update=str(datetime.now()),
             dependencies=[f"{dependency.name}@{dependency.version}" for dependency in package['dependencies']],
             cicd_variables=CICDVariablesSection(
@@ -279,3 +282,13 @@ def update_created_cicd_variables(
     for variable in response_variables:
         created_cicd_variables.append(variable['name'])
     return created_cicd_variables
+
+
+def mask_data(data: str) -> str:
+    encoded_bytes = base64.b64encode(data.encode("utf-8"))
+    return encoded_bytes.decode("utf-8")
+
+
+def unmask_data(encoded_data: str) -> str:
+    decoded_bytes = base64.b64decode(encoded_data)
+    return decoded_bytes.decode("utf-8")

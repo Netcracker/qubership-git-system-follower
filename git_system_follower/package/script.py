@@ -26,7 +26,7 @@ from git_system_follower.errors import PackageApiError
 from git_system_follower.variables import PACKAGE_API_RESULT
 from git_system_follower.typings.cli import ExtraParam
 from git_system_follower.package.cicd_variables import CICDVariable
-from git_system_follower.states import PackageState, filter_cicd_variables_by_state
+from git_system_follower.states import PackageState, filter_cicd_variables_by_state, unmask_data
 from git_system_follower.develop.api.types import Parameters, SystemParameters, ExtraParams
 from git_system_follower.package.system import get_system_info
 from git_system_follower.typings.script import ScriptResponse
@@ -78,7 +78,7 @@ def get_template_variables(state: PackageState | None) -> dict[str, str]:
     if state is None:
         return {}
 
-    return state['template_variables']
+    return {name: unmask_data(value) for name, value in state['template_variables'].items()}
 
 
 def _fetch_cicd_vars_except_package(all_vars_names: tuple[str, ...], pkg_variables: list[CICDVariable]) -> list[str]:

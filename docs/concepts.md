@@ -8,6 +8,7 @@
    1. [Gears Guide](concepts/gears.md)
    2. [apiVersion list](concepts/api_version_list.md)
       1. [apiVersion v1](concepts/api_version_list/v1.md) 
+   3. [.state.yaml Guide](concepts/state.md)
 4. [How-to Guides](how_to.md)  
    1. [Build Guide](how_to/build.md)
    2. [Gear Development Cases](how_to/gear_development_cases.md)
@@ -31,3 +32,6 @@ Here you find intoductions to all key parts of git-system-follower that you wull
 ## Quicklinks
 * [Gear Guide](concepts/gears.md)  
 Explains the Gears format and gives basic guidelines for Gears with git-system-follower
+
+* [.state.yaml Guide](concepts/state.md)  
+Explains the structure of the `.state.yaml` file and gives basic guidelines for working with it

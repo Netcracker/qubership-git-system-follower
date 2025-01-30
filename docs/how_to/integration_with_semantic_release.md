@@ -1,2 +1,2 @@
-## Integraton with semantic-release Tips and Tricks
+## Integration with semantic-release Tips and Tricks
 in development

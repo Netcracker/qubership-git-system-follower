@@ -97,6 +97,7 @@ Get started with the [Quick Start Guide](docs/getting_started/quickstart.md) or 
    1. [Gears Guide](docs/concepts/gears.md)
    2. [apiVersion list](docs/concepts/api_version_list.md)
       1. [apiVersion v1](docs/concepts/api_version_list/v1.md) 
+   3. [.state.yaml Guide](docs/concepts/state.md)
 4. [How-to Guides](docs/how_to.md)  
    1. [Build Guide](docs/how_to/build.md)
    2. [Gear Development Cases](docs/how_to/gear_development_cases.md)

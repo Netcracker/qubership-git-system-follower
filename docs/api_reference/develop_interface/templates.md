@@ -47,7 +47,7 @@ def main(parameters: Parameters):
 ```
 
 ## Functions description
-### `getget_template_names` function
+### `get_template_names` function
 ```python
 def get_template_names(parameters: Parameters) -> tuple[str, ...]:
 ```

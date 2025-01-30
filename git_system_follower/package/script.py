@@ -30,6 +30,7 @@ from git_system_follower.states import PackageState, filter_cicd_variables_by_st
 from git_system_follower.develop.api.types import Parameters, SystemParameters, ExtraParams
 from git_system_follower.package.system import get_system_info
 from git_system_follower.typings.script import ScriptResponse
+from git_system_follower.package.default import init_default_main, delete_default_main
 
 
 __all__ = ['run_script']
@@ -58,18 +59,17 @@ def run_script(
     :param state: current state for this package with another version
     :return: script response with information: CI/CD variables, last used template, etc. after running package api
     """
-    if not path.exists():
-        raise PackageApiError(f'No script file. Path: {path}')
-
     template_variables = get_template_variables(state)
     cicd_variables = filter_cicd_variables_by_state(state, all_cicd_variables)
     created_cicd_vars_in_other_pkgs = _fetch_cicd_vars_except_package(created_cicd_variables, cicd_variables)
+    default_package_api = init_default_main if path.name == 'init.py' else delete_default_main
     response = execute_package_api(
         path, workdir, project, used_template,
         template_variables=template_variables,
         cicd_variables={variable['name']: variable for variable in cicd_variables},
         all_cicd_variables=all_cicd_variables, created_cicd_vars_in_other_pkgs=created_cicd_vars_in_other_pkgs,
-        extras=extras, is_force=is_force
+        extras=extras, is_force=is_force,
+        default=default_package_api
     )
     return response
 
@@ -98,11 +98,17 @@ def _fetch_cicd_vars_except_package(all_vars_names: tuple[str, ...], pkg_variabl
 
 def execute_module(func):
     """ Wrapper for executing package api: import module, change workdir """
-    def wrapper(path: Path, workdir: Path, *args, **kwargs):
+    def wrapper(path: Path, workdir: Path, *args, default: str | None = None, **kwargs):
+        """ Wrapper for execute_module decorator
+
+        :param path: path to package api
+        :param workdir: working directory for package api
+        :param default: default package api code if package api doesn't exist (for init.py, delete.py)
+        """
         path = path.absolute()
         workdir = workdir.absolute()
 
-        module = _load_module(path)
+        module = _load_module(path, default=default)
         old = os.getcwd()
         os.chdir(workdir)
         result = func(path, workdir, *args, **kwargs, module=module)
@@ -112,7 +118,16 @@ def execute_module(func):
     return wrapper
 
 
-def _load_module(path: Path):
+def _load_module(path: Path, *, default: str | None):
+    if not path.exists():
+        if path.name == 'update.py':
+            raise PackageApiError(f'No script file. Path: {path}')
+        if default is None:
+            raise PackageApiError(f'Module {path} not found and no default provided')
+        module = type('default_module', (), {})
+        module.main = default
+        return module
+
     # add the path with the api package so that relative import can work
     module_dir = str(path.parent)
     if module_dir not in sys.path:

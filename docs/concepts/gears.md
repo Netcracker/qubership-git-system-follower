@@ -110,6 +110,46 @@ from git_system_follower.develop.api.templates import create_template
 
 For more details on how to develop your package api, see [API reference](../api_reference.md)
 
+If you don't want to work with CI/CD variables, but only to create template(s), 
+you may not create init.py, delete.py, default functions will be used for them.
+
+Default `init.py`:
+```python
+def main(parameters: Parameters):
+    templates = get_template_names(parameters)
+    if not templates:
+        raise ValueError('There are no templates in the package')
+
+    if len(templates) > 1:
+        template = parameters.extras.get('TEMPLATE')
+        if template is None:
+            raise ValueError('There are more than 1 template in the package, '
+                             'specify which one you want to use with the TEMPLATE variable')
+    else:
+        template = templates[0]
+
+    variables = parameters.extras.copy()
+    variables.pop('TEMPLATE', None)
+    create_template(parameters, template, variables)
+```
+this default checks for the presence of templates:
+1. if there are no templates, it will generate an error,
+2. if there is one template, it will apply it,
+3. if there is more than one template, a `TEMPLATE` variable is needed so that git-system-follower can figure out which template to apply.
+
+Also, all variables passed with `--extra` will be passed to the template.
+
+Default `delete.py`:
+```python
+def delete_default_main(parameters: Parameters):
+    delete_template(parameters)
+```
+In this default only template deletion is called. 
+git-system-follower does not require any additional information, since it stores information
+about the generated template in `.state.yaml`.
+
+For more details about `.state.yaml`, see [.state.yaml Guide](state.md)
+
 ### `cookiecutter` templates
 `cookiecutter` is used to generate templates. For creating templates, see [cookiecutter documentation](https://cookiecutter.readthedocs.io/en/latest/)
 

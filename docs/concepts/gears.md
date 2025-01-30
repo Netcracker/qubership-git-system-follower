@@ -141,7 +141,7 @@ Also, all variables passed with `--extra` will be passed to the template.
 
 Default `delete.py`:
 ```python
-def delete_default_main(parameters: Parameters):
+def main(parameters: Parameters):
     delete_template(parameters)
 ```
 In this default only template deletion is called. 

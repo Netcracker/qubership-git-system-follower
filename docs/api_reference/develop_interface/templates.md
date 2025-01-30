@@ -47,6 +47,17 @@ def main(parameters: Parameters):
 ```
 
 ## Functions description
+### `getget_template_names` function
+```python
+def get_template_names(parameters: Parameters) -> tuple[str, ...]:
+```
+Return tuple of template names 
+
+#### Arguments
+| Name            | Type         | Description                                    |
+|-----------------|--------------|------------------------------------------------|
+| `parameters`    | `Parameters` | parameters that were passed to the package api |
+
 ### `create_template` function
 ```python
 def create_template(

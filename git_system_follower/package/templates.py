@@ -25,7 +25,16 @@ from git_system_follower.errors import PackageApiError
 from git_system_follower.utils.tmpdir import tempdir
 
 
-__all__ = ['create_template', 'delete_template']
+__all__ = ['get_template_names', 'create_template', 'delete_template']
+
+
+def get_template_names(script_dir: Path) -> tuple[str, ...]:
+    """ Get available template names in package api """
+    path = script_dir / 'templates'
+    if not path.exists():
+        raise PackageApiError(f'Template directory is missing. Path: {path}')
+
+    return tuple(template.name for template in path.iterdir() if (path / template).is_dir())
 
 
 @tempdir

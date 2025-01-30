@@ -20,12 +20,23 @@ from git_system_follower.develop.api.types import Parameters, ExtraParams, Extra
 from git_system_follower.variables import PACKAGE_API_RESULT as __PACKAGE_API_RESULT
 from git_system_follower.errors import PackageAPIDevelopmentError, PackageTemplatePolicyError
 from git_system_follower.package.templates import (
+    get_template_names as __get_template_names,
     create_template as __create_template,
     delete_template as __delete_template
 )
 
 
-__all__ = ['create_template', 'update_template', 'delete_template']
+__all__ = ['get_template_names', 'create_template', 'update_template', 'delete_template']
+
+
+def get_template_names(parameters: Parameters) -> tuple[str, ...]:
+    """ Get available template names
+
+    :param parameters: parameters that were passed to the package api
+    :returns: tuple of template names
+    """
+    system_params = parameters._Parameters__system_params
+    return __get_template_names(system_params.script_dir)
 
 
 def create_template(

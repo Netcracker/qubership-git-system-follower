@@ -33,9 +33,7 @@ __all__ = [
 
 
 PACKAGE_SUFFIX = '.tar.gz'
-
-
-IMAGE_PATTERN = r'^(?P<registry>[^:]+):(?P<port>\d+)/(?P<path>.+)/(?P<image_name>[^:]+)(:(?P<image_version>.+))?$'
+IMAGE_PATTERN = r'^(?P<registry>[^:/]+(:\d+)?)\/(?P<path>.+)\/(?P<image_name>[^:]+)(:(?P<image_version>.+))?$'
 
 
 class PackageCLITypes(Enum):
@@ -123,7 +121,7 @@ def parse_image(package: str) -> PackageCLIImage:
         raise ParsePackageNameError(f'Failed to parse {package} package name with regular expression')
 
     default = 'latest'
-    registry, repository = f"{match.group('registry')}:{match.group('port')}", match.group('path')
+    registry, repository = match.group('registry'), match.group('path')
     image, tag = match.group('image_name'), match.group('image_version')
     if tag is None or tag.lower() == default:
         return PackageCLIImage(registry=registry, repository=repository, image=image, tag=default)

@@ -16,12 +16,14 @@
 from typing import Iterable
 from pathlib import Path
 from pprint import pformat
+from abc import ABC, abstractmethod
 import tarfile
 import json
 import shutil
 
 import oras.client
 import oras.container
+import oras.defaults
 import requests
 import yaml
 
@@ -42,39 +44,52 @@ from git_system_follower.utils.tmpdir import tempdir
 __all__ = ['download']
 
 
-class OrasClient(oras.client.OrasClient):
-    """ Oras client for downloading git-system-follower packages
+class Registry(ABC, oras.client.OrasClient):
+    """ Base class of any new Registry """
 
-    Example of use:
-    We have GSF package
-    We've created an image of a docker with this package:
-       artifactory.company.com/path-to/image:tag
+    @abstractmethod
+    def download(self, target: str, outdir: Path) -> Path:
+        """ Download package function from OCI artifact or image
 
-    We want to download this GSF package, then we need to:
-       1. create an OrasClient object: `client = OrasClient(hostname='artifactory.company.com')`
-       2. download package:
-          `client.copy('path-to/image:tag', outdir=Path('/path/to/outdir'))`
-    """
-
-    def copy(self, target: str, outdir: Path) -> Path:
-        """ Similar command "oras copy <target> --to-oci-layout <outdir>" with custom:
+        Similar command "oras copy <target> --to-oci-layout <outdir>" with custom:
         downloading regular docker image (<target>) with package inside it and unpacking this package from layer to
         <outdir>/<package name>@<package version>.tar.gz, where package name and version are taking from package.yaml
         inside package(.tar.gz file) itself
 
-        :param target: image path: <repository>/<image name>:<image tag>
-        :param outdir: directory where need to download package
-        :return: path to downloaded package
+        :param target: OCI artifact or image url without protocol
+        :param outdir: directory where need to save package
+        :return: content of downloaded OCI artifact or image
         """
-        container = self.get_container(target)
+        pass
 
-        token = self._get_anonymous_token(container)
-        self.auth.set_token_auth(token)
-        manifest = self.get_manifest(
-            container, allowed_media_type=['application/vnd.docker.distribution.manifest.v2+json']
-        )
-        logger.debug(f'Found manifest:\n{pformat(manifest)}')
+    @abstractmethod
+    def _get_anonymous_token(self, container: oras.container.Container) -> str:
+        """ Get anonymous token for getting manifest and downloading layers (`docker pull` simulation with possibility
+        of anonymous image downloading)
 
+        :param container: Oras container with information about target
+        :return: anonymous token
+        """
+        pass
+
+    @staticmethod
+    def _check_anonymous_token_request(response: requests.Response, container: oras.container.Container) -> str:
+        """ Verification of the received anonymous token """
+        response.raise_for_status()
+        token = response.json().get('token')
+        if token is None:
+            raise RemoteRepositoryError(f'Failed to get an anonymous token for {container}')
+        return token
+
+    def _download_layer(self, container: oras.container.Container, manifest: dict, outdir: Path) -> Path:
+        """ Download layer of GSF package
+        The GSF package has specific rules that there can only be one directory in an OCI artifact or image
+
+        :param container: Oras container with information about target
+        :param manifest: manifest of OCI artifact or image
+        :param outdir: directory where need to save package
+        :return: content of downloaded OCI artifact or image
+        """
         layers = manifest.get("layers")
         if layers is None:
             raise DownloadPackageError(f'Failed to parse the layers of {container} image to get package '
@@ -97,26 +112,6 @@ class OrasClient(oras.client.OrasClient):
         logger.debug(f'Renamed {package_path} to {package_new_path}')
         return package_new_path
 
-    def _get_anonymous_token(self, container: oras.container.Container) -> str:
-        """ Get anonymous token for getting manifest and downloading layers (`docker pull` simulation with possibility
-        of anonymous image downloading)
-
-        :param container: oras container (object with parsed image url)
-        :return: anonymous token
-        """
-        response = requests.get(
-            f'{self.prefix}://{container.registry}/v2/token',
-            params={
-                'service': container.registry,
-                'scope': f'repository:{container.namespace}/{container.repository}:pull'
-            }
-        )
-        response.raise_for_status()
-        token = response.json().get('token')
-        if token is None:
-            raise RemoteRepositoryError(f'Failed to get an anonymous token for {container}')
-        return token
-
     @staticmethod
     def _get_package_filename(path: Path) -> str:
         """ Get current filename for package (.tar.gz file) using parsing pacakge.yaml inside this package
@@ -126,6 +121,70 @@ class OrasClient(oras.client.OrasClient):
         """
         name, version = get_name_and_version_version_from_targz(path)
         return f'{name}@{version}.tar.gz'
+
+
+class Dockerhub(Registry):
+    """ Oras client for downloading git-system-follower packages from DockerHub """
+
+    def download(self, target: str, outdir: Path) -> Path:
+        container = self.get_container(target)
+        token = self._get_anonymous_token(container)
+        self.auth.set_token_auth(token)
+
+        # fix oras get_manifest for docker.io. For example, we set the image as docker.io/path/to/image:tag
+        # then oras will try to download the image from www.docker.io, which is an invalid link.
+        container.registry = 'index.docker.io'
+
+        manifest = self.get_manifest(
+            container, allowed_media_type=['application/vnd.docker.distribution.manifest.v2+json']
+        )
+        logger.debug(f'Found manifest:\n{pformat(manifest)}')
+        return self._download_layer(container, manifest, outdir)
+
+    def _get_anonymous_token(self, container: oras.container.Container) -> str:
+        response = requests.get(
+            f'{self.prefix}://auth.{container.registry}/token',
+            params={
+                'service': f'registry.{container.registry}',
+                'scope': f'repository:{container.namespace}/{container.repository}:pull'
+            }
+        )
+        return self._check_anonymous_token_request(response, container)
+
+
+class Artifactory(Registry):
+    """ Oras client for downloading git-system-follower packages from artifactory
+
+    Example of use:
+    We have GSF package
+    We've created an image of a docker with this package:
+       artifactory.company.com/path-to/image:tag
+
+    We want to download this GSF package, then we need to:
+       1. create an OrasClient object: `client = OrasClient(hostname='artifactory.company.com')`
+       2. download package:
+          `client.copy('path-to/image:tag', outdir=Path('/path/to/outdir'))`
+    """
+
+    def download(self, target: str, outdir: Path) -> Path:
+        container = self.get_container(target)
+        token = self._get_anonymous_token(container)
+        self.auth.set_token_auth(token)
+        manifest = self.get_manifest(
+            container, allowed_media_type=['application/vnd.docker.distribution.manifest.v2+json']
+        )
+        logger.debug(f'Found manifest:\n{pformat(manifest)}')
+        return self._download_layer(container, manifest, outdir)
+
+    def _get_anonymous_token(self, container: oras.container.Container) -> str:
+        response = requests.get(
+            f'{self.prefix}://{container.registry}/v2/token',
+            params={
+                'service': container.registry,
+                'scope': f'repository:{container.namespace}/{container.repository}:pull'
+            }
+        )
+        return self._check_anonymous_token_request(response, container)
 
 
 def get_name_and_version_version_from_targz(path: Path) -> tuple[str, str]:
@@ -284,9 +343,9 @@ def download_package(package: PackageCLIImage, outdir: Path, *, tmpdir: Path) ->
         logger.info(f'Package has already been downloaded to {outfile} from {package}. Skip downloading')
         return outfile
 
-    client = OrasClient(hostname=package.registry)
-    image = f'{package.repository}/{package.image}' + f':{package.tag}' if package.tag is not None else ''
-    package_tmp_path = client.copy(image, outdir=tmpdir)
+    client = get_client(package.registry)
+    image = package.get_image_path()
+    package_tmp_path = client.download(image, outdir=tmpdir)
     outfile = outdir / package_tmp_path.name
     if outfile.exists():
         logger.warning(f'Package {outfile} already exist. Skip Moving {package_tmp_path} to {outfile}')
@@ -317,6 +376,12 @@ def _get_current_path_using_mapping(package: PackageCLI | PackageCLIImage, packa
         if file_target == str(package):
             return downloaded_package
     return None
+
+
+def get_client(registry: str) -> Dockerhub | Artifactory:
+    if registry == 'docker.io':
+        return Dockerhub(hostname=registry)
+    return Artifactory(hostname=registry)
 
 
 def _save_info_about_downloaded_package(package: PackageCLI, current_package: Path) -> None:

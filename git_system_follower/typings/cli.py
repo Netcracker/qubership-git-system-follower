@@ -60,7 +60,13 @@ class PackageCLIImage(PackageCLI):
     registry: str
     repository: str
     image: str
-    tag: str
+    tag: str = 'latest'
+
+    def get_image_path(self) -> str:
+        """ Get image path (without registry) """
+        path = f'{self.repository}/{self.image}'
+        path += f':{self.tag}' if self.tag is not None else ''
+        return path
 
     def __str__(self):
         return f'{self.registry}/{self.repository}/{self.image}:{self.tag}'
@@ -120,11 +126,10 @@ def parse_image(package: str) -> PackageCLIImage:
     if not match:
         raise ParsePackageNameError(f'Failed to parse {package} package name with regular expression')
 
-    default = 'latest'
     registry, repository = match.group('registry'), match.group('path')
     image, tag = match.group('image_name'), match.group('image_version')
-    if tag is None or tag.lower() == default:
-        return PackageCLIImage(registry=registry, repository=repository, image=image, tag=default)
+    if tag is None:
+        return PackageCLIImage(registry=registry, repository=repository, image=image)
     return PackageCLIImage(registry=registry, repository=repository, image=image, tag=tag)
 
 

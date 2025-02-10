@@ -81,6 +81,18 @@ class Registry(ABC, oras.client.OrasClient):
             raise RemoteRepositoryError(f'Failed to get an anonymous token for {container}')
         return token
 
+    def get_manifest_wrapper(self, container: oras.container.Container) -> dict:
+        """ Wrapper for getting manifest
+
+        :param container: Oras container with information about target
+        :return: manifest
+        """
+        manifest = self.get_manifest(
+            container, allowed_media_type=['application/vnd.docker.distribution.manifest.v2+json']
+        )
+        logger.debug(f'Found manifest:\n{pformat(manifest)}')
+        return manifest
+
     def _download_layer(self, container: oras.container.Container, manifest: dict, outdir: Path) -> Path:
         """ Download layer of GSF package
         The GSF package has specific rules that there can only be one directory in an OCI artifact or image
@@ -135,10 +147,7 @@ class Dockerhub(Registry):
         # then oras will try to download the image from www.docker.io, which is an invalid link.
         container.registry = 'index.docker.io'
 
-        manifest = self.get_manifest(
-            container, allowed_media_type=['application/vnd.docker.distribution.manifest.v2+json']
-        )
-        logger.debug(f'Found manifest:\n{pformat(manifest)}')
+        manifest = self.get_manifest_wrapper(container)
         return self._download_layer(container, manifest, outdir)
 
     def _get_anonymous_token(self, container: oras.container.Container) -> str:
@@ -170,10 +179,7 @@ class Artifactory(Registry):
         container = self.get_container(target)
         token = self._get_anonymous_token(container)
         self.auth.set_token_auth(token)
-        manifest = self.get_manifest(
-            container, allowed_media_type=['application/vnd.docker.distribution.manifest.v2+json']
-        )
-        logger.debug(f'Found manifest:\n{pformat(manifest)}')
+        manifest = self.get_manifest_wrapper(container)
         return self._download_layer(container, manifest, outdir)
 
     def _get_anonymous_token(self, container: oras.container.Container) -> str:

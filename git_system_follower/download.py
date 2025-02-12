@@ -31,9 +31,10 @@ from git_system_follower.variables import IMAGE_PACKAGE_MAP, PACKAGES_PATH, PACK
 from git_system_follower.logger import logger
 from git_system_follower.errors import RemoteRepositoryError, DownloadPackageError, PackageNotFoundError
 from git_system_follower.typings.cli import (
-    PackageCLI, PackageCLITypes, PACKAGE_SUFFIX,
+    PackageCLI, PackageCLITypes,
     PackageCLIImage, PackageCLITarGz, PackageCLISource
 )
+from git_system_follower.plugins.cli.packages.default import TarGzPlugin
 from git_system_follower.typings.package import PackageLocalData
 from git_system_follower.package.package_info import (
     DESCRIPTION_FILENAME, get_package_info, check_dependency_depth, add_dependencies
@@ -375,7 +376,7 @@ def _get_current_path_using_mapping(package: PackageCLI | PackageCLIImage, packa
         content: dict[str, str] = json.load(file)
     downloaded_packages = packages_dir.glob('*.tar.gz')
     for downloaded_package in downloaded_packages:
-        filename = _get_filename_without_suffix(downloaded_package, suffix=PACKAGE_SUFFIX)
+        filename = _get_filename_without_suffix(downloaded_package, suffix=TarGzPlugin.suffix)
         file_target = content.get(filename)
         if file_target is None:
             continue
@@ -398,13 +399,13 @@ def _save_info_about_downloaded_package(package: PackageCLI, current_package: Pa
     """
     with open(IMAGE_PACKAGE_MAP, 'r') as file:
         content: dict[str, str] = json.load(file)
-    current_package_filename = _get_filename_without_suffix(current_package, suffix=PACKAGE_SUFFIX)
+    current_package_filename = _get_filename_without_suffix(current_package, suffix=TarGzPlugin.suffix)
     content[current_package_filename] = str(package)
     with open(IMAGE_PACKAGE_MAP, 'w') as file:
         json.dump(content, file, indent=4)
 
 
-def _get_filename_without_suffix(path: Path, suffix: str = PACKAGE_SUFFIX) -> str:
+def _get_filename_without_suffix(path: Path, suffix: str = TarGzPlugin.suffix) -> str:
     """ Get file name without `suffix`
 
     :param path: file path
@@ -421,7 +422,7 @@ def unpack(path: Path, outdir: Path) -> Path:
     :param outdir: output directory
     :return: sources path of this package
     """
-    filename = _get_filename_without_suffix(path, suffix=PACKAGE_SUFFIX)
+    filename = _get_filename_without_suffix(path, suffix=TarGzPlugin.suffix)
     package_dir = outdir / filename / PACKAGE_DIRNAME
     if package_dir.exists():
         return package_dir

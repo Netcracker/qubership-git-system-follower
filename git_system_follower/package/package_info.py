@@ -23,7 +23,7 @@ from git_system_follower.errors import (
     PackageNotFoundError, PackageDescriptionFileError, DescriptionSectionError, MaxDependencyDepthError
 )
 from git_system_follower.variables import PACKAGE_DIRNAME, PACKAGE_DESCRIPTION_FILE_API
-from git_system_follower.typings.cli import parse_image
+from git_system_follower.plugins.cli.packages.default import ImagePlugin
 from git_system_follower.typings.package import PackageData, PackageLocalData
 
 
@@ -115,8 +115,9 @@ def _validate_package_info(data: dict[str, Any]) -> PackageData:
     updated_dependencies = []
     dependencies = data.get('dependencies')
     if dependencies is not None:
+        image_plugin = ImagePlugin()
         for dependency in data['dependencies']:
-            dependency = parse_image(dependency)
+            dependency = image_plugin.parse_image(dependency)
             updated_dependencies.append(dependency)
     data['version'] = str(data['version'])
     data['dependencies'] = tuple(updated_dependencies)

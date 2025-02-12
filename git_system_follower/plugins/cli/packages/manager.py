@@ -30,6 +30,14 @@ hookspec = pluggy.HookspecMarker(NAME)
 class HookSpec:
     @hookspec
     def process_gear(self, value: str) -> Result:
+        """ Spec for processing GSF Gear as a GSF cli argument
+
+        :param value: GSF cli argument
+        :return: Result inforamtion:
+            package - info about package or None,
+            is_processed - whether the argument has been processed (single argument should be handled in one way,
+            not all at once!)
+        """
         pass
 
 
@@ -42,16 +50,21 @@ class PluginManager:
         self.load_plugins()
 
     def load_plugins(self) -> list[object]:
-        """ Load user's plugins from entry points """
-        plugins = [SourcePlugin, TarGzPlugin, ImagePlugin]
-        for plugin in plugins:
-            self.register(plugin())
+        """ Load user's plugins from entry points
 
+        User plugins are loaded first, and only then system plugins. To be able to override the default behavior
+        """
+        plugins = []
         for entry_point in importlib.metadata.entry_points():
             if entry_point.group == self.group:
                 plugin = entry_point.load()
-                self.pm.register(plugin())
+                self.register(plugin())
                 plugins.append(plugin)
+
+        system_plugins = [ImagePlugin, TarGzPlugin, SourcePlugin]
+        for plugin in system_plugins:
+            self.register(plugin())
+            plugins.append(plugin)
 
         print_list(
             plugins,

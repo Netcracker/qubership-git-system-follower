@@ -15,7 +15,7 @@
 import click
 
 from git_system_follower.typings.cli import PackageCLISource, PackageCLITarGz, PackageCLIImage, ExtraParam
-from git_system_follower.plugins.plugin_managers import cli_packages_pm as plugin_manager
+from git_system_follower.plugins.managers import cli_packages_pm as plugin_manager
 
 
 __all__ = ['Package', 'PackageType', 'ExtraParamTuple']

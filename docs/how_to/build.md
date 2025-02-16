@@ -27,9 +27,26 @@
 
 ---
 
-Information on how to build your project as git-system-follower gear (docker image)
+Information on how to build your project as git-system-follower Gear
 
-## Package file structure
+
+## OCI artifact
+Recommended option when you build your Gear as an OCI artifact
+
+Package file structure:
+```plaintext
+<your repository>
+├─ git-system-follower-package/
+│  └─ <package files>
+└─ <your other files>
+```
+Command to publish your Gear:
+```bash
+oras push <your registry> git-system-follower-package/
+```
+
+## Docker image with artifact
+Package file structure:
 ```plaintext
 <your repository>
 ├─ git-system-follower-package/
@@ -45,4 +62,4 @@ FROM scratch
 COPY git-system-follower-package /git-system-follower-package
 ```
 
-TBD AFTER OPEN SOURCE
+docker build 

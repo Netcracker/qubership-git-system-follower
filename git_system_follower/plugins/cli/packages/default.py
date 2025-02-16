@@ -18,39 +18,54 @@ import re
 from git_system_follower.errors import ParsePackageNameError
 from git_system_follower.typings.cli import PackageCLISource, PackageCLITarGz, PackageCLIImage
 from git_system_follower.plugins.cli.packages import hookimpl, Result
+from git_system_follower.plugins.cli.packages.specs import HookSpec
 
 
 __all__ = ['SourcePlugin', 'TarGzPlugin', 'ImagePlugin']
 
 
-class SourcePlugin:
+class SourcePlugin(HookSpec):
     @hookimpl
-    def process_gear(self, value: str, **kwargs) -> Result:
+    def match(self, value: str) -> bool:
         path = Path(value)
-        if path.is_dir():
-            return Result(package=PackageCLISource(path=path), is_processed=True)
-        return Result(package=None, is_processed=False)
+        return path.is_dir()
+
+    @hookimpl
+    def get_gears(self, value: str, **kwargs) -> list[PackageCLISource]:
+        return [PackageCLISource(path=Path(value))]
+
+    def __str__(self) -> str:
+        return self.value
 
 
-class TarGzPlugin:
+class TarGzPlugin(HookSpec):
     suffix = '.tar.gz'
 
     @hookimpl
-    def process_gear(self, value: str, **kwargs) -> Result:
+    def match(self, value: str) -> bool:
         path = Path(value)
-        if path.name.endswith(self.suffix):
-            return Result(package=PackageCLITarGz(path=path), is_processed=True)
-        return Result(None, False)
+        return path.name.endswith(self.suffix)
+
+    @hookimpl
+    def get_gears(self, value: str, **kwargs) -> list[PackageCLITarGz]:
+        return [PackageCLITarGz(path=Path(value))]
+
+    def __str__(self) -> str:
+        return self.value
 
 
-class ImagePlugin:
+class ImagePlugin(HookSpec):
     pattern = r'^(?P<registry>[^:/]+(:\d+)?)\/(?P<path>.+)\/(?P<image_name>[^:]+)(:(?P<image_version>.+))?$'
 
     @hookimpl
-    def process_gear(self, value: str, **kwargs) -> Result:
+    def match(self, value: str) -> bool:
         if re.match(self.pattern, value):
-            return Result(package=self.parse_image(value), is_processed=True)
-        return Result(None, False)
+            return True
+        return False
+
+    @hookimpl
+    def get_gears(self, value: str, **kwargs) -> list[PackageCLITarGz]:
+        return [self.parse_image(value)]
 
     def parse_image(self, package: str) -> PackageCLIImage:
         match = re.match(self.pattern, package)
@@ -62,3 +77,6 @@ class ImagePlugin:
         if tag is None:
             return PackageCLIImage(registry=registry, repository=repository, image=image)
         return PackageCLIImage(registry=registry, repository=repository, image=image, tag=tag)
+
+    def __str__(self) -> str:
+        return self.value

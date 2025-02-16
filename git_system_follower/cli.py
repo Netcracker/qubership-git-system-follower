@@ -19,7 +19,7 @@ import click
 from git_system_follower.logger import logger, set_level
 from git_system_follower.errors import CLIParamsError
 from git_system_follower.typings.cli import PackageCLIImage, PackageCLITarGz, PackageCLISource, ExtraParam
-from git_system_follower.utils.cli import Package, ExtraParamTuple, add_options
+from git_system_follower.utils.cli import Package, ExtraParamTuple, add_options, get_gears
 from git_system_follower.utils.output import banner, print_params
 from git_system_follower.download import download
 from git_system_follower.install import install
@@ -38,7 +38,7 @@ from git_system_follower.plugins.managers import managers
 )
 @click.option('--debug', 'is_debug', is_flag=True, default=False, help='Show debug level messages')
 def download_command(
-        gears: tuple[PackageCLIImage | PackageCLITarGz | PackageCLISource, ...], directory: Path,
+        gears: tuple[object, ...], directory: Path,
         is_debug: bool
 ):
     """ Download gears
@@ -57,6 +57,7 @@ def download_command(
     if gears == ():
         raise CLIParamsError('Gears for downloading are not specified')
     set_level(is_debug)
+    gears = get_gears(gears)
     download(gears, directory, is_deps_first=True)
 
 
@@ -95,7 +96,7 @@ def download_command(
 )
 @click.option('--debug', 'is_debug', is_flag=True, default=False, help='Show debug level messages')
 def install_command(
-        gears: tuple[PackageCLIImage | PackageCLITarGz | PackageCLISource, ...], repo: str,
+        gears: tuple[object, ...], repo: str,
         branches: tuple[str, ...], token: str, extras: tuple[ExtraParam], ticket: str, message: str,
         is_force: bool, is_debug: bool,
         *args, **kwargs  # args, kwargs uses for plugin options
@@ -126,6 +127,7 @@ def install_command(
     if gears == ():
         raise CLIParamsError('Gears for installation are not specified')
     set_level(is_debug)
+    gears = get_gears(gears)
     install(gears, repo, branches, token, extras=extras, ticket=ticket, message=message, is_force=is_force)
 
 
@@ -164,7 +166,7 @@ def install_command(
 )
 @click.option('--debug', 'is_debug', is_flag=True, default=False, help='Show debug level messages')
 def uninstall_command(
-        gears: tuple[PackageCLIImage | PackageCLITarGz | PackageCLISource, ...], repo: str,
+        gears: tuple[object, ...], repo: str,
         branches: tuple[str, ...], token: str, extras: tuple[ExtraParam, ...], ticket: str, message: str,
         is_force: bool, is_debug: bool
 ):
@@ -196,6 +198,7 @@ def uninstall_command(
     if gears == ():
         raise CLIParamsError('Gears for uninstallation are not specified')
     set_level(is_debug)
+    gears = get_gears(gears)
     uninstall(gears, repo, branches, token, extras=extras, ticket=ticket, message=message, is_force=is_force)
 
 

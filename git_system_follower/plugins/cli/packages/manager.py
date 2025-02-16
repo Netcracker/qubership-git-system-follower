@@ -18,32 +18,26 @@ import pluggy
 import click
 
 from git_system_follower.logger import logger
-from git_system_follower.errors import ParsePackageNameError
+from git_system_follower.errors import ParsePackageNameError, InvalidPlugin
 from git_system_follower.typings.cli import PackageCLISource, PackageCLITarGz, PackageCLIImage
 from git_system_follower.plugins.cli.packages import NAME, Result
+from git_system_follower.plugins.cli.packages.specs import HookSpec
 from git_system_follower.plugins.cli.packages.default import SourcePlugin, TarGzPlugin, ImagePlugin
 from git_system_follower.utils.output import print_list
 
 
-hookspec = pluggy.HookspecMarker(NAME)
+def validate_hooks(method):
+    def wrapper(self, plugin):
+        requires = ['match', 'process', 'get_gears']
+        not_exist = []
+        for require in requires:
+            if require not in dir(plugin):
+                not_exist.append(require)
 
-
-class HookSpec:
-    @hookspec
-    def plugin_options(self) -> list[click.option]:
-        """ Get plugin options for CLI options """
-        return []
-
-    @hookspec
-    def process_gear(self, value: str, **kwargs) -> Result:
-        """ Spec for processing GSF Gear as a GSF cli argument
-
-        :param value: GSF cli argument
-        :return: Result inforamtion:
-            package - info about package or None,
-            is_processed - whether the argument has been processed (single argument should be handled in one way,
-            not all at once!)
-        """
+        if not_exist:
+            raise InvalidPlugin(f'Incorrect plugin structure. Missing hooks: {", ".join(not_exist)}')
+        return method(self, plugin=plugin)
+    return wrapper
 
 
 class PluginManager:
@@ -78,6 +72,7 @@ class PluginManager:
         )
         return plugins
 
+    @validate_hooks
     def register(self, plugin) -> None:
         self.pm.register(plugin)
 
@@ -88,18 +83,19 @@ class PluginManager:
             options[hook.plugin.__class__.__name__] = opts
         return options
 
-    def process(self, value: str, **kwargs) -> PackageCLISource | PackageCLITarGz | PackageCLIImage:
-        """ Proccesing hook implementations, if no hook implementation has processed package then raise error
+    def process(self, value: str, **kwargs) -> HookSpec:
+        """ Proccesing input package value from CLI
+        if no hook implementation has processed package then raise error
 
         :param value: package string for proccesing
         :param kwargs: plugin's parameters
         :return: processed package
         """
-        for hook in self.pm.hook.process_gear.get_hookimpls():
-            func = hook.plugin.process_gear
-            package, is_processed = func(value=value, **kwargs)
+        for hook in self.pm.hook.match.get_hookimpls():
+            process = hook.plugin.process
+            is_processed = process(value=value, **kwargs)
             if is_processed:
-                return package
+                return hook.plugin
 
         # fix to get plugins in the correct order, not self.pm.get_plugins()
         plugins = [plugin[1].__class__.__name__ for plugin in self.pm.list_name_plugin()]

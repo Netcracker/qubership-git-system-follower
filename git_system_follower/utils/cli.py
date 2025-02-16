@@ -20,8 +20,15 @@ from git_system_follower.plugins.managers import cli_packages_pm as plugin_manag
 
 __all__ = [
     'Package', 'PackageType', 'ExtraParamTuple',
-    'add_options'
+    'add_options', 'get_gears'
 ]
+
+
+def get_gears(hooks: tuple[object]) -> tuple[PackageCLISource | PackageCLITarGz | PackageCLIImage]:
+    gears = []
+    for hook in hooks:
+        gears.extend(hook.gears)
+    return tuple(gears)
 
 
 class PackageType(click.ParamType):

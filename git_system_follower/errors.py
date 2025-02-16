@@ -111,3 +111,18 @@ class HashesMismatch(StateFileError):
 class DownloadPackageError(Exception):
     def __init__(self, msg, *args):
         super().__init__(msg, *args)
+
+""" --------------------------------------- """
+
+class PluginError(Exception):
+    def __init__(self, msg, *args):
+        super().__init__(msg, *args)
+
+
+class InvalidPlugin(PluginError):
+    def __init__(self, msg, *args):
+        super().__init__(msg, *args)
+
+class PluginExecutionError(PluginError):
+    def __init__(self, msg, *args):
+        super().__init__(msg, *args)

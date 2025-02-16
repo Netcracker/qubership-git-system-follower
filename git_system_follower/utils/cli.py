@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import re
 
 import click
 
@@ -22,13 +23,6 @@ __all__ = [
     'Package', 'PackageType', 'ExtraParamTuple',
     'add_options', 'get_gears'
 ]
-
-
-def get_gears(hooks: tuple[object]) -> tuple[PackageCLISource | PackageCLITarGz | PackageCLIImage]:
-    gears = []
-    for hook in hooks:
-        gears.extend(hook.gears)
-    return tuple(gears)
 
 
 class PackageType(click.ParamType):
@@ -56,6 +50,17 @@ class ExtraParamTuple(click.Tuple):
         return ExtraParam(name=values[0], value=values[1], masked=True if values[2] == 'masked' else False)
 
 
+""" --------------- For plugins --------------- """
+
+
+def get_gears(hooks: tuple[object]) -> tuple[PackageCLISource | PackageCLITarGz | PackageCLIImage]:
+    """ Add gears from plugin """
+    gears = []
+    for hook in hooks:
+        gears.extend(hook.gears)
+    return tuple(gears)
+
+
 def add_options(command: object, managers: list):
     """ Dynamically add options to click command """
     for manager in managers:
@@ -65,7 +70,7 @@ def add_options(command: object, managers: list):
                 params = extract_click_option_params(opt)
 
                 help_msg = params.get('help', '')
-                params['help'] = f"{plugin_name} plugin option ({manager.group}): {help_msg}"
+                params['help'] = f'{manager.group}:{plugin_name}:{help_msg}'
                 command = opt(command)
 
     return command

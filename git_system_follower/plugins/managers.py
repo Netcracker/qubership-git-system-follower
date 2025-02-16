@@ -21,4 +21,9 @@ Therefore, they are declared right away rather than when they are needed
 from git_system_follower.plugins.cli.packages.manager import PluginManager as CliPackagesPluginManager
 
 
+__all__ = ['managers', 'cli_packages_pm']
+
+
 cli_packages_pm = CliPackagesPluginManager()
+
+managers = [cli_packages_pm]

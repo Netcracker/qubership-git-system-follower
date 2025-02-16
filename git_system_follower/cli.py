@@ -19,20 +19,17 @@ import click
 from git_system_follower.logger import logger, set_level
 from git_system_follower.errors import CLIParamsError
 from git_system_follower.typings.cli import PackageCLIImage, PackageCLITarGz, PackageCLISource, ExtraParam
-from git_system_follower.utils.cli import Package, ExtraParamTuple
+from git_system_follower.utils.cli import Package, ExtraParamTuple, add_options
 from git_system_follower.utils.output import banner, print_params
 from git_system_follower.download import download
 from git_system_follower.install import install
 from git_system_follower.uninstall import uninstall
 from git_system_follower import __version__
 
-
-@click.group()
-def cli():
-    """ The package manager for Git providers. """
+from git_system_follower.plugins.managers import managers
 
 
-@cli.command(name='download')
+@click.command(name='download')
 @click.argument('gears', nargs=-1, type=Package)
 @click.option(
     '-d', '--directory', type=click.Path(exists=True, dir_okay=True, file_okay=False, path_type=Path),
@@ -63,7 +60,7 @@ def download_command(
     download(gears, directory, is_deps_first=True)
 
 
-@cli.command(name='install')
+@click.command(name='install')
 @click.argument('gears', nargs=-1, type=Package)
 @click.option(
     '-r', '--repo', 'repo', type=str, required=True,
@@ -100,7 +97,8 @@ def download_command(
 def install_command(
         gears: tuple[PackageCLIImage | PackageCLITarGz | PackageCLISource, ...], repo: str,
         branches: tuple[str, ...], token: str, extras: tuple[ExtraParam], ticket: str, message: str,
-        is_force: bool, is_debug: bool
+        is_force: bool, is_debug: bool,
+        *args, **kwargs  # args, kwargs uses for plugin options
 ):
     """ Install gears to branches in repository
 
@@ -131,7 +129,7 @@ def install_command(
     install(gears, repo, branches, token, extras=extras, ticket=ticket, message=message, is_force=is_force)
 
 
-@cli.command(name='uninstall')
+@click.command(name='uninstall')
 @click.argument('gears', nargs=-1, type=Package)
 @click.option(
     '-r', '--repo', 'repo', type=str, required=True,
@@ -201,15 +199,32 @@ def uninstall_command(
     uninstall(gears, repo, branches, token, extras=extras, ticket=ticket, message=message, is_force=is_force)
 
 
-@cli.command(name='list')
+@click.command(name='list')
 def list_command():
     """ List installed gears: in develop """
 
 
-@cli.command(name='version')
+@click.command(name='version')
 def version_command():
     """ Show version """
     print(__version__)
+
+
+@click.group()
+def cli():
+    """ The package manager for Git providers. """
+
+
+# Dynamic addition so that plugins can add their own parameters
+download_command = add_options(download_command, managers)
+install_command = add_options(install_command, managers)
+uninstall_command = add_options(uninstall_command, managers)
+
+cli.add_command(download_command, name='download')
+cli.add_command(install_command, name='install')
+cli.add_command(uninstall_command, name='uninstall')
+cli.add_command(list_command, name='list')
+cli.add_command(version_command, name='version')
 
 
 if __name__ == '__main__':

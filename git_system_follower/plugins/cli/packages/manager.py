@@ -15,6 +15,7 @@
 import importlib.metadata
 
 import pluggy
+import click
 
 from git_system_follower.logger import logger
 from git_system_follower.errors import ParsePackageNameError
@@ -29,7 +30,12 @@ hookspec = pluggy.HookspecMarker(NAME)
 
 class HookSpec:
     @hookspec
-    def process_gear(self, value: str) -> Result:
+    def plugin_options(self) -> list[click.option]:
+        """ Get plugin options for CLI options """
+        return []
+
+    @hookspec
+    def process_gear(self, value: str, **kwargs) -> Result:
         """ Spec for processing GSF Gear as a GSF cli argument
 
         :param value: GSF cli argument
@@ -38,11 +44,10 @@ class HookSpec:
             is_processed - whether the argument has been processed (single argument should be handled in one way,
             not all at once!)
         """
-        pass
 
 
 class PluginManager:
-    group = 'gsf.plugins.cli'
+    group = 'gsf.plugins.cli.packages'
 
     def __init__(self):
         self.pm = pluggy.PluginManager(NAME)
@@ -76,10 +81,23 @@ class PluginManager:
     def register(self, plugin) -> None:
         self.pm.register(plugin)
 
-    def process(self, value: str) -> PackageCLISource | PackageCLITarGz | PackageCLIImage:
+    def get_plugin_options(self) -> dict[str, list[click.Option]]:
+        options = {}
+        for hook in self.pm.hook.plugin_options.get_hookimpls():
+            opts = hook.plugin.plugin_options()
+            options[hook.plugin.__class__.__name__] = opts
+        return options
+
+    def process(self, value: str, **kwargs) -> PackageCLISource | PackageCLITarGz | PackageCLIImage:
+        """ Proccesing hook implementations, if no hook implementation has processed package then raise error
+
+        :param value: package string for proccesing
+        :param kwargs: plugin's parameters
+        :return: processed package
+        """
         for hook in self.pm.hook.process_gear.get_hookimpls():
             func = hook.plugin.process_gear
-            package, is_processed = func(value=value)
+            package, is_processed = func(value=value, **kwargs)
             if is_processed:
                 return package
 

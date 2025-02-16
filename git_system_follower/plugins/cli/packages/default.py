@@ -20,10 +20,12 @@ from git_system_follower.typings.cli import PackageCLISource, PackageCLITarGz, P
 from git_system_follower.plugins.cli.packages import hookimpl, Result
 
 
+__all__ = ['SourcePlugin', 'TarGzPlugin', 'ImagePlugin']
+
 
 class SourcePlugin:
     @hookimpl
-    def process_gear(self, value: str) -> Result:
+    def process_gear(self, value: str, **kwargs) -> Result:
         path = Path(value)
         if path.is_dir():
             return Result(package=PackageCLISource(path=path), is_processed=True)
@@ -34,7 +36,7 @@ class TarGzPlugin:
     suffix = '.tar.gz'
 
     @hookimpl
-    def process_gear(self, value: str) -> Result:
+    def process_gear(self, value: str, **kwargs) -> Result:
         path = Path(value)
         if path.name.endswith(self.suffix):
             return Result(package=PackageCLITarGz(path=path), is_processed=True)
@@ -45,7 +47,7 @@ class ImagePlugin:
     pattern = r'^(?P<registry>[^:/]+(:\d+)?)\/(?P<path>.+)\/(?P<image_name>[^:]+)(:(?P<image_version>.+))?$'
 
     @hookimpl
-    def process_gear(self, value: str) -> Result:
+    def process_gear(self, value: str, **kwargs) -> Result:
         if re.match(self.pattern, value):
             return Result(package=self.parse_image(value), is_processed=True)
         return Result(None, False)

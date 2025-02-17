@@ -9,6 +9,8 @@
    2. [apiVersion list](../concepts/api_version_list.md)
       1. [apiVersion v1](../concepts/api_version_list/v1.md) 
    3. [.state.yaml Guide](../concepts/state.md)
+   4. [Plugins Guide](../concepts/plugins.md)
+      1. [CLI Arguments Extension Point](../concepts/plugins/cli_arguments.md)
 4. [How-to Guides](../how_to.md)  
    1. **[Build Guide](build.md)**
    2. [Gear Development Cases](gear_development_cases.md)
@@ -62,4 +64,4 @@ FROM scratch
 COPY git-system-follower-package /git-system-follower-package
 ```
 
-docker build 
+TBD

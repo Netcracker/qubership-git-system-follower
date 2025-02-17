@@ -1,4 +1,4 @@
-# Gear
+# Gears
 ## Documentation
 1. [Docs Home](../docs_home.md)
 2. [Getting Started Guides](../getting_started.md) 
@@ -9,6 +9,8 @@
    2. [apiVersion list](api_version_list.md)
       1. [apiVersion v1](api_version_list/v1.md) 
    3. [.state.yaml Guide](state.md)
+   4. [Plugins Guide](plugins.md)
+      1. [CLI Arguments Extension Point](plugins/cli_arguments.md)
 4. [How-to Guides](../how_to.md)  
    1. [Build Guide](../how_to/build.md)
    2. [Gear Development Cases](../how_to/gear_development_cases.md)
@@ -29,7 +31,7 @@
 
 git-system-follower uses a packaging format called Gear. Gear is a collection of files describe the variables and structure of files in a repository.
 
-Gears are created as files laid out in a particular directory tree. They can be packaged into archives, docker images (is scheduled to be converted to an OCI image).
+Gears are created as files laid out in a particular directory tree. They can be packaged into archives, docker images/OCI artifacts.
 
 ## The Gear file structure
 A Gear is organized as a collection of files in the `git-system-follower-package/` directory inside your project.

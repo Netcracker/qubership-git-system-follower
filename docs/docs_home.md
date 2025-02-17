@@ -9,6 +9,8 @@
    2. [apiVersion list](concepts/api_version_list.md)
       1. [apiVersion v1](concepts/api_version_list/v1.md) 
    3. [.state.yaml Guide](concepts/state.md)
+   4. [Plugins Guide](concepts/plugins.md)
+      1. [CLI Arguments Extension Point](concepts/plugins/cli_arguments.md) 
 4. [How-to Guides](how_to.md)  
    1. [Build Guide](how_to/build.md)
    2. [Gear Development Cases](how_to/gear_development_cases.md)
@@ -30,9 +32,14 @@
 ## How the documentation is organized
 git-system-follower comes with extensive documentation. To help you find the right resources, here's a high-level overview of how it's structured:
 
-* [Getting Started Guides](getting_started.md) provide a step-by-step introduction to using git-system-follower for the first time. These guides are ideal for new users who want to quickly get familiar with the basics and set up their first package.
-* [Concept Guides](concepts.md) dive into essential topics and workflows, offering a deeper understanding of how git-system-follower works and the key principles behind it. These guides will give you the foundational knowledge needed to use the package manager effectively.
-* [How-to Guides](how_to.md) are practical walkthroughs for solving specific problems or handling common tasks. They are aimed at users who already understand the basics and want to explore more advanced features and solutions for real-world scenarios.
+* [Getting Started Guides](getting_started.md) provide a step-by-step introduction to using git-system-follower for the first time. 
+These guides are ideal for new users who want to quickly get familiar with the basics and set up their first Gear.
+* [Concept Guides](concepts.md) dive into essential topics and workflows, offering a deeper understanding of how
+git-system-follower works and the key principles behind it. These guides will give you the foundational knowledge
+needed to use the package manager effectively.
+* [How-to Guides](how_to.md) are practical walkthroughs for solving specific problems or handling common tasks.
+They are aimed at users who already understand the basics and want to explore more advanced features and
+solutions for real-world scenarios.
 
 ## Quicklinks
 * [:wrench: Quickstart Guide](getting_started/quickstart.md)  

@@ -18,7 +18,7 @@ import click
 
 from git_system_follower.logger import logger, set_level
 from git_system_follower.errors import CLIParamsError
-from git_system_follower.typings.cli import PackageCLIImage, PackageCLITarGz, PackageCLISource, ExtraParam
+from git_system_follower.typings.cli import ExtraParam
 from git_system_follower.utils.cli import Package, ExtraParamTuple, add_options, get_gears
 from git_system_follower.utils.output import banner, print_params
 from git_system_follower.download import download

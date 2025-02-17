@@ -123,6 +123,7 @@ class InvalidPlugin(PluginError):
     def __init__(self, msg, *args):
         super().__init__(msg, *args)
 
+
 class PluginExecutionError(PluginError):
     def __init__(self, msg, *args):
         super().__init__(msg, *args)

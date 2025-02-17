@@ -15,7 +15,6 @@
 import pluggy
 import click
 
-from git_system_follower.errors import PluginExecutionError
 from git_system_follower.plugins.cli.packages import NAME
 from git_system_follower.typings.cli import PackageCLISource, PackageCLITarGz, PackageCLIImage
 

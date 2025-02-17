@@ -22,8 +22,3 @@ from git_system_follower.typings.cli import PackageCLISource, PackageCLITarGz, P
 NAME = 'cli_packages_plugin'
 
 hookimpl = pluggy.HookimplMarker(NAME)
-
-
-class Result(NamedTuple):
-    package: PackageCLISource | PackageCLITarGz | PackageCLIImage | None
-    is_processed: bool

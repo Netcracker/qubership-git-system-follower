@@ -19,8 +19,7 @@ import click
 
 from git_system_follower.logger import logger
 from git_system_follower.errors import ParsePackageNameError, InvalidPlugin
-from git_system_follower.typings.cli import PackageCLISource, PackageCLITarGz, PackageCLIImage
-from git_system_follower.plugins.cli.packages import NAME, Result
+from git_system_follower.plugins.cli.packages import NAME
 from git_system_follower.plugins.cli.packages.specs import HookSpec
 from git_system_follower.plugins.cli.packages.default import SourcePlugin, TarGzPlugin, ImagePlugin
 from git_system_follower.utils.output import print_list

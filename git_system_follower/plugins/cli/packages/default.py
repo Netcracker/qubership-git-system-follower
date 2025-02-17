@@ -17,7 +17,7 @@ import re
 
 from git_system_follower.errors import ParsePackageNameError
 from git_system_follower.typings.cli import PackageCLISource, PackageCLITarGz, PackageCLIImage
-from git_system_follower.plugins.cli.packages import hookimpl, Result
+from git_system_follower.plugins.cli.packages import hookimpl
 from git_system_follower.plugins.cli.packages.specs import HookSpec
 
 

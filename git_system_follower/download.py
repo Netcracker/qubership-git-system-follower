@@ -49,7 +49,7 @@ class Registry(ABC, oras.client.OrasClient):
     """ Base class of any new Registry """
 
     @abstractmethod
-    def download(self, target: str, outdir: Path) -> Path:
+    def download(self, target: str, outdir: Path) -> Path | None:
         """ Download package function from OCI artifact or image
 
         Similar command "oras copy <target> --to-oci-layout <outdir>" with custom:
@@ -93,6 +93,28 @@ class Registry(ABC, oras.client.OrasClient):
         )
         logger.debug(f'Found manifest:\n{pformat(manifest)}')
         return manifest
+
+    def is_gear(self, manifest: dict, container: oras.container.Container) -> bool:
+        """ Check if the image is a GSF package
+
+        :param manifest: manifest of OCI artifact or image
+        :param container: Oras container with information about target
+        """
+        # OCI artifact
+        if manifest['mediaType'] == 'application/vnd.oci.image.manifest.v1+json':
+            return True
+
+        # Docker image with: LABEL gsf.package="true"
+        digest = manifest['config']['digest']
+        response = requests.get(
+            f'{self.prefix}://{container.registry}/v2/{container.namespace}/{container.repository}/blobs/{digest}',
+            headers=self.auth.get_auth_header()
+        )
+        response.raise_for_status()
+        labels = response.json().get('config', {}).get('Labels', {})
+
+        required_label = 'gsf.package'
+        return required_label in labels.keys() and labels[required_label] == 'true'
 
     def _download_layer(self, container: oras.container.Container, manifest: dict, outdir: Path) -> Path:
         """ Download layer of GSF package
@@ -139,7 +161,7 @@ class Registry(ABC, oras.client.OrasClient):
 class Dockerhub(Registry):
     """ Oras client for downloading git-system-follower packages from DockerHub """
 
-    def download(self, target: str, outdir: Path) -> Path:
+    def download(self, target: str, outdir: Path) -> Path | None:
         container = self.get_container(target)
         token = self._get_anonymous_token(container)
         self.auth.set_token_auth(token)
@@ -149,6 +171,10 @@ class Dockerhub(Registry):
         container.registry = 'index.docker.io'
 
         manifest = self.get_manifest_wrapper(container)
+        if not self.is_gear(manifest, container):
+            logger.warning(f'{target} is not a git-system-follower package. Skip downloading')
+            return None
+
         return self._download_layer(container, manifest, outdir)
 
     def _get_anonymous_token(self, container: oras.container.Container) -> str:
@@ -163,7 +189,7 @@ class Dockerhub(Registry):
 
 
 class Artifactory(Registry):
-    """ Oras client for downloading git-system-follower packages from artifactory
+    """ Oras client for downloading git-system-follower packages from Artifactory
 
     Example of use:
     We have GSF package
@@ -176,11 +202,16 @@ class Artifactory(Registry):
           `client.copy('path-to/image:tag', outdir=Path('/path/to/outdir'))`
     """
 
-    def download(self, target: str, outdir: Path) -> Path:
+    def download(self, target: str, outdir: Path) -> Path | None:
         container = self.get_container(target)
         token = self._get_anonymous_token(container)
         self.auth.set_token_auth(token)
+
         manifest = self.get_manifest_wrapper(container)
+        if not self.is_gear(manifest, container):
+            logger.warning(f'{target} is not a git-system-follower package. Skip downloading')
+            return None
+
         return self._download_layer(container, manifest, outdir)
 
     def _get_anonymous_token(self, container: oras.container.Container) -> str:
@@ -266,6 +297,8 @@ def download(
         check_dependency_depth(dependency_level, new_dep_tree)
 
         source = get_source(package, directory)
+        if source is None:
+            continue
         data = get_package_info(source.parent, source.name)
         if data['dependencies']:
             logger.info(f"Package dependencies: {', '.join([str(dep) for dep in data['dependencies']])}")
@@ -285,7 +318,10 @@ def download(
     return result
 
 
-def get_source(package: PackageCLI | PackageCLIImage | PackageCLITarGz | PackageCLISource, directory: Path) -> Path:
+def get_source(
+        package: PackageCLI | PackageCLIImage | PackageCLITarGz | PackageCLISource,
+        directory: Path
+) -> Path | None:
     """ Wrapper to handle different package input values
 
     :param package: packages to be downloaded
@@ -302,6 +338,8 @@ def get_source(package: PackageCLI | PackageCLIImage | PackageCLITarGz | Package
 
     if package.type == PackageCLITypes.image:
         path = download_package(package, directory)
+        if path is None:
+            return None
     else:  # package.type == PackageCLITypes.targz
         path = package.path
         name, version = get_name_and_version_version_from_targz(path)
@@ -313,7 +351,7 @@ def get_source(package: PackageCLI | PackageCLIImage | PackageCLITarGz | Package
 
 
 @tempdir
-def download_package(package: PackageCLIImage, outdir: Path, *, tmpdir: Path) -> Path:
+def download_package(package: PackageCLIImage, outdir: Path, *, tmpdir: Path) -> Path | None:
     """ Download package from registry using oras
 
     An explanation of how version detection works: we have the version inside package.yaml and the version (image tag)
@@ -353,6 +391,9 @@ def download_package(package: PackageCLIImage, outdir: Path, *, tmpdir: Path) ->
     client = get_client(package.registry)
     image = package.get_image_path()
     package_tmp_path = client.download(image, outdir=tmpdir)
+    if package_tmp_path is None:  # image is not git-system-follower package
+        return None
+
     outfile = outdir / package_tmp_path.name
     if outfile.exists():
         logger.warning(f'Package {outfile} already exist. Skip Moving {package_tmp_path} to {outfile}')

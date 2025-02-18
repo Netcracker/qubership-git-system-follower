@@ -52,12 +52,7 @@ class PluginManager:
 
         User plugins are loaded first, and only then system plugins. To be able to override the default behavior
         """
-        plugins = []
-        for entry_point in importlib.metadata.entry_points():
-            if entry_point.group == self.group:
-                plugin = entry_point.load()
-                self.register(plugin())
-                plugins.append(plugin)
+        plugins = self._load_entry_points_plugins()
 
         system_plugins = [ImagePlugin, TarGzPlugin, SourcePlugin]
         for plugin in system_plugins:
@@ -69,6 +64,21 @@ class PluginManager:
             f'Loaded plugins for input package processing ({self.group})',
             key=lambda p: p.__name__, output_func=logger.debug
         )
+        return plugins
+
+    def _load_entry_points_plugins(self) -> list[object]:
+        plugins = []
+
+        entry_points = importlib.metadata.entry_points()
+        # fix for python < 3.11
+        if isinstance(entry_points, dict):
+            entry_points = entry_points.get(self.group, [])
+
+        for entry_point in entry_points:
+            if entry_point.group == self.group:
+                plugin = entry_point.load()
+                self.register(plugin())
+                plugins.append(plugin)
         return plugins
 
     @validate_hooks

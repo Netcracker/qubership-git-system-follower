@@ -40,7 +40,8 @@ from git_system_follower.plugins.managers import managers
 @click.option('--debug', 'is_debug', is_flag=True, default=False, help='Show debug level messages')
 def download_command(
         gears: tuple[HookSpec, ...], directory: Path,
-        is_debug: bool
+        is_debug: bool,
+        *args, **kwargs  # dont delete, these parameters for plugin manager
 ):
     """ Download gears
 
@@ -100,6 +101,7 @@ def install_command(
         gears: tuple[HookSpec, ...], repo: str,
         branches: tuple[str, ...], token: str, extras: tuple[ExtraParam], ticket: str, message: str,
         is_force: bool, is_debug: bool,
+        *args, **kwargs  # dont delete, these parameters for plugin manager
 ):
     """ Install gears to branches in repository
 
@@ -168,7 +170,8 @@ def install_command(
 def uninstall_command(
         gears: tuple[HookSpec, ...], repo: str,
         branches: tuple[str, ...], token: str, extras: tuple[ExtraParam, ...], ticket: str, message: str,
-        is_force: bool, is_debug: bool
+        is_force: bool, is_debug: bool,
+        *args, **kwargs  # dont delete, these parameters for plugin manager
 ):
     """ Uninstall gears from branches in repository
 

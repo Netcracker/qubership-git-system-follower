@@ -73,11 +73,11 @@ You can write a large plugin that includes many modules and complex logic,
 but the minimum `main.py` should contain only the implementation of the `match` and `get_gears` hooks. 
 If you need some additional parameters from cli, you can get them added with the help of `plugin_options`.
 
-Specification for your plugins: [git_system_follower/plugins/cli/packages/specs.py](../../../git_system_follower/plugins/cli/packages/specs.py)
+Specification for your plugins: [git_system_follower/plugins/cli/packages/specs.py](../../../git_system_follower/plugins/cli/packages/specs.py#L28)
 
 For example, txt plugin:
 ```python
-import click
+from pathlib import Path
 
 from git_system_follower.typings.cli import PackageCLIImage
 from git_system_follower.plugins.cli.packages.specs import HookSpec

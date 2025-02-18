@@ -154,7 +154,7 @@ def managing_branch(
         packages, repo, state, extras=extras, commit_message=commit_message, is_force=is_force
     )
     if state.status() == ChangeStatus.no_change:
-        logger.debug(f'No changes in {repo.git.active_branch.name} branch. Skip create/merge merge request')
+        logger.info(f'No changes in {repo.git.active_branch.name} branch. Skip create/merge merge request')
         return state
     logger.info(':: Creating merge request')
     mr = create_mr(

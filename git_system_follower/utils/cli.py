@@ -53,7 +53,7 @@ class ExtraParamTuple(click.Tuple):
 """ --------------- For plugins --------------- """
 
 
-def get_gears(hooks: tuple[HookSpec, ...]) -> tuple[PackageCLISource | PackageCLITarGz | PackageCLIImage]:
+def get_gears(hooks: tuple[HookSpec, ...]) -> tuple[PackageCLISource | PackageCLITarGz | PackageCLIImage, ...]:
     """ Add gears from plugin """
     gears = []
     for hook in hooks:

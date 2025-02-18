@@ -83,10 +83,10 @@ class PluginManager:
         return options
 
     def process(self, value: str, **kwargs) -> HookSpec:
-        """ Proccesing input package value from CLI
+        """ Processing input package value from CLI
         if no hook implementation has processed package then raise error
 
-        :param value: package string for proccesing
+        :param value: package string for processing
         :param kwargs: plugin's parameters
         :return: processed package
         """

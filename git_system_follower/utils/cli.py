@@ -16,6 +16,7 @@ import click
 
 from git_system_follower.typings.cli import PackageCLISource, PackageCLITarGz, PackageCLIImage, ExtraParam
 from git_system_follower.plugins.managers import cli_packages_pm as plugin_manager
+from git_system_follower.plugins.cli.packages.specs import HookSpec
 
 
 __all__ = [
@@ -52,7 +53,7 @@ class ExtraParamTuple(click.Tuple):
 """ --------------- For plugins --------------- """
 
 
-def get_gears(hooks: tuple[object]) -> tuple[PackageCLISource | PackageCLITarGz | PackageCLIImage]:
+def get_gears(hooks: tuple[HookSpec, ...]) -> tuple[PackageCLISource | PackageCLITarGz | PackageCLIImage]:
     """ Add gears from plugin """
     gears = []
     for hook in hooks:

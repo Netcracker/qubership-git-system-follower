@@ -64,7 +64,7 @@ class ImagePlugin(HookSpec):
         return False
 
     @hookimpl
-    def get_gears(self, value: str, **kwargs) -> list[PackageCLITarGz]:
+    def get_gears(self, value: str, **kwargs) -> list[PackageCLIImage]:
         return [self.parse_image(value)]
 
     def parse_image(self, package: str) -> PackageCLIImage:

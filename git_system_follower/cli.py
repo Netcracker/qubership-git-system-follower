@@ -18,6 +18,7 @@ import click
 
 from git_system_follower.logger import logger, set_level
 from git_system_follower.errors import CLIParamsError
+from git_system_follower.plugins.cli.packages.specs import HookSpec
 from git_system_follower.typings.cli import ExtraParam
 from git_system_follower.utils.cli import Package, ExtraParamTuple, add_options, get_gears
 from git_system_follower.utils.output import banner, print_params
@@ -38,7 +39,7 @@ from git_system_follower.plugins.managers import managers
 )
 @click.option('--debug', 'is_debug', is_flag=True, default=False, help='Show debug level messages')
 def download_command(
-        gears: tuple[object, ...], directory: Path,
+        gears: tuple[HookSpec, ...], directory: Path,
         is_debug: bool
 ):
     """ Download gears
@@ -96,10 +97,9 @@ def download_command(
 )
 @click.option('--debug', 'is_debug', is_flag=True, default=False, help='Show debug level messages')
 def install_command(
-        gears: tuple[object, ...], repo: str,
+        gears: tuple[HookSpec, ...], repo: str,
         branches: tuple[str, ...], token: str, extras: tuple[ExtraParam], ticket: str, message: str,
         is_force: bool, is_debug: bool,
-        *args, **kwargs  # args, kwargs uses for plugin options
 ):
     """ Install gears to branches in repository
 
@@ -166,7 +166,7 @@ def install_command(
 )
 @click.option('--debug', 'is_debug', is_flag=True, default=False, help='Show debug level messages')
 def uninstall_command(
-        gears: tuple[object, ...], repo: str,
+        gears: tuple[HookSpec, ...], repo: str,
         branches: tuple[str, ...], token: str, extras: tuple[ExtraParam, ...], ticket: str, message: str,
         is_force: bool, is_debug: bool
 ):

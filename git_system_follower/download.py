@@ -112,6 +112,8 @@ class Registry(ABC, oras.client.OrasClient):
         )
         response.raise_for_status()
         labels = response.json().get('config', {}).get('Labels', {})
+        if labels is None:  # case when label specified and is None
+            return False
 
         required_label = 'gsf.package'
         return required_label in labels.keys() and labels[required_label] == 'true'

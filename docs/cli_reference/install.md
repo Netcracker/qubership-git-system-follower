@@ -63,11 +63,11 @@ Options:
   -t, --token TEXT                Gitlab access token  [required]
   --extra <NAME VALUE CHOICE>...  Extra parameters to be passed to the package
                                   API: variable name, value, masked/no-masked
-  --ticket TEXT                   Ticket ID that will be automatically added
-                                  to the beginning of each commit message
-                                  [default: FAKE-0000]
-  --message TEXT                  Commit message text after the ticket ID
-                                  [default: Installed gear(s)]
+  --message TEXT                  Commit message
+  --git-username USER             Username under which the commit will be made
+                                  to the repository
+  --git-email EMAIL               User email under which the commit will be
+                                  made to the repository
   -f, --force                     Forced installation: change of files, CI/CD
                                   variables as specified in gear
   --debug                         Show debug level messages
@@ -80,16 +80,17 @@ Options:
 | `GEARS` | Install all listed gears as:<br/>1. image: `<registry>/<repository>/<name>:<tag>`<br/>2. .tar.gz archive: `/path/to/archive.tar.gz`<br/>3.source code files: `/path/to/gear directory` | `artifactory.company.com/my-image:1.0.0`, `/path/to/my-archive@1.0.0.tar.gz`, `/path/to/my-gear@1.0.0`, `project/my-package` |
 
 ## Options
-| Name             | Description                                                                                         | Mandatory |    Default value    | Environment variable | Example                                                          |
-|------------------|-----------------------------------------------------------------------------------------------------|:---------:|:-------------------:|:--------------------:|------------------------------------------------------------------|
-| `-r`, `--repo`   | Gitlab repository url                                                                               |     +     |          -          |          -           | `https://git.company.com/test`, `http://localhost/test.git`      |
-| `-b`, `--branch` | Branches in which to install the gears                                                              |     +     |          -          |          -           | `main`, `features/FAKE-0000`                                     |
-| `-t`, `--token`  | Gitlab access token                                                                                 |     +     |          -          |   `GSF_GIT_TOKEN`    | `glpat-xxxxxXYvoxqPZw_5Kmyr`                                     |
-| `--extra`        | Extra parameters to be passed to the package API: `name`, `value`, `masked`/`no-masked` of variable |     -     |          -          |          -           | `add_functionality true no-masked`, `password MyPa$$word masked` |
-| `--ticket`       | Ticket ID that will be automatically added to the beginning of each commit message                  |     -     |     `FAKE-0000`     |          -           | `FAKE-0001`, `ABCD-1234`                                         |
-| `--message`      | Commit message text after the ticket ID'                                                            |     -     | `Installed gear(s)` |          -           | `Another commit message`                                         |
-| `--force`        | Forced installation: change of files, CI/CD variables as specified in gear                          |     -     |       `False`       |          -           |                                                                  |
-| `--debug`        | Show debug level messages                                                                           |     -     |       `False`       |          -           |                                                                  |
+| Name             | Description                                                                                         | Mandatory |                                     Default value                                      | Environment variable | Example                                                          |
+|------------------|-----------------------------------------------------------------------------------------------------|:---------:|:--------------------------------------------------------------------------------------:|:--------------------:|------------------------------------------------------------------|
+| `-r`, `--repo`   | Gitlab repository url                                                                               |     +     |                                           -                                            |          -           | `https://git.company.com/test`, `http://localhost/test.git`      |
+| `-b`, `--branch` | Branches in which to install the gears                                                              |     +     |                                           -                                            |          -           | `main`, `features/FAKE-0000`                                     |
+| `-t`, `--token`  | Gitlab access token                                                                                 |     +     |                                           -                                            |   `GSF_GIT_TOKEN`    | `glpat-xxxxxXYvoxqPZw_5Kmyr`                                     |
+| `--extra`        | Extra parameters to be passed to the package API: `name`, `value`, `masked`/`no-masked` of variable |     -     |                                           -                                            |          -           | `add_functionality true no-masked`, `password MyPa$$word masked` |
+| `--message`      | Commit message                                                                                      |     -     |                                  `Installed gear(s)`                                   |          -           | `FAKE-0000 update our tools`                                     |
+| `--git-username` | Username under which the commit will be made to the repository                                      |     -     |        The username in the `~/.gitconfig` file, if it does not exist, `unknown`        |  `GSF_GIT_USERNAME`  | `Name LastName`, `MyName`                                        |
+| `--git-email`    | User email under which the commit will be made to the repository                                    |     -     | The user email in the `~/.gitconfig` file, if it does not exist, `unknown@example.com` |   `GSF_GIT_EMAIL`    | `your.email@gmail.com`                                           |
+| `--force`        | Forced installation: change of files, CI/CD variables as specified in gear                          |     -     |                                        `False`                                         |          -           |                                                                  |
+| `--debug`        | Show debug level messages                                                                           |     -     |                                        `False`                                         |          -           |                                                                  |
 
 ## Examples
 Installing the gear (docker image) to main branch
@@ -143,11 +144,18 @@ $ gsf packages install -r https://git.company.com/test.git \
 ### Carefully update/delete created resources
 git-system-follower provides an interface for creating file structure and creating CI/CD variables,
 so that when installing, git-system-follower tries to carefully update/delete created resources.
+
 For example, if a CI/CD variable has already been created and does not match what the gear
 being installed provides, git-system-follower will skip processing that variable. But if the `--force` parameter is specified or 
 `is_force=True` is specified in creating variable in package api,
-git-system-follower will update/delete the variable regardless of its contents. 
-Works the same way with files in the repository
+git-system-follower will update/delete the variable regardless of its contents.
+
+Works the same way with files in the repository.
 
 ### Installation order
-Install dependencies first, then root gear
+Install dependencies first, then root gear.
+
+### Authorization and commits to the repository
+The token from `--token` does not have to belong to the user from `--git-username`/`--git-email`. 
+Commit changes can be made under a user who does not have permissions to the repository. 
+But the push of these changes must be done under a user who has access to the repository.

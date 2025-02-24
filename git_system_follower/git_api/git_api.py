@@ -39,7 +39,14 @@ def checkout_to_new_branch(repo: Repo, base_branch: str) -> str:
     return new_branch
 
 
-def push_installed_packages(repo: RepositoryInfo, msg: str) -> None:
+def push_installed_packages(repo: RepositoryInfo, msg: str, *, name: str, email: str) -> None:
+    """ Push changes to remote repository
+
+    :param repo: repo information
+    :param msg: commit message
+    :param name: user name for commit changes
+    :param email: user email for commit changes
+    """
     try:
         repo.gitlab.branches.delete(repo.git.active_branch.name)
     except gitlab.exceptions.GitlabDeleteError:
@@ -47,5 +54,9 @@ def push_installed_packages(repo: RepositoryInfo, msg: str) -> None:
         pass
 
     repo.git.git.add(A=True)
+
+    repo.git.config_writer().set_value('user', 'name', name).release()
+    repo.git.config_writer().set_value('user', 'email', email).release()
     repo.git.index.commit(msg)
+
     repo.git.remotes.origin.push(repo.git.active_branch.name)

@@ -45,12 +45,11 @@ __all__ = ['uninstall']
 
 
 def uninstall(
-        packages_cli: tuple[PackageCLIImage | PackageCLITarGz | PackageCLISource, ...], repo_url: str,
-        branches: tuple[str, ...], token: str, *,
-        extras: tuple[ExtraParam, ...], ticket: str, message: str, is_force: bool
+        packages_cli: tuple[PackageCLIImage | PackageCLITarGz | PackageCLISource, ...],
+        repo_url: str, branches: tuple[str, ...], token: str, *,
+        extras: tuple[ExtraParam, ...], commit_message: str,
+        username: str, user_email: str, is_force: bool
 ) -> None:
-    commit_message = f'{ticket} {message}'
-
     gitlab_instance = get_gitlab(repo_url, token)
     project = get_project(gitlab_instance, repo_url)
     states = get_states(project, branches)
@@ -72,8 +71,8 @@ def uninstall(
             logger.info(f'There are no packages to delete. Skip deletion for {branch} branch')
             continue
         states[branch] = managing_branch(
-            project, branch, token, validated_packages, states[branch],
-            extras=extras, commit_message=commit_message, is_force=is_force
+            project, branch, token, validated_packages, states[branch], extras=extras,
+            commit_message=commit_message, username=username, user_email=user_email, is_force=is_force
         )
     logger.success('Uninstallation complete')
 
@@ -198,16 +197,17 @@ def _whether_to_delete_main_packages(
 
 @retry(output_func=logger.info, error_output_func=logger.error)
 def managing_branch(
-        project: Project, branch: str, token: str, packages: tuple[PackageLocalData, ...],
-        state: StateFile, *,
-        extras: tuple[ExtraParam, ...], commit_message: str, is_force: bool
+        project: Project, branch: str, token: str, packages: tuple[PackageLocalData, ...], state: StateFile, *,
+        extras: tuple[ExtraParam, ...], commit_message: str, username: str, user_email: str,
+        is_force: bool
 ) -> StateFile:
     repo = RepositoryInfo(gitlab=project, git=get_git_repo(project, token))
     checkout_to_new_branch(repo.git, branch)
 
     logger.info(':: Uninstalling packages')
     state = processing_branch(
-        packages, repo, state, extras=extras, commit_message=commit_message, is_force=is_force
+        packages, repo, state, extras=extras, is_force=is_force,
+        commit_message=commit_message, username=username, user_email=user_email
     )
     if state.status() == ChangeStatus.no_change:
         logger.info(f'No changes in {repo.git.active_branch.name} branch. Skip create/merge merge request')
@@ -224,7 +224,8 @@ def managing_branch(
 
 def processing_branch(
         packages: tuple[PackageLocalData, ...], repo: RepositoryInfo, state: StateFile, *,
-        extras: tuple[ExtraParam, ...], commit_message: str, is_force: bool
+        extras: tuple[ExtraParam, ...], commit_message: str, username: str, user_email: str,
+        is_force: bool
 ) -> StateFile:
     state = uninstall_packages(packages, repo, state, extras=extras, is_force=is_force)
 
@@ -233,7 +234,7 @@ def processing_branch(
         directory = Path(repo.git.working_dir)
         state.save(directory)
 
-        push_installed_packages(repo, commit_message)
+        push_installed_packages(repo, commit_message, name=username, email=user_email)
         branch_url = repo.gitlab.branches.get(str(repo.git.active_branch)).web_url
         logger.success(f'Changes have been pushed to {repo.git.active_branch.name} branch (url: {branch_url})')
     else:

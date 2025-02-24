@@ -50,11 +50,9 @@ __all__ = ['install']
 def install(
         packages: tuple[PackageCLIImage | PackageCLITarGz | PackageCLISource, ...],
         repo_url: str, branches: tuple[str, ...], token: str, *,
-        extras: tuple[ExtraParam, ...], ticket: str, message: str,
-        is_force: bool
+        extras: tuple[ExtraParam, ...], commit_message: str,
+        username: str, user_email: str, is_force: bool
 ) -> None:
-    commit_message = f'{ticket} {message}'
-
     gitlab_instance = get_gitlab(repo_url, token)
     project = get_project(gitlab_instance, repo_url)
     states = get_states(project, branches)
@@ -69,8 +67,8 @@ def install(
         logger.info(f'[{i}/{len(branches)}] Processing {branch} branch')
         logger.debug(f'Current state in {branch} branch:\n{states[branch]}')
         states[branch] = managing_branch(
-            project, branch, token, packages, states[branch],
-            extras=extras, commit_message=commit_message, is_force=is_force
+            project, branch, token, packages, states[branch], extras=extras,
+            commit_message=commit_message, username=username, user_email=user_email, is_force=is_force
         )
     logger.success('Installation complete')
 
@@ -144,14 +142,16 @@ def _is_necessary_package_to_rollback(package_cli: PackageCLI, installed_package
 @retry(output_func=logger.info, error_output_func=logger.error)
 def managing_branch(
         project: Project, branch: str, token: str, packages: PackagesTo, state: StateFile, *,
-        extras: tuple[ExtraParam, ...], commit_message: str, is_force: bool
+        extras: tuple[ExtraParam, ...], commit_message: str, username: str, user_email: str,
+        is_force: bool
 ) -> StateFile:
     repo = RepositoryInfo(gitlab=project, git=get_git_repo(project, token))
     checkout_to_new_branch(repo.git, branch)
 
     logger.info(':: Installing packages')
     state = processing_branch(
-        packages, repo, state, extras=extras, commit_message=commit_message, is_force=is_force
+        packages, repo, state, extras=extras, is_force=is_force,
+        commit_message=commit_message, username=username, user_email=user_email
     )
     if state.status() == ChangeStatus.no_change:
         logger.info(f'No changes in {repo.git.active_branch.name} branch. Skip create/merge merge request')
@@ -168,7 +168,8 @@ def managing_branch(
 
 def processing_branch(
         packages: PackagesTo, repo: RepositoryInfo, state: StateFile, *,
-        extras: tuple[ExtraParam, ...], commit_message: str, is_force: bool
+        extras: tuple[ExtraParam, ...], commit_message: str, username: str, user_email: str,
+        is_force: bool
 ) -> StateFile:
     state = install_packages(packages, repo, state, extras=extras, is_force=is_force)
 
@@ -177,7 +178,7 @@ def processing_branch(
         directory = Path(repo.git.working_dir)
         state.save(directory)
 
-        push_installed_packages(repo, commit_message)
+        push_installed_packages(repo, commit_message, name=username, email=user_email)
         branch_url = repo.gitlab.branches.get(str(repo.git.active_branch)).web_url
         logger.success(f'Changes have been pushed to {repo.git.active_branch.name} branch (url: {branch_url})')
     else:
@@ -231,7 +232,7 @@ def install_package(
     package_version = normalize_version(package['version'])
     if state_version == package_version:
         logger.info(f"{package['name']}@{package['version']} package is already installed")
-        return
+        return None
 
     if state_version < package_version:
         logger.debug(f"Installation version is higher the version installed in the repository "

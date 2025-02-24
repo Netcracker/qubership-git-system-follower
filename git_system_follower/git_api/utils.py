@@ -16,6 +16,7 @@ from pathlib import Path
 from urllib.parse import urlparse, urlunparse
 
 from git import Repo
+from git.config import GitConfigParser
 from gitlab.v4.objects import Project
 
 from git_system_follower.logger import logger
@@ -24,7 +25,12 @@ from git_system_follower.typings.cli import PackageCLI
 from git_system_follower.typings.package import PackageLocalData
 
 
-__all__ = ['get_packages_str', 'get_git_repo']
+__all__ = ['get_config', 'get_packages_str', 'get_git_repo']
+
+
+def get_config(path: str):
+    path = Path(path).expanduser()
+    return GitConfigParser(path, read_only=True)
 
 
 def get_packages_str(packages: tuple[PackageLocalData | PackageCLI, ...]) -> str:
@@ -34,6 +40,11 @@ def get_packages_str(packages: tuple[PackageLocalData | PackageCLI, ...]) -> str
 
 
 def get_git_repo(project: Project, token: str) -> Repo:
+    """ Clone/get git repo
+
+    :param project: gitlab project
+    :param token: access token
+    """
     url = project.http_url_to_repo
     directory = get_repo_directory_path(url)
     if directory.exists():

@@ -22,6 +22,7 @@ from git_system_follower.plugins.cli.packages.specs import HookSpec
 from git_system_follower.typings.cli import ExtraParam
 from git_system_follower.utils.cli import Package, ExtraParamTuple, add_options, get_gears
 from git_system_follower.utils.output import banner, print_params
+from git_system_follower.git_api.utils import get_config
 from git_system_follower.download import download
 from git_system_follower.install import install
 from git_system_follower.uninstall import uninstall
@@ -30,12 +31,16 @@ from git_system_follower import __version__
 from git_system_follower.plugins.managers import managers
 
 
+config = get_config('~/.gitconfig')
+GIT_USERNAME = config.get_value('user', 'name', default='unknown')
+GIT_EMAIL = config.get_value('user', 'email', default='unknown@example.com')
+
+
 @click.command(name='download')
 @click.argument('gears', nargs=-1, type=Package)
 @click.option(
     '-d', '--directory', type=click.Path(exists=True, dir_okay=True, file_okay=False, path_type=Path),
-    default=Path('.'),
-    help='Directory where gears will be downloaded'
+    default=Path('.'), help='Directory where gears will be downloaded'
 )
 @click.option('--debug', 'is_debug', is_flag=True, default=False, help='Show debug level messages')
 def download_command(
@@ -85,12 +90,16 @@ def download_command(
     metavar='<NAME VALUE CHOICE>...'
 )
 @click.option(
-    '--ticket', type=str, default='FAKE-0000',
-    help='Ticket ID that will be automatically added to the beginning of each commit message'
+    '--message', type=str, default='Installed gear(s)',
+    help='Commit message'
 )
 @click.option(
-    '--message', type=str, default='Installed gear(s)',
-    help='Commit message text after the ticket ID'
+    '--git-username', 'username', type=str, envvar='GSF_GIT_USERNAME', default=GIT_USERNAME,
+    help='Username under which the commit will be made to the repository', metavar='USER'
+)
+@click.option(
+    '--git-email', 'email', type=str, envvar='GSF_GIT_EMAIL', default=GIT_EMAIL,
+    help='User email under which the commit will be made to the repository', metavar='EMAIL'
 )
 @click.option(
     '-f', '--force', 'is_force', is_flag=True, default=False,
@@ -99,7 +108,8 @@ def download_command(
 @click.option('--debug', 'is_debug', is_flag=True, default=False, help='Show debug level messages')
 def install_command(
         gears: tuple[HookSpec, ...], repo: str,
-        branches: tuple[str, ...], token: str, extras: tuple[ExtraParam], ticket: str, message: str,
+        branches: tuple[str, ...], token: str, extras: tuple[ExtraParam],
+        message: str, username: str, email: str,
         is_force: bool, is_debug: bool,
         *args, **kwargs  # dont delete, these parameters for plugin manager
 ):
@@ -121,8 +131,9 @@ def install_command(
         'branches': ', '.join(branches),
         'token': token,
         'extras': ', '.join([f"{var.name}={'*****' if var.masked else var.value}" for var in extras]),
-        'ticket': ticket,
         'message': message,
+        'git-username': username,
+        'git-email': email,
         'force': is_force,
         'debug': is_debug
     }, 'Start parameters', hidden_params=('token',), output_func=logger.info)
@@ -130,7 +141,11 @@ def install_command(
         raise CLIParamsError('Gears for installation are not specified')
     set_level(is_debug)
     gears = get_gears(gears)
-    install(gears, repo, branches, token, extras=extras, ticket=ticket, message=message, is_force=is_force)
+    install(
+        gears, repo, branches, token, extras=extras,
+        commit_message=message, username=username, user_email=email,
+        is_force=is_force
+    )
 
 
 @click.command(name='uninstall')
@@ -155,12 +170,16 @@ def install_command(
     metavar='<NAME VALUE CHOICE>...'
 )
 @click.option(
-    '--ticket', type=str, default='FAKE-0000',
-    help='Ticket ID that will be automatically added to the beginning of each commit message'
+    '--message', type=str, default='Uninstalled gear(s)',
+    help='Commit message'
 )
 @click.option(
-    '--message', type=str, default='Uninstalled gear(s)',
-    help='Commit message text after the ticket ID'
+    '--git-username', 'username', type=str, envvar='GSF_GIT_USERNAME', default=GIT_USERNAME,
+    help='Username under which the commit will be made to the repository', metavar='USER'
+)
+@click.option(
+    '--git-email', 'email', type=str, envvar='GSF_GIT_EMAIL', default=GIT_EMAIL,
+    help='User email under which the commit will be made to the repository', metavar='EMAIL'
 )
 @click.option(
     '-f', '--force', 'is_force', is_flag=True, default=False,
@@ -169,7 +188,8 @@ def install_command(
 @click.option('--debug', 'is_debug', is_flag=True, default=False, help='Show debug level messages')
 def uninstall_command(
         gears: tuple[HookSpec, ...], repo: str,
-        branches: tuple[str, ...], token: str, extras: tuple[ExtraParam, ...], ticket: str, message: str,
+        branches: tuple[str, ...], token: str, extras: tuple[ExtraParam, ...],
+        message: str, username: str, email: str,
         is_force: bool, is_debug: bool,
         *args, **kwargs  # dont delete, these parameters for plugin manager
 ):
@@ -193,8 +213,9 @@ def uninstall_command(
         'branches': ', '.join(branches),
         'token': token,
         'extras': ', '.join([f"{var.name}={'*****' if var.masked else var.value}" for var in extras]),
-        'ticket': ticket,
         'message': message,
+        'git-username': username,
+        'git-email': email,
         'force': is_force,
         'debug': is_debug
     }, 'Start parameters', hidden_params=('token',), output_func=logger.info)
@@ -202,7 +223,11 @@ def uninstall_command(
         raise CLIParamsError('Gears for uninstallation are not specified')
     set_level(is_debug)
     gears = get_gears(gears)
-    uninstall(gears, repo, branches, token, extras=extras, ticket=ticket, message=message, is_force=is_force)
+    uninstall(
+        gears, repo, branches, token, extras=extras,
+        commit_message=message, username=username, user_email=email,
+        is_force=is_force
+    )
 
 
 @click.command(name='list')

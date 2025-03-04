@@ -72,7 +72,7 @@ def get_states(project: Project, branches: tuple[str, ...]) -> dict[str, StateFi
     :return: return dictionary with key - branch name, value - state file for this branch
     """
     states = {}
-    remote_branches = [branch.name for branch in project.branches.list()]
+    remote_branches = [branch.name for branch in project.branches.list(get_all=True)]
     cicd_variables = get_cicd_variables(project)
     for branch in branches:
         if branch not in remote_branches:

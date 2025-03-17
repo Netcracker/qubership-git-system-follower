@@ -86,7 +86,7 @@ from git_system_follower.plugins.cli.packages.default import ImagePlugin
 
 
 class TxtPlugin(HookSpec):
-    suffix = '.tar.gz'
+    suffix = '.txt'
     
     @hookimpl
     def match(self, value: str) -> bool:

@@ -15,7 +15,7 @@
 [![PyPI](https://img.shields.io/pypi/v/qubership-git-system-follower)](https://pypi.org/project/qubership-git-system-follower/)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/qubership-git-system-follower)
 ![Build](https://github.com/Netcracker/qubership-git-system-follower/actions/workflows/checks.yaml/badge.svg)
-![Downloads](https://pepy.tech/badge/qubership-git-system-follower)
+![Repo Size](https://img.shields.io/github/repo-size/Netcracker/qubership-git-system-follower)
 
 </div>
 

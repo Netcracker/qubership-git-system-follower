@@ -34,9 +34,9 @@ Show `git-system-follower package manager` version
 ## Display help text
 To list the help on any command just execute the command, followed by the `--help` option
 ```plaintext
-$ git-system-follower packages version --help
+$ gsf version --help
 
-Usage: git-system-follower packages version [OPTIONS]
+Usage: gsf version [OPTIONS]
 
   Show version
 

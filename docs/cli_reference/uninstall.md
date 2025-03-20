@@ -42,9 +42,9 @@ You can pass a gear to uninstallation as:
 ## Display help text
 To list the help on any command just execute the command, followed by the `--help` option
 ```plaintext
-$ gsf packages uninstall --help
+$ gsf uninstall --help
 
-Usage: git-system-follower packages uninstall [OPTIONS] [GEARS]...
+Usage: gsf uninstall [OPTIONS] [GEARS]...
 
   Uninstall gears from branches in repository
 

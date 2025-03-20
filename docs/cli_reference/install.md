@@ -42,9 +42,9 @@ You can pass a gear to installation as:
 ## Display help text
 To list the help on any command just execute the command, followed by the `--help` option
 ```plaintext
-$ gsf packages install --help
+$ gsf install --help
 
-Usage: gsf packages install [OPTIONS] [GEARS]...
+Usage: gsf install [OPTIONS] [GEARS]...
 
   Install gears to branches in repository
 

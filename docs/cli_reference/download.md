@@ -37,9 +37,9 @@ and saving it as `.tar.gz` file
 ## Display help text
 To list the help on any command just execute the command, followed by the `--help` option
 ```plaintext
-$ gsf packages download --help
+$ gsf download --help
 
-Usage: gsf packages download [OPTIONS] [GEARS]...
+Usage: gsf download [OPTIONS] [GEARS]...
 
   Download gears
 

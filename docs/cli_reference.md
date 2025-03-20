@@ -32,27 +32,27 @@
 This CLI provides several commands for managing gears within your GitLab repository.
 Below are pages with the available commands and their functionalities:
 1. [download](cli_reference/download.md) - Download gears
-2. [install](cli_reference/install.md) - Install gears to repositories in GitLab group
+2. [install](cli_reference/install.md) - Install gears to Gitlab repository
 3. [list](cli_reference/list.md) - List installed gears: **in develop** :exclamation:
-4. [uninstall](cli_reference/uninstall.md) - Uninstall gears from repositories in GitLab group
+4. [uninstall](cli_reference/uninstall.md) - Uninstall gears from Gitlab repository
 5. [version](cli_reference/version.md) - Show version
 
 ## Entry points
-You can use long and short entry point to use `git-system-follower`, their functionality is the same:
+You can use long and short entry point to use git-system-follower, their functionality is the same:
 ```bash
-$ git-system-follower packages --help  # long entry point
-$ gsf packages --help                  # short entry point
+$ git-system-follower --help  # long entry point
+$ gsf --help                  # short entry point
 ```
 From now on, the short entry point option will be used in the documentation: `gsf`
 
 ## Display help text
 To list the help on any command just execute the command, followed by the `--help` option
 ```text
-$ gsf packages --help
+$ gsf --help
 
-Usage: gsf packages [OPTIONS] COMMAND [ARGS]...
+Usage: gsf [OPTIONS] COMMAND [ARGS]...
 
-  Package management in Gitlab repository
+  The package manager for Git providers
 
 Options:
   --help  Show this message and exit.

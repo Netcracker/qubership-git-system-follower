@@ -40,12 +40,6 @@ The following tools are required for git-system-follower to work
 The following prerequisites are required for a successful use of git-system-follower:
 1. Gitlab instance with version >= v16.2.10
 
-## Create and activate python virual environment
-```bash
-python -m venv venv
-source venv/bin/activate
-```
-
 ## Install git-system-follower
 git-system-follower is a python package, you can install it with any python package manager
 

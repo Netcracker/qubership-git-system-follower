@@ -17,6 +17,15 @@
 ![Build](https://github.com/Netcracker/qubership-git-system-follower/actions/workflows/checks.yaml/badge.svg)
 ![Repo Size](https://img.shields.io/github/repo-size/Netcracker/qubership-git-system-follower)
 
+Supported Git providers
+
+![GitLab](https://img.shields.io/badge/GitLab-%231E1E1E.svg?style=for-the-badge&logo=gitlab&logoColor=orange)
+
+<!-- Uncomment this if we add support for these providers
+![GitHub](https://img.shields.io/badge/GitHub-%23181717.svg?style=for-the-badge&logo=github&logoColor=white)
+![Bitbucket](https://img.shields.io/badge/Bitbucket-%230047B3.svg?style=for-the-badge&logo=bitbucket&logoColor=white)
+-->
+
 </div>
 
 ## :eyes: Overview

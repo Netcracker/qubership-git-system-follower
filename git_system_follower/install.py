@@ -51,13 +51,15 @@ def install(
         packages: tuple[PackageCLIImage | PackageCLITarGz | PackageCLISource, ...],
         repo_url: str, branches: tuple[str, ...], token: str, *,
         extras: tuple[ExtraParam, ...], commit_message: str,
-        username: str, user_email: str, is_force: bool
+        username: str, user_email: str, 
+        aws_secret_key: str, aws_access_key: str,
+        is_force: bool
 ) -> None:
     gitlab_instance = get_gitlab(repo_url, token)
     project = get_project(gitlab_instance, repo_url)
     states = get_states(project, branches)
 
-    packages = get_packages(packages, states)
+    packages = get_packages(packages, states, aws_secret_key, aws_access_key)
     print_list(packages.install, title='Packages', output_func=logger.info,
                key=lambda package: f"{package['name']}@{package['version']}")
     print_list(packages.rollback, title='Additional rollback packages', output_func=logger.info,
@@ -75,7 +77,8 @@ def install(
 
 def get_packages(
         packages_cli: tuple[PackageCLIImage | PackageCLITarGz | PackageCLISource, ...],
-        states: dict[str, StateFile]
+        states: dict[str, StateFile],
+        aws_secret_key: str, aws_access_key: str
 ) -> PackagesTo:
     """ Getting information about packages to install and rollback (delete+init)
 
@@ -85,23 +88,25 @@ def get_packages(
     :return: packages info tuples in PackageTo class
     """
     packages = PackagesTo(
-        install=_get_packages_to_install(packages_cli),
+        install=_get_packages_to_install(packages_cli, aws_secret_key, aws_access_key),
         rollback=()
     )
     installed_packages = get_installed_packages(states)
-    packages.rollback = _get_packages_to_rollback(packages_cli, installed_packages)
+    packages.rollback = _get_packages_to_rollback(packages_cli, installed_packages, aws_secret_key, aws_access_key)
     return packages
 
 
 def _get_packages_to_install(
-        packages_cli: tuple[PackageCLIImage | PackageCLITarGz | PackageCLISource, ...]
+        packages_cli: tuple[PackageCLIImage | PackageCLITarGz | PackageCLISource, ...],
+        aws_secret_key: str, aws_access_key: str
 ) -> tuple[PackageLocalData, ...]:
     """ Getting information about packages to install
 
     :param packages_cli: listing packages to be installed
     :return: packages info to install tuple
     """
-    packages = tuple(download(packages_cli, is_deps_first=True))
+    packages = tuple(download(packages_cli, aws_secret_key=aws_secret_key, 
+        aws_access_key=aws_access_key, is_deps_first=True))
     for i, package in enumerate(packages):
         for j, comparison_package in enumerate(packages):
             if i != j and package['name'] == comparison_package['name']:
@@ -115,6 +120,7 @@ def _get_packages_to_install(
 def _get_packages_to_rollback(
         packages_cli: tuple[PackageCLIImage | PackageCLITarGz | PackageCLISource, ...],
         installed_packages: set[PackageCLI],
+        aws_secret_key: str, aws_access_key: str
 ) -> tuple[PackageLocalData, ...]:
     """ Getting information about packages to rollback (delete+init)
 
@@ -127,7 +133,7 @@ def _get_packages_to_rollback(
         for installed_package in installed_packages:
             if _is_necessary_package_to_rollback(package_cli, installed_package):
                 packages_to_rollback.append(installed_package)
-    return tuple(download(packages_to_rollback, is_deps_first=False))
+    return tuple(download(packages_to_rollback, is_deps_first=False, aws_secret_key=aws_secret_key, aws_access_key=aws_access_key))
 
 
 def _is_necessary_package_to_rollback(package_cli: PackageCLI, installed_package: PackageCLI) -> bool:

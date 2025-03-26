@@ -101,6 +101,8 @@ def download_command(
     '--git-email', 'email', type=str, envvar='GSF_GIT_EMAIL', default=GIT_EMAIL,
     help='User email under which the commit will be made to the repository', metavar='EMAIL'
 )
+@click.option('--aws-secret-key', 'aws_secret_key', type=str, default='Skipped', help='AWS Secret Key')
+@click.option('--aws-access-key', 'aws_access_key', type=str, default='Skipped', help='AWS Access Key')
 @click.option(
     '-f', '--force', 'is_force', is_flag=True, default=False,
     help='Forced installation: change of files, CI/CD variables as specified in gear'
@@ -110,6 +112,7 @@ def install_command(
         gears: tuple[HookSpec, ...], repo: str,
         branches: tuple[str, ...], token: str, extras: tuple[ExtraParam],
         message: str, username: str, email: str,
+        aws_secret_key: str, aws_access_key: str,
         is_force: bool, is_debug: bool,
         *args, **kwargs  # dont delete, these parameters for plugin manager
 ):
@@ -134,6 +137,8 @@ def install_command(
         'message': message,
         'git-username': username,
         'git-email': email,
+        'aws-secret-key': aws_secret_key,
+        'aws-access-key': aws_access_key,
         'force': is_force,
         'debug': is_debug
     }, 'Start parameters', hidden_params=('token',), output_func=logger.info)
@@ -144,6 +149,7 @@ def install_command(
     install(
         gears, repo, branches, token, extras=extras,
         commit_message=message, username=username, user_email=email,
+        aws_secret_key=aws_secret_key, aws_access_key=aws_access_key,
         is_force=is_force
     )
 

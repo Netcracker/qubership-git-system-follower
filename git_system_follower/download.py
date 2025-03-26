@@ -20,13 +20,16 @@ from abc import ABC, abstractmethod
 import tarfile
 import json
 import shutil
-
+import os
+#import botocore.session
 import oras.client
 import oras.container
 import oras.defaults
 import requests
 import yaml
+import base64
 
+from boto3 import Session
 from git_system_follower.variables import IMAGE_PACKAGE_MAP, PACKAGES_PATH, PACKAGE_DIRNAME
 from git_system_follower.logger import logger
 from git_system_follower.errors import RemoteRepositoryError, DownloadPackageError, PackageNotFoundError
@@ -165,7 +168,8 @@ class Dockerhub(Registry):
 
     def download(self, target: str, outdir: Path) -> Path | None:
         container = self.get_container(target)
-        token = self._get_anonymous_token(container)
+        logger.info(f'Access key - {aws_access_key}')
+        # token = self._get_anonymous_token(container)
         self.auth.set_token_auth(token)
 
         # fix oras get_manifest for docker.io. For example, we set the image as docker.io/path/to/image:tag
@@ -226,6 +230,45 @@ class Artifactory(Registry):
         )
         return self._check_anonymous_token_request(response, container)
 
+class AmazonECR(Registry):
+    """ Oras client for downloading git-system-follower packages from AmazonECR """
+
+    def set_aws_credentials(self, aws_secret_key, aws_access_key):
+        self.aws_secret_key = aws_secret_key
+        self.aws_access_key = aws_access_key
+
+    def download(self, target: str, outdir: Path) -> Path | None:
+        container = self.get_container(target)
+        token = self._get_anonymous_token(container).strip()
+        self.auth.set_token_auth(token)
+        container.registry = f"{str(container).split('.')[0]}.dkr.ecr.{str(container).split('.')[3]}.localhost.localstack.cloud:4566" # localhost.localstack.cloud.4566 would become .amazonaws.com
+
+        manifest = self.get_manifest_wrapper(container)
+
+        if not self.is_gear(manifest, container):
+            logger.warning(f'{target} is not a git-system-follower package. Skip downloading')
+            return None
+
+        return self._download_layer(container, manifest, outdir)
+
+    def _get_anonymous_token(self, container: oras.container.Container) -> str:
+        session = Session(
+            region_name = str(container).split('.')[3],
+            aws_access_key_id = self.aws_access_key,
+            aws_secret_access_key = self.aws_secret_key
+            )
+        headers = { 'Content-Type': 'application/json' }
+        body = '{}'
+        client = session.client('ecr', region_name=str(container).split('.')[3], endpoint_url="http://localhost:4566")
+        response = client.get_authorization_token()
+        
+        if response:
+            auth_token = response['authorizationData'][0]['authorizationToken']
+            return auth_token
+        else:
+            print(f"Error: {response.status_code} - {response.text}")
+            return None
+
 
 def get_name_and_version_version_from_targz(path: Path) -> tuple[str, str]:
     """ Get name and version of package for .tar.gz archive
@@ -273,7 +316,9 @@ def _get_name_and_version_from_description(content: dict, description: str) -> t
 def download(
         packages: Iterable[PackageCLI | PackageCLIImage | PackageCLITarGz | PackageCLISource],
         directory: Path = PACKAGES_PATH, *,
-        dependency_tree: str = '', dependency_level: int = 0, is_deps_first: bool
+        dependency_tree: str = '', dependency_level: int = 0, 
+        aws_secret_key: str, aws_access_key: str,
+        is_deps_first: bool
 ) -> list[PackageLocalData]:
     """ Download packages
 
@@ -291,14 +336,13 @@ def download(
 
     if dependency_level == 0:
         logger.info(':: Downloading packages')
-
     result = []
     for i, package in enumerate(packages, 1):
         logger.info(f'-> Downloading {package}')
         new_dep_tree = f'{dependency_tree} -> {package.name}' if dependency_level != 0 else package.name
         check_dependency_depth(dependency_level, new_dep_tree)
 
-        source = get_source(package, directory)
+        source = get_source(package, directory, aws_secret_key, aws_access_key)
         if source is None:
             continue
         data = get_package_info(source.parent, source.name)
@@ -306,7 +350,8 @@ def download(
             logger.info(f"Package dependencies: {', '.join([str(dep) for dep in data['dependencies']])}")
         dependencies_data = download(
             data['dependencies'], directory,
-            dependency_tree=new_dep_tree, dependency_level=dependency_level + 1, is_deps_first=is_deps_first
+            dependency_tree=new_dep_tree, dependency_level=dependency_level + 1, is_deps_first=is_deps_first,
+            aws_secret_key = aws_secret_key, aws_access_key = aws_access_key
         )
         fixed_dependency_names = []
         for dependency in data['dependencies']:
@@ -322,7 +367,8 @@ def download(
 
 def get_source(
         package: PackageCLI | PackageCLIImage | PackageCLITarGz | PackageCLISource,
-        directory: Path
+        directory: Path,
+        aws_secret_key: str, aws_access_key: str
 ) -> Path | None:
     """ Wrapper to handle different package input values
 
@@ -339,7 +385,7 @@ def get_source(
         return source / PACKAGE_DIRNAME
 
     if package.type == PackageCLITypes.image:
-        path = download_package(package, directory)
+        path = download_package(package, directory, aws_secret_key=aws_secret_key, aws_access_key=aws_access_key)
         if path is None:
             return None
     else:  # package.type == PackageCLITypes.targz
@@ -353,7 +399,8 @@ def get_source(
 
 
 @tempdir
-def download_package(package: PackageCLIImage, outdir: Path, *, tmpdir: Path) -> Path | None:
+def download_package(package: PackageCLIImage, outdir: Path, *, tmpdir: Path,
+    aws_secret_key: str, aws_access_key: str) -> Path | None:
     """ Download package from registry using oras
 
     An explanation of how version detection works: we have the version inside package.yaml and the version (image tag)
@@ -392,10 +439,11 @@ def download_package(package: PackageCLIImage, outdir: Path, *, tmpdir: Path) ->
 
     client = get_client(package.registry)
     image = package.get_image_path()
+    if aws_access_key != "Skipped" and aws_secret_key != "Skipped":
+        client.set_aws_credentials(aws_secret_key, aws_access_key)
     package_tmp_path = client.download(image, outdir=tmpdir)
     if package_tmp_path is None:  # image is not git-system-follower package
         return None
-
     outfile = outdir / package_tmp_path.name
     if outfile.exists():
         logger.warning(f'Package {outfile} already exist. Skip Moving {package_tmp_path} to {outfile}')
@@ -431,6 +479,8 @@ def _get_current_path_using_mapping(package: PackageCLI | PackageCLIImage, packa
 def get_client(registry: str) -> Dockerhub | Artifactory:
     if registry == 'docker.io':
         return Dockerhub(hostname=registry)
+    elif 'localstack' in registry:  #amazonaws
+        return AmazonECR(hostname=registry)
     return Artifactory(hostname=registry)
 
 

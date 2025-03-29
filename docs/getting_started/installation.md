@@ -41,9 +41,9 @@ If you prefer to use git-system-follower as a standalone CLI tool instead of int
 For more details, see the [uv tool documentation](https://docs.astral.sh/uv/concepts/tools/).
 
 <details open>
-    <summary><b>Recommended: By uv</b></summary>
+    <summary><kbd><b>Recommended: By uv</b></kbd></summary>
 
-   Before proceeding, make sure uv is installed. See the [uv installation guide](https://docs.astral.sh/uv/getting-started/installation/)
+   Before proceeding, make sure `uv` is installed. See the [uv installation guide](https://docs.astral.sh/uv/getting-started/installation/)
 
    Then, install git-system-follower with:
    ```bash
@@ -57,7 +57,7 @@ For more details, see the [uv tool documentation](https://docs.astral.sh/uv/conc
    # create & activate virtual env
    uv venv .venv && source .venv/bin/activate
 
-   # Install git-system-follower
+   # install git-system-follower
    uv pip install qubership-git-system-follower
    ```
 
@@ -65,7 +65,7 @@ For more details, see the [uv tool documentation](https://docs.astral.sh/uv/conc
 
 However, if `uv` is not a suitable option, use `pip` instead.
 <details>
-    <summary>By pip</summary>
+    <summary><kbd>By pip</kbd></summary>
 
    ```bash
    # create & activate virtual env

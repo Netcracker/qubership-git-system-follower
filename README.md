@@ -6,7 +6,6 @@
 # git-system-follower
 **git-system-follower (gsf)** is a package manager for Git providers.
 
-
 [![PyPI](https://img.shields.io/pypi/v/qubership-git-system-follower)](https://pypi.org/project/qubership-git-system-follower/)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/qubership-git-system-follower)
 ![Build](https://github.com/Netcracker/qubership-git-system-follower/actions/workflows/checks.yaml/badge.svg)
@@ -20,13 +19,16 @@
 [:package: Install](#package-install) •
 [:page_with_curl: Docs](#page_with_curl-docs)
 
-Supported Git providers
+---
 
-![GitLab](https://img.shields.io/badge/GitLab-%231E1E1E.svg?style=for-the-badge&logo=gitlab&logoColor=orange)
-<!-- Uncomment this if we add support for these providers
-![GitHub](https://img.shields.io/badge/GitHub-%23181717.svg?style=for-the-badge&logo=github&logoColor=white)
-![Bitbucket](https://img.shields.io/badge/Bitbucket-%230047B3.svg?style=for-the-badge&logo=bitbucket&logoColor=white)
--->
+Supported resources
+
+Git providers
+![GitLab](https://img.shields.io/badge/GitLab-%231E1E1E.svg?style=flat&logo=gitlab&logoColor=orange)
+•
+Gear registries
+![Dockerhub](https://img.shields.io/badge/Dockerhub-%230db7ed.svg?style=flat&logo=docker&logoColor=white)
+![Artifactory](https://img.shields.io/badge/Artifactory-%41bf47.svg?style=flat)
 
 </div>
 

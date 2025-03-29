@@ -117,7 +117,9 @@ These sections contain information from `package.yaml` in Gear
 This is where the variables that were passed by the package developer to the template generation are stored. 
 This is to avoid having to remember and pass these variables again when the package is deleted.
 
-:heavy_exclamation_mark: Variable values are masked in Base64 encoding only, not encrypted.
+> \[!WARNING]
+>
+> Variable values are masked in Base64 encoding only, not encrypted.
 
 how to see the values of variables:
 ```bash

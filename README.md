@@ -1,9 +1,17 @@
 <div align="center">
 <br />
-<img src="/logo.svg" alt="git-system-follower logo" width="100">
+
+<img src="https://raw.githubusercontent.com/Netcracker/qubership-git-system-follower/master/logo.svg" alt="git-system-follower logo" width="100">
 
 # git-system-follower
-**git-system-follower (GSF)** is a package manager for Git providers.
+**git-system-follower (gsf)** is a package manager for Git providers.
+
+
+[![PyPI](https://img.shields.io/pypi/v/qubership-git-system-follower)](https://pypi.org/project/qubership-git-system-follower/)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/qubership-git-system-follower)
+![Build](https://github.com/Netcracker/qubership-git-system-follower/actions/workflows/checks.yaml/badge.svg)
+![Repo Size](https://img.shields.io/github/repo-size/Netcracker/qubership-git-system-follower)
+[![ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 [:eyes: Overview](#eyes-overview) •
 [:wrench: Problems It Solves](#wrench-problems-it-solves) •
@@ -12,15 +20,9 @@
 [:package: Install](#package-install) •
 [:page_with_curl: Docs](#page_with_curl-docs)
 
-[![PyPI](https://img.shields.io/pypi/v/qubership-git-system-follower)](https://pypi.org/project/qubership-git-system-follower/)
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/qubership-git-system-follower)
-![Build](https://github.com/Netcracker/qubership-git-system-follower/actions/workflows/checks.yaml/badge.svg)
-![Repo Size](https://img.shields.io/github/repo-size/Netcracker/qubership-git-system-follower)
-
 Supported Git providers
 
 ![GitLab](https://img.shields.io/badge/GitLab-%231E1E1E.svg?style=for-the-badge&logo=gitlab&logoColor=orange)
-
 <!-- Uncomment this if we add support for these providers
 ![GitHub](https://img.shields.io/badge/GitHub-%23181717.svg?style=for-the-badge&logo=github&logoColor=white)
 ![Bitbucket](https://img.shields.io/badge/Bitbucket-%230047B3.svg?style=for-the-badge&logo=bitbucket&logoColor=white)
@@ -29,12 +31,12 @@ Supported Git providers
 </div>
 
 ## :eyes: Overview
-**GSF** designed to streamline the management of repository branch content and configuration.
-By automating installations, updates, and removals, **GSF** reduces manual intervention,
+**gsf** designed to streamline the management of repository branch content and configuration.
+By automating installations, updates, and removals, **gsf** reduces manual intervention,
 prevents errors, and ensures a consistent state across projects.
 
 If you’re managing CI/CD pipelines, infrastructure configurations, or any repository-bound tools,
-**GSF** is here to make your work easier, faster, and more reliable using [Git packages, aka Gears](docs/concepts/gears.md).
+**gsf** is here to make your work easier, faster, and more reliable using [Git packages, aka Gears](docs/concepts/gears.md).
 
 ## :wrench: Problems It Solves
 Have you used versioned `.gitlab-ci.yml` that require a specific file structure in the repository?
@@ -46,7 +48,7 @@ for no apparent reason - and you waste time figuring out that someone accidental
 the startup parameters. And if you need to update an old `.gitlab-ci.yml` to the latest version,
 you often have to manually migrate through multiple versions.
 
-**GSF solves all of these problems** by automatically managing your config file version
+**gsf solves all of these problems** by automatically managing your config file version
 and structure, eliminating all of these errors and saving you a lot of work:
 
 * **Reduced manual work**  

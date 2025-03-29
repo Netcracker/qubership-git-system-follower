@@ -19,7 +19,6 @@
 [:package: Install](#package-install) •
 [:page_with_curl: Docs](#page_with_curl-docs)
 
----
 
 Supported resources
 

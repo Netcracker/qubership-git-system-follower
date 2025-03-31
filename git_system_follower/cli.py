@@ -47,7 +47,7 @@ GIT_EMAIL = config.get_value('user', 'email', default='unknown@example.com')
     '--registry-type',
     type=click.Choice([registry_type.value for registry_type in RegistryTypes], case_sensitive=False),
     required=False, default='Autodetect',
-    help='Registry type to work with it'
+    help='Specify the registry type or use automatic detection'
 )
 @click.option(
     '--registry-username', type=str, required=False, default=None, envvar='GSF_REGISTRY_USERNAME',
@@ -132,7 +132,7 @@ def download_command(
     '--registry-type',
     type=click.Choice([registry_type.value for registry_type in RegistryTypes], case_sensitive=False),
     required=False, default='Autodetect',
-    help='Registry type to work with it'
+    help='Specify the registry type or use automatic detection'
 )
 @click.option(
     '--registry-username', type=str, required=False, default=None, envvar='GSF_REGISTRY_USERNAME',
@@ -238,7 +238,7 @@ def install_command(
     '--registry-type',
     type=click.Choice([registry_type.value for registry_type in RegistryTypes], case_sensitive=False),
     required=False, default='Autodetect',
-    help='Registry type to work with it'
+    help='Specify the registry type or use automatic detection'
 )
 @click.option(
     '--registry-username', type=str, required=False, default=None, envvar='GSF_REGISTRY_USERNAME',

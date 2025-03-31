@@ -36,22 +36,8 @@ and saving it as `.tar.gz` file
 
 ## Display help text
 To list the help on any command just execute the command, followed by the `--help` option
-```plaintext
-$ gsf download --help
-
-Usage: gsf download [OPTIONS] [GEARS]...
-
-  Download gears
-
-  GEARS                         Download all listed gears as image:
-                                <registry>/<repository>/<name>:<tag>, e.g.
-                                artifactory.company.com/path-to/your-image:1.0.0
-
-Options:
-  -d, --directory DIRECTORY  Directory where gears will be downloaded
-                             [default: .]
-  --debug                    Show debug level messages
-  --help                     Show this message and exit.
+```bash
+gsf download --help
 ```
 
 ## Arguments
@@ -60,11 +46,15 @@ Options:
 | `GEARS` | Download all listed gears as image: `<registry>/<repository>/<name>:<tag>` | `artifactory.company.com/path-to/your-image:1.0.0` |
 
 ## Options
-| Name                | Description                              | Mandatory |      Default value      | Example             |
-|---------------------|------------------------------------------|:---------:|:-----------------------:|---------------------|
-| `-d`, `--directory` | Directory where gears will be downloaded |     -     | `.` (Current directory) | `/opt/gsf-packages` |
-| `--debug`           | Show debug level messages                |     -     |         `False`         |                     |
-
+| Name                  | Description                                                              | Mandatory |      Default value      |  Environment variable   | Example                                           |
+|-----------------------|--------------------------------------------------------------------------|:---------:|:-----------------------:|:-----------------------:|---------------------------------------------------|
+| `-d`, `--directory`   | Directory where gears will be downloaded                                 |     -     | `.` (Current directory) |            -            | `/opt/gsf-packages`                               |
+| `--registry-type`     | Specify the registry type or use automatic detection                     |     -     |      `Autodetect`       |            -            | `Autodetect`, `Dockerhub`, `Artifactory`, `Nexus` |
+| `--registry-username` | Username for basic authentication in the registry when downloading Gears |     -     |            -            | `GSF_REGISTRY_USERNAME` | `myusername`, `k1shk1n`                           |
+| `--registry-password` | Password for basic authentication in the registry when downloading Gears |     -     |            -            | `GSF_REGISTRY_PASSWORD` | `MyPa$$w0rd`                                      |
+| `--insecure-registry` | Allow insecure connections to the registry (use HTTP instead of HTTPS)   |     -     |         `False`         |            -            |                                                   |
+| `--debug`             | Show debug level messages                                                |     -     |         `False`         |            -            |                                                   |
+               
 ## Examples
 Downloading the package (for the first time)
 <!-- TODO: add an example of a package that will not be lost (released package). So that users can try it out -->
@@ -72,20 +62,25 @@ Downloading the package (for the first time)
 $ gsf packages download artifactory.company.com/my-image:1.0.0 -d packages
 
 [04:26:54.404] INFO     |
-    `?.
-      ( )        ┏┓╻┳ ┏┓╻╻┏┓┳┏┓┏┳┓ ┏┓┏┓╻ ╻ ┏┓┏ ┓┏┓┳┓
-       & `?.     ┃┓┃┃ ┗┓┗┃┗┓┃┣ ┃┃┃ ┣ ┃┃┃ ┃ ┃┃┃┃┃┣ ┣┛
-       ?   ( )   ┗┛╹╹ ┗┛┗┛┗┛╹┗┛╹ ╹ ╹ ┗┛┗┛┗┛┗┛┗┻┛┗┛┛┗
-       &         git-system-follower v0.0.1
-      ( )
+     .-,
+  .^.: :.^.    ┏┓╻┳ ┏┓╻╻┏┓┳┏┓┏┳┓ ┏┓┏┓╻ ╻ ┏┓┏ ┓┏┓┳┓
+ ,-' .-. '-,   ┃┓┃┃ ┗┓┗┃┗┓┃┣ ┃┃┃ ┣ ┃┃┃ ┃ ┃┃┃┃┃┣ ┣┛
+ '-. '-' .-'   ┗┛╹╹ ┗┛┗┛┗┛╹┗┛╹ ╹ ╹ ┗┛┗┛┗┛┗┛┗┻┛┗┛┛┗
+  '.`; ;`.'    git-system-follower v0.0.1
+     `-`
 [04:26:54.404] INFO     |
 ╭════════════════════════════════════════ Start parameters ════════════════════════════════════════╮
-  gears     = artifactory.company.com/my-image:1.0.0
-  directory = /home/tests/packages
-  debug     = False
+  gears             = artifactory.company.com/my-image:1.0.0
+  directory         = /home/tests/packages
+  registry_type     = Autodetect
+  registry-username =
+  registry-password =
+  insecure-registry =
+  debug             = False
 ╰══════════════════════════════════════════════════════════════════════════════════════════════════╯
 [04:26:54.405] INFO     | :: Downloading packages
 [04:26:54.405] INFO     | -> Downloading artifactory.company.com/my-image:1.0.0
+[04:26:54.424] INFO     | artifactory.company.com is of type Artifactory
 [04:26:55.461] INFO     | my-gear@1.0.0 package is provided as docker image (Image: artifactory.company.com/my-image:1.0.0)
 [04:26:55.461] SUCCESS  | Downloaded package from artifactory.company.com/my-image:1.0.0 to packages/my-gear@1.0.0.tar.gz
 [04:26:55.465] SUCCESS  | Download complete
@@ -96,12 +91,12 @@ Downloading package (next times)
 $ gsf packages download artifactory.company.com/my-image:1.0.0 -d packages
 
 [04:44:11.786] INFO     |
-    `?.
-      ( )        ┏┓╻┳ ┏┓╻╻┏┓┳┏┓┏┳┓ ┏┓┏┓╻ ╻ ┏┓┏ ┓┏┓┳┓
-       & `?.     ┃┓┃┃ ┗┓┗┃┗┓┃┣ ┃┃┃ ┣ ┃┃┃ ┃ ┃┃┃┃┃┣ ┣┛
-       ?   ( )   ┗┛╹╹ ┗┛┗┛┗┛╹┗┛╹ ╹ ╹ ┗┛┗┛┗┛┗┛┗┻┛┗┛┛┗
-       &         git-system-follower v0.0.1
-      ( )
+    .-,
+ .^.: :.^.   ┏┓╻┳ ┏┓╻╻┏┓┳┏┓┏┳┓ ┏┓┏┓╻ ╻ ┏┓┏ ┓┏┓┳┓
+,-' .-. '-,  ┃┓┃┃ ┗┓┗┃┗┓┃┣ ┃┃┃ ┣ ┃┃┃ ┃ ┃┃┃┃┃┣ ┣┛
+'-. '-' .-'  ┗┛╹╹ ┗┛┗┛┗┛╹┗┛╹ ╹ ╹ ┗┛┗┛┗┛┗┛┗┻┛┗┛┛┗
+ '.`; ;`.'   git-system-follower v0.0.1
+    `-`
 [04:44:11.786] INFO     |
 ╭════════════════════════════════════════ Start parameters ════════════════════════════════════════╮
   gears     = artifactory.company.com/my-image:1.0.0
@@ -119,6 +114,16 @@ where it downloaded it to: it uses its `.git-system-follower/packages` directory
 to map the image to the package directory it downloaded (see [Image-to-package mapping](#image-to-package-mapping))
 
 ## Advanced
+### Authentication Methods for Registry Access
+You can work with private registries by providing authentication credentials.
+
+There are three ways to specify credentials, listed in order of priority: 
+1. Pass the credentials directly using `--registry-username` and `--registry-password`
+2. Credentials can be provided via stdin using `echo`: `echo -e "<username>\n<password>" | gsf download ...`
+3. Set `GSF_REGISTRY_USERNAME` and `GSF_REGISTRY_PASSWORD` as environment variables
+
+If multiple methods are used, command-line parameters take precedence over stdin, and stdin takes precedence over environment variables.
+
 ### Why docker is not a required
 When the git-system-follower downloads the docker image it doesn't need `docker` because we use the `oras` library
 (it doesn't use the docker socket)

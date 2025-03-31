@@ -41,37 +41,8 @@ You can pass a gear to installation as:
 
 ## Display help text
 To list the help on any command just execute the command, followed by the `--help` option
-```plaintext
-$ gsf install --help
-
-Usage: gsf install [OPTIONS] [GEARS]...
-
-  Install gears to branches in repository
-
-  GEARS                         Install all listed gears as
-                                1. image: <registry>/<repository>/<name>:<tag>, e.g.
-                                artifactory.company.com/path-to/your-image:1.0.0
-                                2. .tar.gz archive: /path/to/archive.tar.gz, e.g.
-                                your-archive@1.0.0.tar.gz
-                                3. source code files: /path/to/gear directory, e.g.
-                                your-gear@1.0.0
-
-Options:
-  -r, --repo URL                  Gitlab repository url  [required]
-  -b, --branch BRANCH...          Branches in which to install the gears
-                                  [required]
-  -t, --token TEXT                Gitlab access token  [required]
-  --extra <NAME VALUE CHOICE>...  Extra parameters to be passed to the package
-                                  API: variable name, value, masked/no-masked
-  --message TEXT                  Commit message
-  --git-username USER             Username under which the commit will be made
-                                  to the repository
-  --git-email EMAIL               User email under which the commit will be
-                                  made to the repository
-  -f, --force                     Forced installation: change of files, CI/CD
-                                  variables as specified in gear
-  --debug                         Show debug level messages
-  --help                          Show this message and exit.
+```bash
+gsf install --help
 ```
 
 ## Arguments
@@ -80,17 +51,21 @@ Options:
 | `GEARS` | Install all listed gears as:<br/>1. image: `<registry>/<repository>/<name>:<tag>`<br/>2. .tar.gz archive: `/path/to/archive.tar.gz`<br/>3.source code files: `/path/to/gear directory` | `artifactory.company.com/my-image:1.0.0`, `/path/to/my-archive@1.0.0.tar.gz`, `/path/to/my-gear@1.0.0`, `project/my-package` |
 
 ## Options
-| Name             | Description                                                                                         | Mandatory |                                     Default value                                      | Environment variable | Example                                                          |
-|------------------|-----------------------------------------------------------------------------------------------------|:---------:|:--------------------------------------------------------------------------------------:|:--------------------:|------------------------------------------------------------------|
-| `-r`, `--repo`   | Gitlab repository url                                                                               |     +     |                                           -                                            |          -           | `https://git.company.com/test`, `http://localhost/test.git`      |
-| `-b`, `--branch` | Branches in which to install the gears                                                              |     +     |                                           -                                            |          -           | `main`, `features/FAKE-0000`                                     |
-| `-t`, `--token`  | Gitlab access token                                                                                 |     +     |                                           -                                            |   `GSF_GIT_TOKEN`    | `glpat-xxxxxXYvoxqPZw_5Kmyr`                                     |
-| `--extra`        | Extra parameters to be passed to the package API: `name`, `value`, `masked`/`no-masked` of variable |     -     |                                           -                                            |          -           | `add_functionality true no-masked`, `password MyPa$$word masked` |
-| `--message`      | Commit message                                                                                      |     -     |                                  `Installed gear(s)`                                   |          -           | `FAKE-0000 update our tools`                                     |
-| `--git-username` | Username under which the commit will be made to the repository                                      |     -     |        The username in the `~/.gitconfig` file, if it does not exist, `unknown`        |  `GSF_GIT_USERNAME`  | `Name LastName`, `MyName`                                        |
-| `--git-email`    | User email under which the commit will be made to the repository                                    |     -     | The user email in the `~/.gitconfig` file, if it does not exist, `unknown@example.com` |   `GSF_GIT_EMAIL`    | `your.email@gmail.com`                                           |
-| `--force`        | Forced installation: change of files, CI/CD variables as specified in gear                          |     -     |                                        `False`                                         |          -           |                                                                  |
-| `--debug`        | Show debug level messages                                                                           |     -     |                                        `False`                                         |          -           |                                                                  |
+| Name                  | Description                                                                                         | Mandatory |                                     Default value                                      |  Environment variable   | Example                                                          |
+|-----------------------|-----------------------------------------------------------------------------------------------------|:---------:|:--------------------------------------------------------------------------------------:|:-----------------------:|------------------------------------------------------------------|
+| `-r`, `--repo`        | Gitlab repository url                                                                               |     +     |                                           -                                            |            -            | `https://git.company.com/test`, `http://localhost/test.git`      |
+| `-b`, `--branch`      | Branches in which to install the gears                                                              |     +     |                                           -                                            |            -            | `main`, `features/FAKE-0000`                                     |
+| `-t`, `--token`       | Gitlab access token                                                                                 |     +     |                                           -                                            |     `GSF_GIT_TOKEN`     | `glpat-xxxxxXYvoxqPZw_5Kmyr`                                     |
+| `--extra`             | Extra parameters to be passed to the package API: `name`, `value`, `masked`/`no-masked` of variable |     -     |                                           -                                            |            -            | `add_functionality true no-masked`, `password MyPa$$word masked` |
+| `--message`           | Commit message                                                                                      |     -     |                                  `Installed gear(s)`                                   |            -            | `FAKE-0000 update our tools`                                     |
+| `--git-username`      | Username under which the commit will be made to the repository                                      |     -     |        The username in the `~/.gitconfig` file, if it does not exist, `unknown`        |   `GSF_GIT_USERNAME`    | `Name LastName`, `MyName`                                        |
+| `--git-email`         | User email under which the commit will be made to the repository                                    |     -     | The user email in the `~/.gitconfig` file, if it does not exist, `unknown@example.com` |     `GSF_GIT_EMAIL`     | `your.email@gmail.com`                                           |
+| `--registry-type`     | Specify the registry type or use automatic detection                                                |     -     |                                      `Autodetect`                                      |            -            | `Autodetect`, `Dockerhub`, `Artifactory`, `Nexus`                |
+| `--registry-username` | Username for basic authentication in the registry when downloading Gears                            |     -     |                                           -                                            | `GSF_REGISTRY_USERNAME` | `myusername`, `k1shk1n`                                          |
+| `--registry-password` | Password for basic authentication in the registry when downloading Gears                            |     -     |                                           -                                            | `GSF_REGISTRY_PASSWORD` | `MyPa$$w0rd`                                                     |
+| `--insecure-registry` | Allow insecure connections to the registry (use HTTP instead of HTTPS)                              |     -     |                                        `False`                                         |            -            |                                                                  |
+| `--force`             | Forced installation: change of files, CI/CD variables as specified in gear                          |     -     |                                        `False`                                         |            -            |                                                                  |
+| `--debug`             | Show debug level messages                                                                           |     -     |                                        `False`                                         |            -            |                                                                  |
 
 ## Examples
 Installing the gear (docker image) to main branch
@@ -141,6 +116,16 @@ $ gsf packages install -r https://git.company.com/test.git \
 ```
 
 ## Advanced
+### Authentication Methods for Registry Access
+You can work with private registries by providing authentication credentials.
+
+There are three ways to specify credentials, listed in order of priority: 
+1. Pass the credentials directly using `--registry-username` and `--registry-password`
+2. Credentials can be provided via stdin using `echo`: `echo -e "<username>\n<password>" | gsf install ...`
+3. Set `GSF_REGISTRY_USERNAME` and `GSF_REGISTRY_PASSWORD` as environment variables
+
+If multiple methods are used, command-line parameters take precedence over stdin, and stdin takes precedence over environment variables.
+
 ### Carefully update/delete created resources
 git-system-follower provides an interface for creating file structure and creating CI/CD variables,
 so that when installing, git-system-follower tries to carefully update/delete created resources.

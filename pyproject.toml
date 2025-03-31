@@ -8,7 +8,7 @@ version = "0.4.0"
 description = "The package manager for Git providers"
 authors = ["Qubership"]
 maintainers = [
-    { name = "Vladislav Kishkin", email = "vladislav.kishkin01@gmail.com" },
+    "Vladislav Kishkin <vladislav.kishkin01@gmail.com>",
 ]
 license = "Apache-2.0"
 readme = "README.md"
@@ -17,6 +17,8 @@ classifiers = [
     "Topic :: Software Development :: Build Tools",
 ]
 packages = [{include = "git_system_follower"}]
+repository = "https://github.com/Netcracker/qubership-git-system-follower"
+documentation = "https://github.com/Netcracker/qubership-git-system-follower/blob/main/docs/docs_home.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -52,8 +54,3 @@ select = ["E", "F", "W", "C90"]
 testpaths = [
     "tests"
 ]
-
-[project.urls]
-Repository = "https://github.com/Netcracker/qubership-git-system-follower"
-Documentation = "https://github.com/Netcracker/qubership-git-system-follower/blob/main/docs/docs_home.md"
-

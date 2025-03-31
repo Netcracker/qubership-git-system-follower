@@ -167,10 +167,10 @@ class Registry(ABC, oras.client.OrasClient):
 
 
 class RegistryV2(Registry):
-    """ Oras client for downloading git-system-follower packages from docker registries using Docker Registry HTTP API V2 spec
-    for more details, see https://docker-docs.uclv.cu/registry/spec/api/
+    """ Oras client for downloading git-system-follower packages from docker registries
+    using Docker Registry HTTP API V2 spec
 
-    Supported registries: Artifactory, Nexus.
+    for more details, see https://docker-docs.uclv.cu/registry/spec/api/
     """
 
     def download(self, target: str, outdir: Path, *, registry: RegistryInfo) -> Path | None:

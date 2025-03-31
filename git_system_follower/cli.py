@@ -44,7 +44,8 @@ GIT_EMAIL = config.get_value('user', 'email', default='unknown@example.com')
     default=Path('.'), help='Directory where gears will be downloaded'
 )
 @click.option(
-    '--registry-type', type=click.Choice([registry_type.value for registry_type in RegistryTypes], case_sensitive=False),
+    '--registry-type',
+    type=click.Choice([registry_type.value for registry_type in RegistryTypes], case_sensitive=False),
     required=False, default='Autodetect',
     help='Registry type to work with it'
 )
@@ -128,7 +129,8 @@ def download_command(
     help='User email under which the commit will be made to the repository', metavar='EMAIL'
 )
 @click.option(
-    '--registry-type', type=click.Choice([registry_type.value for registry_type in RegistryTypes], case_sensitive=False),
+    '--registry-type',
+    type=click.Choice([registry_type.value for registry_type in RegistryTypes], case_sensitive=False),
     required=False, default='Autodetect',
     help='Registry type to work with it'
 )
@@ -233,7 +235,8 @@ def install_command(
     help='User email under which the commit will be made to the repository', metavar='EMAIL'
 )
 @click.option(
-    '--registry-type', type=click.Choice([registry_type.value for registry_type in RegistryTypes], case_sensitive=False),
+    '--registry-type',
+    type=click.Choice([registry_type.value for registry_type in RegistryTypes], case_sensitive=False),
     required=False, default='Autodetect',
     help='Registry type to work with it'
 )
@@ -309,7 +312,7 @@ def uninstall_command(
 @click.command(name='list')
 def list_command():
     """ List installed gears: in develop """
-    raise NotImplemented("In development")
+    raise NotImplementedError("In development")
 
 
 @click.command(name='version')

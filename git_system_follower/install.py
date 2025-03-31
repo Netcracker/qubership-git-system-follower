@@ -41,7 +41,7 @@ from git_system_follower.utils.retry import retry
 from git_system_follower.utils.versions import normalize_version
 from git_system_follower.package.initer import init
 from git_system_follower.package.updater import update
-from git_system_follower.package.rollbacker import rollback
+# from git_system_follower.package.rollbacker import rollback
 from git_system_follower.typings.script import ScriptResponse
 
 
@@ -261,7 +261,7 @@ def install_package(
         raise PackageNotFoundError(f"Package {package['name']}@{package['version']} not found in "
                                    f"Additional rollback package list:\n{pformat(additional_packages)}")
 
-    raise NotImplemented("Gear's downgrade is in development")
+    raise NotImplementedError("Gear's downgrade is in development")
     # response = rollback(
     #     package, old_package, repo, state,
     #     created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force

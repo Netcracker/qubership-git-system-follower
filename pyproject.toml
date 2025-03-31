@@ -1,10 +1,21 @@
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
 [tool.poetry]
 name = "qubership-git-system-follower"
 version = "0.4.0"
 description = "The package manager for Git providers"
 authors = ["Qubership"]
+maintainers = [
+    { name = "Vladislav Kishkin", email = "vladislav.kishkin01@gmail.com" },
+]
 license = "Apache-2.0"
 readme = "README.md"
+classifiers = [
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Build Tools",
+]
 packages = [{include = "git_system_follower"}]
 
 [tool.poetry.dependencies]
@@ -42,6 +53,7 @@ testpaths = [
     "tests"
 ]
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[project.urls]
+Repository = "https://github.com/Netcracker/qubership-git-system-follower"
+Documentation = "https://github.com/Netcracker/qubership-git-system-follower/blob/main/docs/docs_home.md"
+

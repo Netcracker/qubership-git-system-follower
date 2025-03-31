@@ -25,15 +25,19 @@ import oras.client
 import oras.container
 import oras.defaults
 import requests
+from requests.auth import HTTPBasicAuth
 import yaml
 
 from git_system_follower.variables import IMAGE_PACKAGE_MAP, PACKAGES_PATH, PACKAGE_DIRNAME
 from git_system_follower.logger import logger
-from git_system_follower.errors import RemoteRepositoryError, DownloadPackageError, PackageNotFoundError
+from git_system_follower.errors import (
+    RemoteRepositoryError, DownloadPackageError, UnknownRegistryError, PackageNotFoundError
+)
 from git_system_follower.typings.cli import (
     PackageCLI, PackageCLITypes,
     PackageCLIImage, PackageCLITarGz, PackageCLISource
 )
+from git_system_follower.typings.registry import RegistryTypes, RegistryInfo
 from git_system_follower.plugins.cli.packages.default import TarGzPlugin
 from git_system_follower.typings.package import PackageLocalData
 from git_system_follower.package.package_info import (
@@ -49,7 +53,7 @@ class Registry(ABC, oras.client.OrasClient):
     """ Base class of any new Registry """
 
     @abstractmethod
-    def download(self, target: str, outdir: Path) -> Path | None:
+    def download(self, target: str, outdir: Path, *, registry: RegistryInfo) -> Path | None:
         """ Download package function from OCI artifact or image
 
         Similar command "oras copy <target> --to-oci-layout <outdir>" with custom:
@@ -59,16 +63,18 @@ class Registry(ABC, oras.client.OrasClient):
 
         :param target: OCI artifact or image url without protocol
         :param outdir: directory where need to save package
+        :param registry: registry information like credentials for auth, insecure mode, etc.
         :return: content of downloaded OCI artifact or image
         """
         pass
 
     @abstractmethod
-    def _get_anonymous_token(self, container: oras.container.Container) -> str:
+    def _get_anonymous_token(self, container: oras.container.Container, *, registry: RegistryInfo) -> str:
         """ Get anonymous token for getting manifest and downloading layers (`docker pull` simulation with possibility
         of anonymous image downloading)
 
         :param container: Oras container with information about target
+        :param registry: registry information like credentials for auth, insecure mode, etc.
         :return: anonymous token
         """
         pass
@@ -160,12 +166,51 @@ class Registry(ABC, oras.client.OrasClient):
         return f'{name}@{version}.tar.gz'
 
 
-class Dockerhub(Registry):
-    """ Oras client for downloading git-system-follower packages from DockerHub """
+class RegistryV2(Registry):
+    """ Oras client for downloading git-system-follower packages from docker registries using Docker Registry HTTP API V2 spec
+    for more details, see https://docker-docs.uclv.cu/registry/spec/api/
 
-    def download(self, target: str, outdir: Path) -> Path | None:
+    Supported registries: Artifactory, Nexus.
+    """
+
+    def download(self, target: str, outdir: Path, *, registry: RegistryInfo) -> Path | None:
+        if registry.is_insecure:
+            self.prefix="http"
         container = self.get_container(target)
-        token = self._get_anonymous_token(container)
+        token = self._get_anonymous_token(container, registry=registry)
+        self.auth.set_token_auth(token)
+
+        manifest = self.get_manifest_wrapper(container)
+        if not self.is_gear(manifest, container):
+            logger.warning(f'{target} is not a git-system-follower package. Skip downloading')
+            return None
+
+        return self._download_layer(container, manifest, outdir)
+
+    def _get_anonymous_token(self, container: oras.container.Container, *, registry: RegistryInfo) -> str:
+        auth = None
+        if registry.credentials is not None:
+            auth = HTTPBasicAuth(registry.credentials.username, registry.credentials.password)
+        response = requests.get(
+            f'{self.prefix}://{container.registry}/v2/token',
+            params={
+                'service': container.registry,
+                'scope': f'repository:{container.namespace}/{container.repository}:pull'
+            }, auth=auth, verify=not registry.is_insecure
+        )
+        return self._check_anonymous_token_request(response, container)
+
+
+class Dockerhub(RegistryV2):
+    """ Oras client for downloading git-system-follower packages from DockerHub
+
+    It also works as well as RegistryV2, but have custom logic
+    (TODO: fix it using Docker Registry HTTP API V2 spec for a single solution for all registries)
+    """
+
+    def download(self, target: str, outdir: Path, *, registry: RegistryInfo) -> Path | None:
+        container = self.get_container(target)
+        token = self._get_anonymous_token(container, registry=registry)
         self.auth.set_token_auth(token)
 
         # fix oras get_manifest for docker.io. For example, we set the image as docker.io/path/to/image:tag
@@ -179,52 +224,26 @@ class Dockerhub(Registry):
 
         return self._download_layer(container, manifest, outdir)
 
-    def _get_anonymous_token(self, container: oras.container.Container) -> str:
+    def _get_anonymous_token(self, container: oras.container.Container, *, registry: RegistryInfo) -> str:
+        auth = None
+        if registry.credentials is not None:
+            auth = HTTPBasicAuth(registry.credentials.username, registry.credentials.password)
         response = requests.get(
             f'{self.prefix}://auth.{container.registry}/token',
             params={
                 'service': f'registry.{container.registry}',
                 'scope': f'repository:{container.namespace}/{container.repository}:pull'
-            }
+            }, auth=auth, verify=not registry.is_insecure
         )
         return self._check_anonymous_token_request(response, container)
 
 
-class Artifactory(Registry):
-    """ Oras client for downloading git-system-follower packages from Artifactory
+class Artifactory(RegistryV2):
+    pass
 
-    Example of use:
-    We have GSF package
-    We've created an image of a docker with this package:
-       artifactory.company.com/path-to/image:tag
 
-    We want to download this GSF package, then we need to:
-       1. create an OrasClient object: `client = OrasClient(hostname='artifactory.company.com')`
-       2. download package:
-          `client.copy('path-to/image:tag', outdir=Path('/path/to/outdir'))`
-    """
-
-    def download(self, target: str, outdir: Path) -> Path | None:
-        container = self.get_container(target)
-        token = self._get_anonymous_token(container)
-        self.auth.set_token_auth(token)
-
-        manifest = self.get_manifest_wrapper(container)
-        if not self.is_gear(manifest, container):
-            logger.warning(f'{target} is not a git-system-follower package. Skip downloading')
-            return None
-
-        return self._download_layer(container, manifest, outdir)
-
-    def _get_anonymous_token(self, container: oras.container.Container) -> str:
-        response = requests.get(
-            f'{self.prefix}://{container.registry}/v2/token',
-            params={
-                'service': container.registry,
-                'scope': f'repository:{container.namespace}/{container.repository}:pull'
-            }
-        )
-        return self._check_anonymous_token_request(response, container)
+class Nexus(RegistryV2):
+    pass
 
 
 def get_name_and_version_version_from_targz(path: Path) -> tuple[str, str]:
@@ -273,12 +292,13 @@ def _get_name_and_version_from_description(content: dict, description: str) -> t
 def download(
         packages: Iterable[PackageCLI | PackageCLIImage | PackageCLITarGz | PackageCLISource],
         directory: Path = PACKAGES_PATH, *,
-        dependency_tree: str = '', dependency_level: int = 0, is_deps_first: bool
+        registry: RegistryInfo, dependency_tree: str = '', dependency_level: int = 0, is_deps_first: bool
 ) -> list[PackageLocalData]:
     """ Download packages
 
     :param packages: packages to be downloaded
     :param directory: directory where need to download package
+    :param registry: registry information like credentials for auth, insecure mode, etc.
     :param dependency_tree: current dependency tree, e.g. `root-package -> root's-dependency`
     :param dependency_level: current dependency depth level
     :param is_deps_first: whether dependencies should be specified first, and then the main package. This is necessary
@@ -298,14 +318,14 @@ def download(
         new_dep_tree = f'{dependency_tree} -> {package.name}' if dependency_level != 0 else package.name
         check_dependency_depth(dependency_level, new_dep_tree)
 
-        source = get_source(package, directory)
+        source = get_source(package, directory, registry=registry)
         if source is None:
             continue
         data = get_package_info(source.parent, source.name)
         if data['dependencies']:
             logger.info(f"Package dependencies: {', '.join([str(dep) for dep in data['dependencies']])}")
         dependencies_data = download(
-            data['dependencies'], directory,
+            data['dependencies'], directory, registry=registry,
             dependency_tree=new_dep_tree, dependency_level=dependency_level + 1, is_deps_first=is_deps_first
         )
         fixed_dependency_names = []
@@ -321,13 +341,14 @@ def download(
 
 
 def get_source(
-        package: PackageCLI | PackageCLIImage | PackageCLITarGz | PackageCLISource,
-        directory: Path
+        package: PackageCLI | PackageCLIImage | PackageCLITarGz | PackageCLISource, directory: Path, *,
+        registry: RegistryInfo
 ) -> Path | None:
     """ Wrapper to handle different package input values
 
     :param package: packages to be downloaded
     :param directory: directory where need to download package
+    :param registry: registry information like credentials for auth, insecure mode, etc.
     :return: source code (download package with unpacking or unpacking .tar.gz archive or already ready-made code)
     """
     if package.type == PackageCLITypes.source:
@@ -339,7 +360,7 @@ def get_source(
         return source / PACKAGE_DIRNAME
 
     if package.type == PackageCLITypes.image:
-        path = download_package(package, directory)
+        path = download_package(package, directory, registry=registry)
         if path is None:
             return None
     else:  # package.type == PackageCLITypes.targz
@@ -353,7 +374,10 @@ def get_source(
 
 
 @tempdir
-def download_package(package: PackageCLIImage, outdir: Path, *, tmpdir: Path) -> Path | None:
+def download_package(
+        package: PackageCLIImage, outdir: Path, *,
+        tmpdir: Path, registry: RegistryInfo
+) -> Path | None:
     """ Download package from registry using oras
 
     An explanation of how version detection works: we have the version inside package.yaml and the version (image tag)
@@ -378,6 +402,7 @@ def download_package(package: PackageCLIImage, outdir: Path, *, tmpdir: Path) ->
     :param package: package to be downloaded
     :param outdir: directory where need to download package
     :param tmpdir: temporary directory where package will be downloaded and manipulated
+    :param registry: registry information like credentials for auth, insecure mode, etc.
     :return: downloaded package (tar.gz file): `<outdir>/<package tar.gz file>`
     """
     if not IMAGE_PACKAGE_MAP.exists():
@@ -390,9 +415,9 @@ def download_package(package: PackageCLIImage, outdir: Path, *, tmpdir: Path) ->
         logger.info(f'Package has already been downloaded to {outfile} from {package}. Skip downloading')
         return outfile
 
-    client = get_client(package.registry)
+    client = get_client(package.registry, registry=registry)
     image = package.get_image_path()
-    package_tmp_path = client.download(image, outdir=tmpdir)
+    package_tmp_path = client.download(image, outdir=tmpdir, registry=registry)
     if package_tmp_path is None:  # image is not git-system-follower package
         return None
 
@@ -428,10 +453,83 @@ def _get_current_path_using_mapping(package: PackageCLI | PackageCLIImage, packa
     return None
 
 
-def get_client(registry: str) -> Dockerhub | Artifactory:
-    if registry == 'docker.io':
-        return Dockerhub(hostname=registry)
-    return Artifactory(hostname=registry)
+def get_client(
+        registry_address: str, *, registry: RegistryInfo
+) -> Dockerhub | Artifactory | Nexus:
+    """ Identifies registry type and returns appropriate client
+
+    :param registry_address: image registry (eg 'docker.io', 'artifactory.example.com:17001', 'nexus.host.com:16001')
+    :param registry: registry information like credentials for auth, insecure mode, etc.
+    :returns: Instance of Dockerhub, Artifactory, or Nexus client
+
+    :raises UnknownRegistryError: registry could not be identified
+    """
+    scheme = 'http' if registry.is_insecure else 'https'
+    if is_dockerhub(scheme, registry_address, registry_type=registry.type, is_insecure=registry.is_insecure):
+        logger.info(f'{registry_address} is of type DockerHub')
+        return Dockerhub(hostname=registry_address)
+
+    if is_artifactory(scheme, registry_address, registry_type=registry.type, is_insecure=registry.is_insecure):
+        logger.info(f'{registry_address} is of type Artifactory')
+        return Artifactory(hostname=registry_address)
+
+    if is_nexus(scheme, registry_address, registry_type=registry.type, is_insecure=registry.is_insecure):
+        logger.info(f'{registry_address} is of type Nexus')
+        return Nexus(hostname=registry_address)
+
+    raise UnknownRegistryError(
+        f'Could not determine the registry type for {registry_address}. '
+        f'Supported registries: DockerHub, Artifactory, Nexus'
+    )
+
+
+def is_dockerhub(scheme: str, registry: str, *, registry_type: RegistryTypes, is_insecure: bool) -> bool:
+    """ Check if the given registry is Dockerhub """
+    if registry_type == RegistryTypes.dockerhub:
+        return True
+    if registry_type != RegistryTypes.auto:
+        return False
+
+    url = f'{scheme}://index.{registry}/v2'
+    try:
+        response = requests.get(url, timeout=3, verify=not is_insecure)
+    except requests.exceptions.RequestException as error:
+        logger.debug(f'DockerHub REST API call error: {error}')
+        return False
+    # dockerhub always returns 401 code and 'www-authenticate' header in this end point
+    return response.status_code == 401 and 'docker.io/token' in response.headers.get('www-authenticate', '')
+
+
+def is_artifactory(scheme: str, registry: str, *, registry_type: RegistryTypes, is_insecure: bool) -> bool:
+    """ Check if the given registry is Artifactory """
+    if registry_type == RegistryTypes.artifactory:
+        return True
+    if registry_type != RegistryTypes.auto:
+        return False
+
+    url = f'{scheme}://{registry}/artifactory/api/system/version'
+    try:
+        response = requests.get(url, timeout=3, verify=not is_insecure)
+    except requests.exceptions.RequestException as error:
+        logger.debug(f'Artifactory REST API call error: {error}')
+        return False
+    return response.status_code == 200
+
+
+def is_nexus(scheme: str, registry: str, *, registry_type: RegistryTypes, is_insecure: bool) -> bool:
+    """ Check if the given registry is Nexus """
+    if registry_type == RegistryTypes.nexus:
+        return True
+    if registry_type != RegistryTypes.auto:
+        return False
+
+    url = f'{scheme}://{registry}/v2/_catalog'
+    try:
+        response = requests.get(url, timeout=3, verify=not is_insecure)
+    except requests.exceptions.RequestException as error:
+        logger.debug(f'Nexus REST API call error: {error}')
+        return False
+    return response.status_code == 200 and 'Nexus' in response.headers.get('Server', '')
 
 
 def _save_info_about_downloaded_package(package: PackageCLI, current_package: Path) -> None:

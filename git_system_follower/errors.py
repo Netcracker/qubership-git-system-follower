@@ -112,6 +112,12 @@ class DownloadPackageError(Exception):
     def __init__(self, msg, *args):
         super().__init__(msg, *args)
 
+
+class UnknownRegistryError(DownloadPackageError):
+    """ Raised when the registry type cannot be determined """
+    def __init__(self, msg, *args):
+        super().__init__(msg, *args)
+
 """ --------------------------------------- """
 
 class PluginError(Exception):

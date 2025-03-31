@@ -22,7 +22,7 @@ from enum import Enum
 __all__ = [
     'PackageCLITypes', 'PackageCLI',
     'PackageCLIImage', 'PackageCLITarGz', 'PackageCLISource',
-    'ExtraParam'
+    'ExtraParam', 'Credentials'
 ]
 
 
@@ -87,3 +87,8 @@ class ExtraParam(NamedTuple):
     name: str
     value: str
     masked: bool
+
+
+class Credentials(NamedTuple):
+    username: str
+    password: str

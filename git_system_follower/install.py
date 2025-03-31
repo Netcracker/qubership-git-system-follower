@@ -23,6 +23,7 @@ from git_system_follower.errors import InstallationError, PackageNotFoundError, 
 from git_system_follower.typings.cli import (
     PackageCLI, PackageCLIImage, PackageCLITarGz, PackageCLISource, ExtraParam
 )
+from git_system_follower.typings.registry import RegistryInfo
 from git_system_follower.typings.package import PackageLocalData, PackagesTo
 from git_system_follower.download import download
 from git_system_follower.git_api.gitlab_api import (
@@ -51,13 +52,14 @@ def install(
         packages: tuple[PackageCLIImage | PackageCLITarGz | PackageCLISource, ...],
         repo_url: str, branches: tuple[str, ...], token: str, *,
         extras: tuple[ExtraParam, ...], commit_message: str,
-        username: str, user_email: str, is_force: bool
+        username: str, user_email: str,
+        registry: RegistryInfo, is_force: bool,
 ) -> None:
     gitlab_instance = get_gitlab(repo_url, token)
     project = get_project(gitlab_instance, repo_url)
     states = get_states(project, branches)
 
-    packages = get_packages(packages, states)
+    packages = get_packages(packages, states, registry=registry)
     print_list(packages.install, title='Packages', output_func=logger.info,
                key=lambda package: f"{package['name']}@{package['version']}")
     print_list(packages.rollback, title='Additional rollback packages', output_func=logger.info,
@@ -75,33 +77,37 @@ def install(
 
 def get_packages(
         packages_cli: tuple[PackageCLIImage | PackageCLITarGz | PackageCLISource, ...],
-        states: dict[str, StateFile]
+        states: dict[str, StateFile], *,
+        registry: RegistryInfo
 ) -> PackagesTo:
     """ Getting information about packages to install and rollback (delete+init)
 
     :param packages_cli: listing packages to be installed
     :param states: current states in GitLab repository branches
+    :param registry: registry information like credentials for auth, insecure mode, etc.
 
     :return: packages info tuples in PackageTo class
     """
     packages = PackagesTo(
-        install=_get_packages_to_install(packages_cli),
+        install=_get_packages_to_install(packages_cli, registry=registry),
         rollback=()
     )
     installed_packages = get_installed_packages(states)
-    packages.rollback = _get_packages_to_rollback(packages_cli, installed_packages)
+    packages.rollback = _get_packages_to_rollback(packages_cli, installed_packages, registry=registry)
     return packages
 
 
 def _get_packages_to_install(
-        packages_cli: tuple[PackageCLIImage | PackageCLITarGz | PackageCLISource, ...]
+        packages_cli: tuple[PackageCLIImage | PackageCLITarGz | PackageCLISource, ...], *,
+        registry: RegistryInfo
 ) -> tuple[PackageLocalData, ...]:
     """ Getting information about packages to install
 
     :param packages_cli: listing packages to be installed
+    :param registry: registry information like credentials for auth, insecure mode, etc.
     :return: packages info to install tuple
     """
-    packages = tuple(download(packages_cli, is_deps_first=True))
+    packages = tuple(download(packages_cli, is_deps_first=True, registry=registry))
     for i, package in enumerate(packages):
         for j, comparison_package in enumerate(packages):
             if i != j and package['name'] == comparison_package['name']:
@@ -114,12 +120,14 @@ def _get_packages_to_install(
 
 def _get_packages_to_rollback(
         packages_cli: tuple[PackageCLIImage | PackageCLITarGz | PackageCLISource, ...],
-        installed_packages: set[PackageCLI],
+        installed_packages: set[PackageCLI], *,
+        registry: RegistryInfo
 ) -> tuple[PackageLocalData, ...]:
     """ Getting information about packages to rollback (delete+init)
 
     :param packages_cli: listing packages to be installed
     :param installed_packages: listing installed packages
+    :param registry: registry information like credentials for auth, insecure mode, etc.
     :return: packages info to rollback tuple
     """
     packages_to_rollback = []
@@ -127,7 +135,7 @@ def _get_packages_to_rollback(
         for installed_package in installed_packages:
             if _is_necessary_package_to_rollback(package_cli, installed_package):
                 packages_to_rollback.append(installed_package)
-    return tuple(download(packages_to_rollback, is_deps_first=False))
+    return tuple(download(packages_to_rollback, is_deps_first=False, registry=registry))
 
 
 def _is_necessary_package_to_rollback(package_cli: PackageCLI, installed_package: PackageCLI) -> bool:
@@ -253,8 +261,9 @@ def install_package(
         raise PackageNotFoundError(f"Package {package['name']}@{package['version']} not found in "
                                    f"Additional rollback package list:\n{pformat(additional_packages)}")
 
-    response = rollback(
-        package, old_package, repo, state,
-        created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force
-    )
-    return response
+    raise NotImplemented("Gear's downgrade is in development")
+    # response = rollback(
+    #     package, old_package, repo, state,
+    #     created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force
+    # )
+    # return response

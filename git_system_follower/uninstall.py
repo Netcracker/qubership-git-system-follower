@@ -22,6 +22,7 @@ from git_system_follower.errors import UninstallationError
 from git_system_follower.typings.cli import (
     PackageCLI, ExtraParam, PackageCLIImage, PackageCLITarGz, PackageCLISource
 )
+from git_system_follower.typings.registry import RegistryInfo
 from git_system_follower.typings.package import PackageLocalData
 from git_system_follower.download import download
 from git_system_follower.git_api.gitlab_api import (
@@ -35,9 +36,7 @@ from git_system_follower.utils.retry import retry
 from git_system_follower.states import (
     ChangeStatus, PackageState, StateFile,
     get_installed_packages
-    # save_state_file, get_package_in_states, get_created_cicd_variables
 )
-# from git_system_follower.package.package_info import get_installed_packages
 from git_system_follower.package.deleter import delete
 
 
@@ -48,13 +47,14 @@ def uninstall(
         packages_cli: tuple[PackageCLIImage | PackageCLITarGz | PackageCLISource, ...],
         repo_url: str, branches: tuple[str, ...], token: str, *,
         extras: tuple[ExtraParam, ...], commit_message: str,
-        username: str, user_email: str, is_force: bool
+        username: str, user_email: str,
+        registry: RegistryInfo, is_force: bool
 ) -> None:
     gitlab_instance = get_gitlab(repo_url, token)
     project = get_project(gitlab_instance, repo_url)
     states = get_states(project, branches)
 
-    packages = get_packages(packages_cli, states)
+    packages = get_packages(packages_cli, states, registry=registry)
     if not packages:
         logger.info('No packages of these versions found in state file')
         return
@@ -79,10 +79,11 @@ def uninstall(
 
 def get_packages(
         packages_cli: tuple[PackageCLIImage | PackageCLITarGz | PackageCLISource, ...],
-        states: dict[str, StateFile]
+        states: dict[str, StateFile], *,
+        registry: RegistryInfo
 ) -> tuple[PackageLocalData, ...]:
     installed_packages = get_installed_packages(states)
-    downloaded_packages = download(packages_cli, is_deps_first=False)
+    downloaded_packages = download(packages_cli, is_deps_first=False, registry=registry)
     packages = []
     for download_package in downloaded_packages:
         for installed_package in installed_packages:

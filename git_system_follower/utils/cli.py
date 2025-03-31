@@ -12,15 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from sys import stdin
+
 import click
 
-from git_system_follower.typings.cli import PackageCLISource, PackageCLITarGz, PackageCLIImage, ExtraParam
+from git_system_follower.typings.cli import PackageCLISource, PackageCLITarGz, PackageCLIImage, ExtraParam, Credentials
 from git_system_follower.plugins.managers import cli_packages_pm as plugin_manager
 from git_system_follower.plugins.cli.packages.specs import HookSpec
 
 
 __all__ = [
     'Package', 'PackageType', 'ExtraParamTuple',
+    'resolve_credentials',
     'add_options', 'get_gears'
 ]
 
@@ -48,6 +51,33 @@ class ExtraParamTuple(click.Tuple):
     def convert(self, value, param, ctx):
         values = super().convert(value, param, ctx)
         return ExtraParam(name=values[0], value=values[1], masked=True if values[2] == 'masked' else False)
+
+
+def resolve_credentials(cli_username: str | None, cli_password: str | None) -> Credentials | None:
+    stdin_username, stdin_password = read_stdin_credentials()
+    username, password = cli_username or stdin_username, cli_password or stdin_password
+    if username is None and password is None:
+        return None
+
+    if username is None:
+        username = click.prompt('Registry username', type=str)
+    if password is None:
+        password = click.prompt('Registry password', type=str, hide_input=True)
+    return Credentials(username, password)
+
+
+def read_stdin_credentials() -> tuple[str | None, str | None]:
+    """ Reads username and password from standard input.
+
+    :returns: Credentials or None if stdin is empty
+    """
+    if stdin.isatty():
+        return None, None
+
+    input_lines = stdin.read().strip().splitlines()
+    if len(input_lines) < 2:
+        return None, None
+    return input_lines[0], input_lines[1]
 
 
 """ --------------- For plugins --------------- """

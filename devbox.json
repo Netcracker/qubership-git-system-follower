@@ -41,7 +41,7 @@
         "docker-compose -f $DEVBOX_DIR/docker-compose.yml down --volumes"
       ],
       "down-nexus": [
-        "docker-compose -f $DEVBOX_DIR/docker-compose.yml down $NEXUS_SERVICE_NAME --volumes"
+        "docker-compose -f $DEVBOX_DIR/docker-compose.yml down $NEXUS_SERVICE_NAME $NEXUS_NGINX_SERVICE_NAME --volumes"
       ],
       "down-localstack": [
         "docker-compose -f $DEVBOX_DIR/docker-compose.yml down $LOCALSTACK_SERVICE_NAME --volumes"

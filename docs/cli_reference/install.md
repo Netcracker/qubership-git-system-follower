@@ -122,7 +122,7 @@ You can work with private registries by providing authentication credentials.
 There are three ways to specify credentials, listed in order of priority: 
 1. Pass the credentials directly using `--registry-username` and `--registry-password`
 2. Set `GSF_REGISTRY_USERNAME` and `GSF_REGISTRY_PASSWORD` as environment variables
-3Credentials can be provided via stdin using `echo`: `echo -e "<username>\n<password>" | gsf install ...`
+3. Credentials can be provided via stdin using `echo`: `echo -e "<username>\n<password>" | gsf install ...`
 > \[!WARNING]
 >
 > Note that unlike other methods, you can't transfer only username or only password this way. This way you can transfer both username and password at once

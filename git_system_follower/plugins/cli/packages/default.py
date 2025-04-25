@@ -55,7 +55,12 @@ class TarGzPlugin(HookSpec):
 
 
 class ImagePlugin(HookSpec):
-    pattern = r'^(?P<registry>[^:/]+(:\d+)?)\/(?P<path>.+)\/(?P<image_name>[^:]+)(:(?P<image_version>.+))?$'
+    pattern = (
+        r'^(?P<registry>[^:/]+(?::\d+)?)\/'
+        r'(?:(?P<path>[^/]+(?:\/[^/]+)*)\/)?'
+        r'(?P<image_name>[^:\/]+)'
+        r'(?::(?P<image_version>.+))?$'
+    )
 
     @hookimpl
     def match(self, value: str) -> bool:

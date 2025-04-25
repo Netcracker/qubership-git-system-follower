@@ -50,11 +50,13 @@ GIT_EMAIL = config.get_value('user', 'email', default='unknown@example.com')
     help='Specify the registry type or use automatic detection'
 )
 @click.option(
-    '--registry-username', type=str, required=False, default=None, envvar='GSF_REGISTRY_USERNAME',
+    # env variable is specified in resolve_credentials because of priority
+    '--registry-username', type=str, required=False, default=None,
     help='Username for basic authentication in the registry when downloading Gears'
 )
 @click.option(
-    '--registry-password', type=str, required=False, default=None, envvar='GSF_REGISTRY_PASSWORD',
+    # env variable is specified in resolve_credentials because of priority
+    '--registry-password', type=str, required=False, default=None,
     help='Password for basic authentication in the registry when downloading Gears'
 )
 @click.option(
@@ -135,11 +137,13 @@ def download_command(
     help='Specify the registry type or use automatic detection'
 )
 @click.option(
-    '--registry-username', type=str, required=False, default=None, envvar='GSF_REGISTRY_USERNAME',
+    # env variable is specified in resolve_credentials because of priority
+    '--registry-username', type=str, required=False, default=None,
     help='Username for basic authentication in the registry when downloading Gears'
 )
 @click.option(
-    '--registry-password', type=str, required=False, default=None, envvar='GSF_REGISTRY_PASSWORD',
+    # env variable is specified in resolve_credentials because of priority
+    '--registry-password', type=str, required=False, default=None,
     help='Password for basic authentication in the registry when downloading Gears'
 )
 @click.option(
@@ -241,11 +245,13 @@ def install_command(
     help='Specify the registry type or use automatic detection'
 )
 @click.option(
-    '--registry-username', type=str, required=False, default=None, envvar='GSF_REGISTRY_USERNAME',
+    # env variable is specified in resolve_credentials because of priority
+    '--registry-username', type=str, required=False, default=None,
     help='Username for basic authentication in the registry when downloading Gears'
 )
 @click.option(
-    '--registry-password', type=str, required=False, default=None, envvar='GSF_REGISTRY_PASSWORD',
+    # env variable is specified in resolve_credentials because of priority
+    '--registry-password', type=str, required=False, default=None,
     help='Password for basic authentication in the registry when downloading Gears'
 )
 @click.option(

@@ -12,10 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Optional
 from sys import stdin
+import base64
+import binascii
+import os
 
 import click
 
+from git_system_follower.logger import logger
 from git_system_follower.typings.cli import PackageCLISource, PackageCLITarGz, PackageCLIImage, ExtraParam, Credentials
 from git_system_follower.plugins.managers import cli_packages_pm as plugin_manager
 from git_system_follower.plugins.cli.packages.specs import HookSpec
@@ -54,19 +59,31 @@ class ExtraParamTuple(click.Tuple):
 
 
 def resolve_credentials(cli_username: str | None, cli_password: str | None) -> Credentials | None:
+    """ Resolve credentials obtained in different ways
+
+    Priorities:
+        1. cli parameters
+        2. stdin/pipe parameters (parse to first ":")
+        3. env variables
+        4. prompts if only username or only password is specified
+    """
     stdin_username, stdin_password = read_stdin_credentials()
-    username, password = cli_username or stdin_username, cli_password or stdin_password
+
+    username = cli_username or stdin_username or os.getenv("GSF_REGISTRY_USERNAME")
+    password = cli_password or stdin_password or os.getenv("GSF_REGISTRY_PASSWORD")
+
     if username is None and password is None:
+        logger.debug('Username and/or password have not been passed by either method')
         return None
 
     if username is None:
         username = click.prompt('Registry username', type=str)
     if password is None:
         password = click.prompt('Registry password', type=str, hide_input=True)
-    return Credentials(username, password)
+    return Credentials(username=username, password=password)
 
 
-def read_stdin_credentials() -> tuple[str | None, str | None]:
+def read_stdin_credentials() -> tuple[Optional[str], Optional[str]]:
     """ Reads username and password from standard input.
 
     :returns: Credentials or None if stdin is empty
@@ -74,10 +91,23 @@ def read_stdin_credentials() -> tuple[str | None, str | None]:
     if stdin.isatty():
         return None, None
 
-    input_lines = stdin.read().strip().splitlines()
-    if len(input_lines) < 2:
-        return None, None
-    return input_lines[0], input_lines[1]
+    creds = stdin.read().strip()
+    logger.debug('Encountered a string in stdin. Trying to parse it')
+    if ':' not in creds:
+        logger.debug('No ":" separator found, attempt to unmask string with base64')
+        try:
+            creds = base64.b64decode(creds).decode().strip()
+        except (binascii.Error, UnicodeDecodeError) as error:
+            logger.warning(
+                f'The separator ":" in the stdin string was not found. '
+                f'When trying to unmask this string using base64, we got an error: {error}. '
+                f'Skip parse stdin string'
+            )
+            return None, None
+    if ':' not in creds:
+        return None, creds
+    username, password = creds.split(':', 1)
+    return username, password
 
 
 """ --------------- For plugins --------------- """

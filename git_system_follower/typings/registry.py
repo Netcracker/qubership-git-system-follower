@@ -14,6 +14,7 @@
 
 from enum import Enum
 from dataclasses import dataclass
+from typing import Optional
 
 from git_system_follower.typings.cli import Credentials
 
@@ -26,10 +27,11 @@ class RegistryTypes(Enum):
     dockerhub = 'Dockerhub'
     nexus = 'Nexus'
     artifactory = 'Artifactory'
+    awsecr = 'AwsEcr'
 
 
 @dataclass
 class RegistryInfo:
-    credentials: Credentials | None
+    credentials: Optional[Credentials]
     type: RegistryTypes
     is_insecure: bool

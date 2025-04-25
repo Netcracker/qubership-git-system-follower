@@ -55,12 +55,11 @@ class PackageCLIImage(PackageCLI):
 
     def get_image_path(self) -> str:
         """ Get image path (without registry) """
-        path = f'{self.repository}/{self.image}'
-        path += f':{self.tag}' if self.tag is not None else ''
-        return path
+        path = f'{self.repository}/' if self.repository else ''
+        return f'{path}{self.image}:{self.tag}'
 
     def __str__(self):
-        return f'{self.registry}/{self.repository}/{self.image}:{self.tag}'
+        return f'{self.registry}/{self.get_image_path()}'
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -92,3 +91,5 @@ class ExtraParam(NamedTuple):
 class Credentials(NamedTuple):
     username: str
     password: str
+    # for adding token necessary to think use this class or create several class,
+    # e.g. Token = str, Auth = Optional[Union[Credentials, Token]]

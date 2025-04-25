@@ -20,9 +20,11 @@ from abc import ABC, abstractmethod
 import tarfile
 import json
 import shutil
+import re
 
 import oras.client
 import oras.container
+import oras.auth
 import oras.defaults
 import requests
 from requests.auth import HTTPBasicAuth
@@ -69,9 +71,9 @@ class Registry(ABC, oras.client.OrasClient):
         pass
 
     @abstractmethod
-    def _get_anonymous_token(self, container: oras.container.Container, *, registry: RegistryInfo) -> str:
-        """ Get anonymous token for getting manifest and downloading layers (`docker pull` simulation with possibility
-        of anonymous image downloading)
+    def _basic_auth(self, container: oras.container.Container, *, registry: RegistryInfo) -> str:
+        """ Get basic auth token for getting manifest and downloading layers using Basic
+        Auth (`docker pull` simulation with possibility of anonymous image downloading)
 
         :param container: Oras container with information about target
         :param registry: registry information like credentials for auth, insecure mode, etc.
@@ -175,9 +177,9 @@ class RegistryV2(Registry):
 
     def download(self, target: str, outdir: Path, *, registry: RegistryInfo) -> Path | None:
         if registry.is_insecure:
-            self.prefix="http"
+            self.prefix = "http"
         container = self.get_container(target)
-        token = self._get_anonymous_token(container, registry=registry)
+        token = self._basic_auth(container, registry=registry)
         self.auth.set_token_auth(token)
 
         manifest = self.get_manifest_wrapper(container)
@@ -187,7 +189,7 @@ class RegistryV2(Registry):
 
         return self._download_layer(container, manifest, outdir)
 
-    def _get_anonymous_token(self, container: oras.container.Container, *, registry: RegistryInfo) -> str:
+    def _basic_auth(self, container: oras.container.Container, *, registry: RegistryInfo) -> str:
         auth = None
         if registry.credentials is not None:
             auth = HTTPBasicAuth(registry.credentials.username, registry.credentials.password)
@@ -210,7 +212,7 @@ class Dockerhub(RegistryV2):
 
     def download(self, target: str, outdir: Path, *, registry: RegistryInfo) -> Path | None:
         container = self.get_container(target)
-        token = self._get_anonymous_token(container, registry=registry)
+        token = self._basic_auth(container, registry=registry)
         self.auth.set_token_auth(token)
 
         # fix oras get_manifest for docker.io. For example, we set the image as docker.io/path/to/image:tag
@@ -224,7 +226,7 @@ class Dockerhub(RegistryV2):
 
         return self._download_layer(container, manifest, outdir)
 
-    def _get_anonymous_token(self, container: oras.container.Container, *, registry: RegistryInfo) -> str:
+    def _basic_auth(self, container: oras.container.Container, *, registry: RegistryInfo) -> str:
         auth = None
         if registry.credentials is not None:
             auth = HTTPBasicAuth(registry.credentials.username, registry.credentials.password)
@@ -244,6 +246,23 @@ class Artifactory(RegistryV2):
 
 class Nexus(RegistryV2):
     pass
+
+
+class AwsEcr(RegistryV2):
+
+    def download(self, target: str, outdir: Path, *, registry: RegistryInfo) -> Path | None:
+        container = self.get_container(target)
+        if registry.credentials is None:
+            raise PermissionError('AWS ECR does not work in anonymous mode, credentials are required')
+        self.auth = oras.auth.get_auth_backend('basic', self.session, registry.is_insecure)
+        self.auth.set_basic_auth(registry.credentials.username, registry.credentials.password)
+
+        manifest = self.get_manifest_wrapper(container)
+        if not self.is_gear(manifest, container):
+            logger.warning(f'{target} is not a git-system-follower package. Skip downloading')
+            return None
+
+        return self._download_layer(container, manifest, outdir)
 
 
 def get_name_and_version_version_from_targz(path: Path) -> tuple[str, str]:
@@ -455,7 +474,7 @@ def _get_current_path_using_mapping(package: PackageCLI | PackageCLIImage, packa
 
 def get_client(
         registry_address: str, *, registry: RegistryInfo
-) -> Dockerhub | Artifactory | Nexus:
+) -> Dockerhub | Artifactory | Nexus | AwsEcr:
     """ Identifies registry type and returns appropriate client
 
     :param registry_address: image registry (eg 'docker.io', 'artifactory.example.com:17001', 'nexus.host.com:16001')
@@ -477,9 +496,13 @@ def get_client(
         logger.info(f'{registry_address} is of type Nexus')
         return Nexus(hostname=registry_address)
 
+    if is_awsecr(scheme, registry_address, registry_type=registry.type, is_insecure=registry.is_insecure):
+        logger.info(f'{registry_address} is of type AWS ECR')
+        return AwsEcr(hostname=registry_address)
+
     raise UnknownRegistryError(
         f'Could not determine the registry type for {registry_address}. '
-        f'Supported registries: DockerHub, Artifactory, Nexus'
+        f'Supported registries: DockerHub, Artifactory, Nexus, AWS ECR'
     )
 
 
@@ -530,6 +553,26 @@ def is_nexus(scheme: str, registry: str, *, registry_type: RegistryTypes, is_ins
         logger.debug(f'Nexus REST API call error: {error}')
         return False
     return response.status_code == 200 and 'Nexus' in response.headers.get('Server', '')
+
+
+def is_awsecr(scheme: str, registry: str, *, registry_type: RegistryTypes, is_insecure: bool) -> bool:
+    """ Check if the given registry is Aws ECR """
+    if registry_type == RegistryTypes.awsecr:
+        return True
+    if registry_type != RegistryTypes.auto:
+        return False
+
+    url = f'{scheme}://{registry}'
+    try:
+        response = requests.get(url, timeout=3, verify=not is_insecure)
+    except requests.exceptions.RequestException as error:
+        logger.debug(f'AWS API call error: {error}')
+        return False
+
+    regex = re.compile(r'(\w+)=["\']([^"\']+)["\']')
+    auth_header = response.headers.get('Www-Authenticate', '')
+    headers = dict(regex.findall(auth_header))
+    return headers.get('service', '') == 'ecr.amazonaws.com'
 
 
 def _save_info_about_downloaded_package(package: PackageCLI, current_package: Path) -> None:

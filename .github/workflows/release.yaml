@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-22.04
+    permissions:
+      id-token: write
+    env:
+      package_name: "qubership-git-system-follower"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Build package
+        run: pip install poetry && poetry build
+
+      - name: Publish package
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+  deploy-docs:
+    runs-on: ubuntu-22.04
+    needs: publish
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # mike requires full access to history and commits
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install poetry && poetry install --with dev
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+
+      - name: Deploy versioned docs
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          source .venv/bin/activate
+          mike deploy --push --update-aliases "$VERSION" latest

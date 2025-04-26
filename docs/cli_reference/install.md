@@ -1,40 +1,11 @@
 # install
-## Documentation
-1. [Docs Home](../docs_home.md)
-2. [Getting Started Guides](../getting_started.md) 
-   1. [Quickstart Guide](../getting_started/quickstart.md)
-   2. [Installation Guide](../getting_started/installation.md)
-3. [Concepts Guides](../concepts.md)  
-   1. [Gears Guide](../concepts/gears.md)
-   2. [apiVersion list](../concepts/api_version_list.md)
-      1. [apiVersion v1](../concepts/api_version_list/v1.md) 
-   3. [.state.yaml Guide](../concepts/state.md)
-   4. [Plugins Guide](../concepts/plugins.md)
-      1. [CLI Arguments Extension Point](../concepts/plugins/cli_arguments.md)
-4. [How-to Guides](../how_to.md)  
-   1. [Build Guide](../how_to/build.md)
-   2. [Gear Development Cases](../how_to/gear_development_cases.md)
-   3. [Integration with semantic-release](../how_to/integration_with_semantic_release.md)
-5. [CLI reference](../cli_reference.md) 
-   1. [download](download.md)
-   2. **[install](install.md)**
-   3. [list](list.md)
-   4. [uninstall](uninstall.md)
-   5. [version](version.md)
-6. [API reference](../api_reference.md)  
-   1. [Develop interface](../api_reference/develop_interface.md)  
-      1. [types Module](../api_reference/develop_interface/types.md)
-      2. [cicd_variables Module](../api_reference/develop_interface/cicd_variables.md)
-      3. [templates Module](../api_reference/develop_interface/templates.md)
-
----
-
 Install gears to branches in GitLab repository
 
 git-system-follower install a gears into the repository branch using the package api: `init` / `update` / `delete`.
 After it git-system-follower create/update `.states.yaml` file in root of directory where save information about installed gears
 
 You can pass a gear to installation as:
+
 1. docker image: it will be downloaded (see [CLI reference/download](download.md))
 2. `.tar.gz` file
 3. directory with gear (source code)
@@ -70,49 +41,49 @@ gsf install --help
 ## Examples
 Installing the gear (docker image) to main branch
 ```plaintext
-$ gsf packages install -r https://git.company.com/test.git \
-                       -b main -t glpat-xxxxxXYvoxqPZw_5Kmyr \
-                       artifactory.company.com/my-image:1.0.0
+gsf install -r https://git.company.com/test.git \
+            -b main -t glpat-xxxxxXYvoxqPZw_5Kmyr \
+            artifactory.company.com/my-image:1.0.0
 ```
 
 Installing the gear (`.tar.gz` archive) to main branch
 ```plaintext
-$ gsf packages install -r https://git.company.com/test.git \
-                       -b main -t glpat-xxxxxXYvoxqPZw_5Kmyr \
-                       packages/my-archive@1.0.0.tar.gz
+gsf install -r https://git.company.com/test.git \
+            -b main -t glpat-xxxxxXYvoxqPZw_5Kmyr \
+            packages/my-archive@1.0.0.tar.gz
 ```
 
 Installing the gear (directory with source code) to main branch
 ```plaintext
-$ gsf packages install -r https://git.company.com/test.git \
-                       -b main -t glpat-xxxxxXYvoxqPZw_5Kmyr \
-                       packages/my-project
+gsf install -r https://git.company.com/test.git \
+            -b main -t glpat-xxxxxXYvoxqPZw_5Kmyr \
+            packages/my-project
 ```
 
 Specify multiple gears for installation:
 ```plantext
-$ gsf packages install -r https://git.company.com/test.git \
-                       -b main -t glpat-xxxxxXYvoxqPZw_5Kmyr \
-                       artifactory.company.com/my-image:1.0.0 \
-                       packages/some-other-package.tar.gz \
-                       projects/my-project
+gsf install -r https://git.company.com/test.git \
+            -b main -t glpat-xxxxxXYvoxqPZw_5Kmyr \
+            artifactory.company.com/my-image:1.0.0 \
+            packages/some-other-package.tar.gz \
+            projects/my-project
 ```
 
 Specify multiple branches for installing:
 ```plantext
-$ gsf packages install -r https://git.company.com/test.git \
-                       -b main -b develop -b feature\DTWO-0000 \
-                       -t glpat-xxxxxXYvoxqPZw_5Kmyr \
-                       packages/my-gear@1.0.0
+gsf install -r https://git.company.com/test.git \
+            -b main -b develop -b feature\DTWO-0000 \
+            -t glpat-xxxxxXYvoxqPZw_5Kmyr \
+            packages/my-gear@1.0.0
 ```
 
 Passing extra parameters to api package during installation:
 ```plantext
-$ gsf packages install -r https://git.company.com/test.git \
-                       -b main -t glpat-xxxxxXYvoxqPZw_5Kmyr \
-                       --extra FIRST_VAR_NAME FIRST_VAR_VALUE no-masked \
-                       --extra PASSWORD Pa$$w0rd masked \
-                       packages/my-gear@1.0.0
+gsf install -r https://git.company.com/test.git \
+            -b main -t glpat-xxxxxXYvoxqPZw_5Kmyr \
+            --extra FIRST_VAR_NAME FIRST_VAR_VALUE no-masked \
+            --extra PASSWORD Pa$$w0rd masked \
+            packages/my-gear@1.0.0
 ```
 
 ## Advanced
@@ -122,23 +93,22 @@ You can work with private registries by providing authentication credentials.
 There are three ways to specify credentials, listed in order of priority: 
 
 1. Pass the credentials directly using `--registry-username` and `--registry-password`
-2. Credentials can be provided via stdin: `echo "<username>:<password>" | gsf install ...`
+2. Credentials can be provided via stdin: `echo "<username>:<password>" | gsf download ...`
 3. Set `GSF_REGISTRY_USERNAME` and `GSF_REGISTRY_PASSWORD` as environment variables
 4. If only username or only password has been provided then git-system-follower will request
 the rest of credentials using prompt (in interactive mode)
 
 If multiple methods are used, command-line parameters take precedence over stdin, and stdin takes precedence over environment variables.
 
-> \[!NOTE]
->
-> How it works internally: if you pass a string that contains `:`, 
-> then git-system-follower parse that string as username everything before that character, 
-> everything after it as password.
-> 
-> If this string doesn't contain `:` git-system-follower will try to unmask this string
-> using `base64` and will parse unmasked string again.
-> 
-> If `:` is not in the string again, git-system-follower recognizes the entire string as a passed password
+!!! info
+    How it works internally: if you pass a string that contains `:`, 
+    then git-system-follower parse that string as username everything before that character, 
+    everything after it as password.
+
+    If this string doesn't contain `:` git-system-follower will try to unmask this string
+    using `base64` and will parse unmasked string again.
+
+    If `:` is not in the string again, git-system-follower recognizes the entire string as a passed password
 
 #### Specific registry authentication
 Some registries, such as **AWS ECR**, introduce their own custom "enhancements" on top of the classic
@@ -148,14 +118,13 @@ and any additional authentication logic is left to the user or the orchestration
 
 For AWS ECR specifically, you can authenticate using the AWS CLI (after configuring your local AWS account) like so:
 ```bash
-$ aws ecr get-authorization-token --output text --query 'authorizationData[].authorizationToken' | gsf install ...
+aws ecr get-authorization-token --output text --query 'authorizationData[].authorizationToken' | gsf install ...
 ```
 
-> \[!NOTE]
->
-> AWS ECR does not use Bearer authentication. Instead, it relies on **Basic** authentication, 
-> where the **username** is literally `AWS`, and the **password** is a temporary token (which lasts for 12 hours) obtained 
-> via `aws ecr get-authorization-token`.
+!!! note
+    AWS ECR does not use Bearer authentication. Instead, it relies on **Basic** authentication, 
+    where the **username** is literally `AWS`, and the **password** is a temporary token (which lasts for 12 hours) obtained 
+    via `aws ecr get-authorization-token`.
 
 ### Carefully update/delete created resources
 git-system-follower provides an interface for creating file structure and creating CI/CD variables,

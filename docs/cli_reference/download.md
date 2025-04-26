@@ -1,35 +1,4 @@
 # download
-## Documentation
-1. [Docs Home](../docs_home.md)
-2. [Getting Started Guides](../getting_started.md) 
-   1. [Quickstart Guide](../getting_started/quickstart.md)
-   2. [Installation Guide](../getting_started/installation.md)
-3. [Concepts Guides](../concepts.md)  
-   1. [Gears Guide](../concepts/gears.md)
-   2. [apiVersion list](../concepts/api_version_list.md)
-      1. [apiVersion v1](../concepts/api_version_list/v1.md) 
-   3. [.state.yaml Guide](../concepts/state.md)
-   4. [Plugins Guide](../concepts/plugins.md)
-      1. [CLI Arguments Extension Point](../concepts/plugins/cli_arguments.md)
-4. [How-to Guides](../how_to.md)  
-   1. [Build Guide](../how_to/build.md)
-   2. [Gear Development Cases](../how_to/gear_development_cases.md)
-   3. [Integration with semantic-release](../how_to/integration_with_semantic_release.md)
-5. [CLI reference](../cli_reference.md) 
-   1. **[download](download.md)**
-   2. [install](install.md) 
-   3. [list](list.md)
-   4. [uninstall](uninstall.md)
-   5. [version](version.md)
-6. [API reference](../api_reference.md)  
-   1. [Develop interface](../api_reference/develop_interface.md)  
-      1. [types Module](../api_reference/develop_interface/types.md)
-      2. [cicd_variables Module](../api_reference/develop_interface/cicd_variables.md)
-      3. [templates Module](../api_reference/develop_interface/templates.md)
-
----
-
-Download gears
 
 Downloading all listed gears (docker images) and then finding the package layer in that image
 and saving it as `.tar.gz` file
@@ -58,9 +27,13 @@ gsf download --help
 ## Examples
 Downloading the package (for the first time)
 <!-- TODO: add an example of a package that will not be lost (released package). So that users can try it out -->
-```plaintext
-$ gsf packages download artifactory.company.com/my-image:1.0.0 -d packages
 
+```bash
+gsf download artifactory.company.com/my-image:1.0.0 -d packages
+```
+
+<div class="result" markdown>
+```plaintext
 [04:26:54.404] INFO     |
      .-,
   .^.: :.^.    ┏┓╻┳ ┏┓╻╻┏┓┳┏┓┏┳┓ ┏┓┏┓╻ ╻ ┏┓┏ ┓┏┓┳┓
@@ -85,11 +58,17 @@ $ gsf packages download artifactory.company.com/my-image:1.0.0 -d packages
 [04:26:55.461] SUCCESS  | Downloaded package from artifactory.company.com/my-image:1.0.0 to packages/my-gear@1.0.0.tar.gz
 [04:26:55.465] SUCCESS  | Download complete
 ```
+</div>
 
-Downloading package (next times)
+Downloading package (next times):
+
+```bash
+gsf download artifactory.company.com/my-image:1.0.0 -d packages
+```
+
+<div class="result" markdown>
+
 ```plaintext
-$ gsf packages download artifactory.company.com/my-image:1.0.0 -d packages
-
 [04:44:11.786] INFO     |
     .-,
  .^.: :.^.   ┏┓╻┳ ┏┓╻╻┏┓┳┏┓┏┳┓ ┏┓┏┓╻ ╻ ┏┓┏ ┓┏┓┳┓
@@ -109,6 +88,9 @@ $ gsf packages download artifactory.company.com/my-image:1.0.0 -d packages
 [04:44:11.789] INFO     | Package has already been downloaded to packages/my-gear@1.0.0.tar.gz from artifactory.company.com/my-image:1.0.0. Skip downloading
 [04:44:11.790] SUCCESS  | Download complete
 ```
+
+</div>
+
 The images don't download because the git-system-follower has remembered what it downloaded and 
 where it downloaded it to: it uses its `.git-system-follower/packages` directory and `.git-system-follower/image-package-map.json` file
 to map the image to the package directory it downloaded (see [Image-to-package mapping](#image-to-package-mapping))
@@ -127,16 +109,15 @@ the rest of credentials using prompt (in interactive mode)
 
 If multiple methods are used, command-line parameters take precedence over stdin, and stdin takes precedence over environment variables.
 
-> \[!NOTE]
->
-> How it works internally: if you pass a string that contains `:`, 
-> then git-system-follower parse that string as username everything before that character, 
-> everything after it as password.
-> 
-> If this string doesn't contain `:` git-system-follower will try to unmask this string
-> using `base64` and will parse unmasked string again.
-> 
-> If `:` is not in the string again, git-system-follower recognizes the entire string as a passed password
+!!! info
+    How it works internally: if you pass a string that contains `:`, 
+    then git-system-follower parse that string as username everything before that character, 
+    everything after it as password.
+
+    If this string doesn't contain `:` git-system-follower will try to unmask this string
+    using `base64` and will parse unmasked string again.
+
+    If `:` is not in the string again, git-system-follower recognizes the entire string as a passed password
 
 #### Specific registry authentication
 Some registries, such as **AWS ECR**, introduce their own custom "enhancements" on top of the classic
@@ -146,14 +127,13 @@ and any additional authentication logic is left to the user or the orchestration
 
 For AWS ECR specifically, you can authenticate using the AWS CLI (after configuring your local AWS account) like so:
 ```bash
-$ aws ecr get-authorization-token --output text --query 'authorizationData[].authorizationToken' | gsf download ...
+aws ecr get-authorization-token --output text --query 'authorizationData[].authorizationToken' | gsf download ...
 ```
 
-> \[!NOTE]
->
-> AWS ECR does not use Bearer authentication. Instead, it relies on **Basic** authentication, 
-> where the **username** is literally `AWS`, and the **password** is a temporary token (which lasts for 12 hours) obtained 
-> via `aws ecr get-authorization-token`.
+!!! note
+    AWS ECR does not use Bearer authentication. Instead, it relies on **Basic** authentication, 
+    where the **username** is literally `AWS`, and the **password** is a temporary token (which lasts for 12 hours) obtained 
+    via `aws ecr get-authorization-token`.
 
 ### Why docker is not a required
 When the git-system-follower downloads the docker image it doesn't need `docker` because we use the `oras` library

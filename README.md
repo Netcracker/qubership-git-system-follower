@@ -1,7 +1,7 @@
 <div align="center">
 <br />
 
-<img src="https://raw.githubusercontent.com/Netcracker/qubership-git-system-follower/master/logo.svg" alt="git-system-follower logo" width="100">
+<img src="https://raw.githubusercontent.com/Netcracker/qubership-git-system-follower/master/docs/assets/logo.svg" alt="git-system-follower logo" width="100">
 
 # git-system-follower
 **git-system-follower (gsf)** is a package manager for Git providers.

@@ -1,0 +1,123 @@
+# Project information
+site_name: git system-follower
+# site_url: https://Netcracker.github.io/qubership-git-system-follower
+site_author: Vladislav Kishkin
+site_description: The package manager for Git providers
+
+# Repository
+repo_url: https://github.com/Netcracker/qubership-git-system-follower
+repo_name: git-system-follower
+
+# Configuration
+theme:
+  name: material
+  logo: assets/logo.svg
+  favicon: assets/logo.svg
+  features:
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.instant.progress
+    - navigation.tracking
+    - navigation.sections
+    - navigation.indexes
+    - navigation.path
+    - toc.follow
+    - navigation.top
+    - navigation.footer
+    - content.code.copy
+    - content.code.select
+    - versioning
+  palette:
+    # Note: Using the system theme works with the insiders version
+    # https://squidfunk.github.io/mkdocs-material/setup/changing-the-colors/#automatic-light-dark-mode
+    - media: "(prefers-color-scheme)"
+      primary: black
+      accent: deep orange
+      toggle:
+        icon: material/lightbulb-auto
+        name: Switch to light mode
+
+    - media: "(prefers-color-scheme: light)"
+      primary: black
+      scheme: default
+      accent: deep orange
+      toggle:
+        icon: material/lightbulb
+        name: Switch to dark mode
+
+    - media: "(prefers-color-scheme: dark)"
+      primary: black
+      scheme: slate
+      accent: deep orange
+      toggle:
+        icon: material/lightbulb-outline
+        name: Switch to system preference
+
+# Additional configuration
+extra:
+  version:
+    provider: mike
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/Netcracker/qubership-git-system-follower
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/qubership-git-system-follower/
+
+# Extensions
+markdown_extensions:
+  - attr_list
+  - md_in_html
+  - admonition
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.details
+  - pymdownx.tabbed:
+        alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - def_list
+
+# Page tree
+nav:
+  - Intoduction: index.md
+  - Docs Home: home.md
+  - Getting Started:
+    - getting_started/index.md
+    - Quickstart: getting_started/quickstart.md
+    - Installation: getting_started/installation.md
+  - Concepts:
+    - concepts/index.md
+    - Gears Guide: concepts/gears.md
+    - apiVersion list: 
+      - concepts/api_version_list/index.md
+      - apiVersion v1: concepts/api_version_list/v1.md
+    - .state.yaml Guide: concepts/state.md
+    - Plugins Guide:
+      - concepts/plugins/index.md
+      - CLI Arguments Extension Point: concepts/plugins/cli_arguments.md
+      # - Versioning: concepts/plugins/versioning.md
+  - How to:
+    - how_to/index.md
+    - Build Gear: how_to/build.md
+    # - Gear Development Cases: how_to/gear_development_cases.md
+    # - Integration with semantic-release: how_to/semantic_release.md
+  - CLI reference:
+    - cli_reference/index.md
+    - download: cli_reference/download.md
+    - install: cli_reference/install.md
+    - list: cli_reference/list.md
+    - uninstall: cli_reference/uninstall.md
+    - version: cli_reference/version.md
+  - API reference: 
+    - api_reference/index.md
+    - Develop interface: 
+      - api_reference/develop_interface/index.md
+      - types Module: api_reference/develop_interface/types.md
+      - cicd_variables Module: api_reference/develop_interface/cicd_variables.md
+      - templates Module: api_reference/develop_interface/templates.md

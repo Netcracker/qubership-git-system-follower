@@ -1,34 +1,4 @@
 # Gears
-## Documentation
-1. [Docs Home](../docs_home.md)
-2. [Getting Started Guides](../getting_started.md) 
-   1. [Quickstart Guide](../getting_started/quickstart.md)
-   2. [Installation Guide](../getting_started/installation.md)
-3. [Concepts Guides](../concepts.md) 
-   1. **[Gears Guide](gears.md)**
-   2. [apiVersion list](api_version_list.md)
-      1. [apiVersion v1](api_version_list/v1.md) 
-   3. [.state.yaml Guide](state.md)
-   4. [Plugins Guide](plugins.md)
-      1. [CLI Arguments Extension Point](plugins/cli_arguments.md)
-4. [How-to Guides](../how_to.md)  
-   1. [Build Guide](../how_to/build.md)
-   2. [Gear Development Cases](../how_to/gear_development_cases.md)
-   3. [Integration with semantic-release](../how_to/integration_with_semantic_release.md)
-5. [CLI reference](../cli_reference.md) 
-   1. [download](../cli_reference/download.md)
-   2. [install](../cli_reference/install.md) 
-   3. [list](../cli_reference/list.md)
-   4. [uninstall](../cli_reference/uninstall.md)
-   5. [version](../cli_reference/version.md)
-6. [API reference](../api_reference.md)  
-   1. [Develop interface](../api_reference/develop_interface.md)  
-      1. [types Module](../api_reference/develop_interface/types.md)
-      2. [cicd_variables Module](../api_reference/develop_interface/cicd_variables.md)
-      3. [templates Module](../api_reference/develop_interface/templates.md)
-
----
-
 git-system-follower uses a packaging format called Gear. Gear is a collection of files describe the variables and structure of files in a repository.
 
 Gears are created as files laid out in a particular directory tree. They can be packaged into archives, docker images/OCI artifacts.
@@ -61,7 +31,7 @@ Every Gears must have a version number. A version must follow TBD
 ### The `apiVersion` field
 `apiVersion` field allows git-system-follower to understand which version of this Gear
 
-You can check [available `apiVersion` list](api_version_list.md)
+You can check [available `apiVersion` list](api_version_list/index.md)
 
 ### The `type` field
 `type` field allows git-system-follower to understand how work with this Gear
@@ -96,6 +66,7 @@ scripts/
 
 ### python scripts
 scripts are used for different scenarios:
+
 1. git-system-follower uses `init.py` for initialization in the repository.
 2. git-system-follower uses `delete.py` for deletion in the repository.
 3. git-system-follower uses `update.py` to update in the repository.
@@ -110,7 +81,7 @@ from git_system_follower.develop.api.cicd_variables import CICDVariable, create_
 from git_system_follower.develop.api.templates import create_template
 ```
 
-For more details on how to develop your package api, see [API reference](../api_reference.md)
+For more details on how to develop your package api, see [API reference](../api_reference/index.md)
 
 If you don't want to work with CI/CD variables, but only to create template(s), 
 you may not create init.py, delete.py, default functions will be used for them.
@@ -135,6 +106,7 @@ def main(parameters: Parameters):
     create_template(parameters, template, variables)
 ```
 this default checks for the presence of templates:
+
 1. if there are no templates, it will generate an error,
 2. if there is one template, it will apply it,
 3. if there is more than one template, a `TEMPLATE` variable is needed so that git-system-follower can figure out which template to apply.
@@ -205,11 +177,13 @@ git-system-follower sequentially installs all version that stand between version
 B is version we want to upgrade to
 
 Example:
+
 * `1.0.0` version installed
 * We want to install `1.4.0` version
 * There are five version between them: `1.1.0`, `1.2.0`, `1.2.1`, `1.2.2`, `1.3.0`
 
 In this case, the update will be as follows: 
+
 1. use `update.py` of `1.1.0` version
 2. use `update.py` of `1.2.0` version
 3. use `update.py` of `1.2.1` version

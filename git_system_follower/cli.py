@@ -328,7 +328,7 @@ def version_command():
 
 
 @click.group()
-@click.version_option(__version__)
+@click.version_option(__version__, message='%(version)s')
 def cli():
     """ The package manager for Git providers. """
 

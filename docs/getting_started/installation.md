@@ -110,14 +110,13 @@ Enter into the virtual environment where you have git-system-follower installed.
 
 === "Fish"
 
-    1. Generate and save script:  
+    1. Via completions file:  
         Save the script to `~/.config/fish/completions/gsf.fish`:
         ```bash
         _GSF_COMPLETE=fish_source gsf > ~/.config/fish/completions/gsf.fish
-        . ~/.gsf-complete.zsh
         ```
 
-    2. Single script:  
+    2. Via source command:  
         However, there is another way.
         Add this to `~/.config/fish/completions/gsf.fish`: 
         ```bash

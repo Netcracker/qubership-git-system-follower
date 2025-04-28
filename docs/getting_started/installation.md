@@ -60,7 +60,7 @@ pip install -e git-system-follower/
 ### Enabling shell autocompletion
 git-system-follower supports command autocompletion in `Bash`, `Zsh`, and `Fish`, which will save you a lot of time when typing commands.
 
-Enter into the environment where you have gsf installed. If you used `uv tool install` to install, you do not need to enter in anywhere, gsf commands are available in your system
+Enter into the virtual environment where you have git-system-follower installed. If you used `uv tool install` to install, you do not need to enter in anywhere, git-system-follower commands are available in your system
 
 === "Bash"
 
@@ -117,7 +117,7 @@ Enter into the environment where you have gsf installed. If you used `uv tool in
         . ~/.gsf-complete.zsh
         ```
 
-    2. Via `eval`:  
+    2. Single script:  
         However, there is another way.
         Add this to `~/.config/fish/completions/gsf.fish`: 
         ```bash

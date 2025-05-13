@@ -17,9 +17,11 @@ import logging
 from colorama import init
 
 from git_system_follower.variables import ROOT_DIR
-from git_system_follower.utils.logger import SUCCESS_LEVEL_NUM, SUCCESS_LEVEL_NAME
-from git_system_follower.utils.logger import (get_stream_handler, get_file_handler, success,
-                                              disable_info_for_other_loggers)
+from git_system_follower.utils.logger import (
+    SUCCESS_LEVEL_NUM, SUCCESS_LEVEL_NAME,
+    get_stream_handler, get_file_handler, success, disable_info_for_other_loggers,
+    ColoredFormatter, SHORT_DEBUG_FORMAT, SHORT_DEBUG_DATE_FORMAT, SHORT_FORMAT, SHORT_DATE_FORMAT
+)
 
 
 __all__ = ['LOG_FILE_PATH', 'logger', 'set_level']
@@ -52,5 +54,9 @@ logger = _get_logger('root')
 
 
 def set_level(is_debug: bool) -> None:
-    level = logging.DEBUG if is_debug else logging.INFO
+    level, fmt, datefmt = logging.INFO, SHORT_FORMAT, SHORT_DATE_FORMAT
+    if is_debug:
+        level, fmt, datefmt = logging.DEBUG, SHORT_DEBUG_FORMAT, SHORT_DEBUG_DATE_FORMAT
+
     logger.handlers[0].setLevel(level=level)  # set level only for stream handler
+    logger.handlers[0].setFormatter(ColoredFormatter(fmt=fmt, datefmt=datefmt))

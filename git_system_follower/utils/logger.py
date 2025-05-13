@@ -19,13 +19,21 @@ import click
 from colorama import Fore, Style
 
 
+# for banner + print_params
+NO_FORMAT = '%(message)s'
+NO_DATE_FORMAT = ''
+
 # for stdout
-_SHORT_FORMAT = '[%(asctime)s.%(msecs)03d] %(levelname)-18s | %(message)s'
-_SHORT_DATE_FORMAT = '%H:%M:%S'
+SHORT_FORMAT = f'{Fore.CYAN}%(asctime)s.%(msecs)03d{Fore.RESET} %(message)s'
+SHORT_DATE_FORMAT = '%M:%S'
+
+# for debug stdout
+SHORT_DEBUG_FORMAT = f'{Fore.CYAN}%(asctime)s.%(msecs)03d{Fore.RESET} %(levelname)-18s | %(message)s'
+SHORT_DEBUG_DATE_FORMAT = '%M:%S'
 
 # for log file
-_FORMAT = '[%(asctime)s.%(msecs)03d] %(levelname)-8s | %(filename)s:%(funcName)s:%(lineno)d - %(message)s'
-_DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
+FORMAT = '[%(asctime)s.%(msecs)03d] %(levelname)-8s | %(filename)s:%(funcName)s:%(lineno)d - %(message)s'
+DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 # New logging level
 SUCCESS_LEVEL_NUM = 25
@@ -61,7 +69,7 @@ class RemoveColorFilter(logging.Filter):
         return True
 
 
-file_formatter = logging.Formatter(fmt=_FORMAT, datefmt=_DATE_FORMAT)
+file_formatter = logging.Formatter(fmt=FORMAT, datefmt=DATE_FORMAT)
 
 
 def disable_info_for_other_loggers(names: list[str]) -> None:
@@ -73,7 +81,7 @@ def disable_info_for_other_loggers(names: list[str]) -> None:
 def get_stream_handler() -> logging.StreamHandler:
     handler = logging.StreamHandler()
     handler.setLevel(level=logging.INFO)
-    handler.setFormatter(ColoredFormatter(fmt=_SHORT_FORMAT, datefmt=_SHORT_DATE_FORMAT))
+    handler.setFormatter(ColoredFormatter(fmt=NO_FORMAT, datefmt=NO_DATE_FORMAT))
     return handler
 
 

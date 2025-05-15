@@ -276,12 +276,11 @@ def get_installed_packages(states: dict[str, StateFile]) -> set[PackageCLI]:
 
 
 def update_created_cicd_variables(
-        created_cicd_variables: list[str], response: ScriptResponse
-) -> list[str]:
-    response_variables = response['cicd_variables'] if response is not None else []
-    for variable in response_variables:
-        created_cicd_variables.append(variable['name'])
-    return created_cicd_variables
+        created_cicd_variables: tuple[str, ...], response: ScriptResponse | None
+) -> tuple[str, ...]:
+    if response is None:
+        return created_cicd_variables
+    return created_cicd_variables + tuple(variable['name'] for variable in response['cicd_variables'])
 
 
 def mask_data(data: str) -> str:

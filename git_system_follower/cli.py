@@ -15,6 +15,8 @@
 from pathlib import Path
 
 import click
+from outlify.panel import ParamsPanel
+from outlify.style import Styles, Colors
 
 from git_system_follower.logger import logger, set_level
 from git_system_follower.errors import CLIParamsError
@@ -22,7 +24,7 @@ from git_system_follower.plugins.cli.packages.specs import HookSpec
 from git_system_follower.typings.cli import ExtraParam
 from git_system_follower.typings.registry import RegistryTypes, RegistryInfo
 from git_system_follower.utils.cli import Package, ExtraParamTuple, resolve_credentials, add_options, get_gears
-from git_system_follower.utils.output import banner, print_params
+from git_system_follower.utils.output import banner, print_params, CustomColors
 from git_system_follower.git_api.utils import get_config
 from git_system_follower.download import download
 from git_system_follower.install import install
@@ -79,7 +81,7 @@ def download_command(
     """
     credentials = resolve_credentials(registry_username, registry_password)
     banner(version=__version__, output_func=logger.info)
-    print_params({
+    params = {
         'gears': ', '.join([str(gear) for gear in gears]),
         'directory': directory.absolute(),
         'registry-type': registry_type,
@@ -87,7 +89,14 @@ def download_command(
         'registry-password': credentials.password if credentials is not None else '',
         'insecure-registry': is_insecure,
         'debug': is_debug
-    }, 'Start parameters', hidden_params=('token', 'registry-password'), output_func=logger.info)
+    }
+    logger.info(ParamsPanel(
+        params, width=80, hidden=('token', 'registry-password'), params_style=[Styles.bold],
+        title='Start parameters', title_style=[Styles.bold, CustomColors.branded],
+        subtitle='Adjust with command-line arguments', subtitle_style=[Styles.dim, CustomColors.branded],
+        border='╭╮╰╯═', border_style=[CustomColors.branded]
+    ))
+    exit()
     if gears == ():
         raise CLIParamsError('Gears for downloading are not specified')
     set_level(is_debug)

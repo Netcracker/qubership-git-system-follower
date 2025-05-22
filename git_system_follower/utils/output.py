@@ -19,7 +19,7 @@ import textwrap
 from git_system_follower.typings.package import PackageLocalData
 
 
-__all__ = ['print_params', 'print_list', 'banner', 'print_dependency_tree_one_level']
+__all__ = ['print_params', 'print_list', 'banner', 'print_dependency_tree_one_level', 'CustomColors']
 
 
 WIDTH = 100
@@ -76,16 +76,23 @@ def print_list(
         content += f':\n{textwrap.fill(elements_content, width)}'
     output_func(content)
 
+from outlify.style import AnsiCodes, Styles
+
+
+class CustomAnsiColorsCodes(AnsiCodes):
+    branded = '38;2;244;81;30'
+
+CustomColors = CustomAnsiColorsCodes()
 
 def banner(version: str, *, output_func: Callable = print):
     # This logo is colored #F4511E
     content = f"""
-    \033[38;2;244;81;30m.-,\033[0m
- \033[38;2;244;81;30m.^.: :.^.\033[0m   ┏┓╻┳ ┏┓╻╻┏┓┳┏┓┏┳┓ ┏┓┏┓╻ ╻ ┏┓┏ ┓┏┓┳┓
-\033[38;2;244;81;30m,-' .-. '-,\033[0m  ┃┓┃┃ ┗┓┗┃┗┓┃┣ ┃┃┃ ┣ ┃┃┃ ┃ ┃┃┃┃┃┣ ┣┛
-\033[38;2;244;81;30m'-. '-' .-'\033[0m  ┗┛╹╹ ┗┛┗┛┗┛╹┗┛╹ ╹ ╹ ┗┛┗┛┗┛┗┛┗┻┛┗┛┛┗
- \033[38;2;244;81;30m'.`; ;`.'\033[0m   git-system-follower v{version}
-    \033[38;2;244;81;30m`-`\033[0m"""
+    {CustomColors.branded}.-,{Styles.reset}
+ {CustomColors.branded}.^.: :.^.{Styles.reset}   ┏┓╻┳ ┏┓╻╻┏┓┳┏┓┏┳┓ ┏┓┏┓╻ ╻ ┏┓┏ ┓┏┓┳┓
+{CustomColors.branded},-' .-. '-,{Styles.reset}  ┃┓┃┃ ┗┓┗┃┗┓┃┣ ┃┃┃ ┣ ┃┃┃ ┃ ┃┃┃┃┃┣ ┣┛
+{CustomColors.branded}'-. '-' .-'{Styles.reset}  ┗┛╹╹ ┗┛┗┛┗┛╹┗┛╹ ╹ ╹ ┗┛┗┛┗┛┗┛┗┻┛┗┛┛┗
+ {CustomColors.branded}'.`; ;`.'{Styles.reset}   git-system-follower v{version}
+    {CustomColors.branded}`-`{Styles.reset}"""
     output_func(content)
 
 

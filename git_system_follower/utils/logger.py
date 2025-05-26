@@ -25,11 +25,11 @@ NO_DATE_FORMAT = ''
 
 # for stdout
 SHORT_FORMAT = f'{Fore.CYAN}%(asctime)s.%(msecs)03d{Fore.RESET} %(message)s'
-SHORT_DATE_FORMAT = '%M:%S'
+SHORT_DATE_FORMAT = '%H:%M:%S'
 
 # for debug stdout
 SHORT_DEBUG_FORMAT = f'{Fore.CYAN}%(asctime)s.%(msecs)03d{Fore.RESET} %(levelname)-18s | %(message)s'
-SHORT_DEBUG_DATE_FORMAT = '%M:%S'
+SHORT_DEBUG_DATE_FORMAT = '%H:%M:%S'
 
 # for log file
 FORMAT = '[%(asctime)s.%(msecs)03d] %(levelname)-8s | %(filename)s:%(funcName)s:%(lineno)d - %(message)s'

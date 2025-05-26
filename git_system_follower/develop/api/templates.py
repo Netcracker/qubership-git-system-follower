@@ -99,7 +99,7 @@ def update_template(
     variables = __update_template_variables(variables)
     __create_template(
         system_params.script_dir, parameters.used_template, parameters.workdir,
-        variables=variables, is_force=is_force
+        variables=variables, is_force=is_force, current_version_dir=parameters.current_version_dir
     )
 
 
@@ -141,7 +141,7 @@ def __add_info_about_template(template: str, variables: dict[str, str]) -> None:
         json.dump(content, file)
 
 
-def __update_template_variables(variables: dict[str, str]) -> dict[str, str]:
+def __update_template_variables(variables: dict[str, str] | None) -> dict[str, str]:
     with open(__PACKAGE_API_RESULT, 'r') as file:
         content = json.load(file)
     template_variables = content['template_variables'].copy()

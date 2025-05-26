@@ -22,7 +22,6 @@ from cookiecutter.main import cookiecutter
 from git_system_follower.logger import logger
 from git_system_follower.errors import PackageApiError
 from git_system_follower.utils.tmpdir import tempdir, multi_tempdirs
-from git_system_follower.develop.api.types import Parameters
 
 
 __all__ = ['get_template_names', 'create_template', 'delete_template']

@@ -80,12 +80,11 @@ from outlify.style import AnsiCodes, Styles
 
 
 class CustomAnsiColorsCodes(AnsiCodes):
-    branded = '38;2;244;81;30'
+    branded = '38;2;244;81;30'  # color: #F4511E
 
 CustomColors = CustomAnsiColorsCodes()
 
 def banner(version: str, *, output_func: Callable = print):
-    # This logo is colored #F4511E
     content = f"""
     {CustomColors.branded}.-,{Styles.reset}
  {CustomColors.branded}.^.: :.^.{Styles.reset}   ┏┓╻┳ ┏┓╻╻┏┓┳┏┓┏┳┓ ┏┓┏┓╻ ╻ ┏┓┏ ┓┏┓┳┓

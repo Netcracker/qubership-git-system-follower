@@ -44,7 +44,8 @@ def run_script(
         path: Path, workdir: Path, project: Project, all_cicd_variables: dict[str, CICDVariable],
         used_template: str | None, *,
         extras: tuple[ExtraParam, ...], is_force: bool, state: PackageState | None = None,
-        created_cicd_variables: tuple[str, ...]
+        created_cicd_variables: tuple[str, ...],
+        current_version_dir: Path = None
 ) -> ScriptResponse:
     """ Run script (package api): init/update/delete
 
@@ -69,7 +70,8 @@ def run_script(
         cicd_variables={variable['name']: variable for variable in cicd_variables},
         all_cicd_variables=all_cicd_variables, created_cicd_vars_in_other_pkgs=created_cicd_vars_in_other_pkgs,
         extras=extras, is_force=is_force,
-        default=default_package_api
+        default=default_package_api,
+        current_version_dir=current_version_dir
     )
     return response
 
@@ -152,7 +154,8 @@ def execute_package_api(
         module,
         template_variables: dict[str, str],
         cicd_variables: dict[str, CICDVariable], all_cicd_variables: dict[str, CICDVariable],
-        created_cicd_vars_in_other_pkgs: list[str], extras: tuple[ExtraParam, ...], is_force: bool
+        created_cicd_vars_in_other_pkgs: list[str], extras: tuple[ExtraParam, ...], is_force: bool,
+        current_version_dir: Path = None
 ) -> ScriptResponse:
     with open(PACKAGE_API_RESULT, 'w') as file:
         json.dump({
@@ -176,7 +179,8 @@ def execute_package_api(
         cicd_variables=cicd_variables,
         all_cicd_variables=all_cicd_variables,
         used_template=used_template,
-        template_variables=template_variables
+        template_variables=template_variables,
+        current_version_dir=current_version_dir
     )
     module.main(params)
 

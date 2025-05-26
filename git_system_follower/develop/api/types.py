@@ -15,6 +15,7 @@
 """ Module with api with types for package developers  """
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional
 
 from gitlab.v4.objects import Project
 
@@ -59,3 +60,4 @@ class Parameters:
     all_cicd_variables: CICDVariables
     used_template: str
     template_variables: dict[str, str]
+    current_version_dir: Optional[Path]

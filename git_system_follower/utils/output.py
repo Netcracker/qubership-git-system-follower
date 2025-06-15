@@ -13,8 +13,7 @@
 # limitations under the License.
 
 """ Module with output info related utils """
-from typing import Iterable, Callable, Sequence
-import textwrap
+from typing import Iterable, Callable
 
 from outlify.style import AnsiCodes, Colors, Styles
 

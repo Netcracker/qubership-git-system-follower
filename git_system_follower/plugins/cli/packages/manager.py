@@ -16,13 +16,13 @@ import importlib.metadata
 
 import pluggy
 import click
+from outlify.list import TitledList
 
 from git_system_follower.logger import logger
 from git_system_follower.errors import ParsePackageNameError, InvalidPlugin
 from git_system_follower.plugins.cli.packages import NAME
 from git_system_follower.plugins.cli.packages.specs import HookSpec
 from git_system_follower.plugins.cli.packages.default import SourcePlugin, TarGzPlugin, ImagePlugin
-from git_system_follower.utils.output import print_list
 
 
 def validate_hooks(method):
@@ -59,11 +59,10 @@ class PluginManager:
             self.register(plugin())
             plugins.append(plugin)
 
-        print_list(
-            plugins,
-            f'Loaded plugins for input package processing ({self.group})',
-            key=lambda p: p.__name__, output_func=logger.debug
-        )
+        logger.info(TitledList(
+            [plugin.__name__ for plugin in plugins],
+            title=f'Loaded plugins for input package processing ({self.group})'
+        ))
         return plugins
 
     def _load_entry_points_plugins(self) -> list[object]:

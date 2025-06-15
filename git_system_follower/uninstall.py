@@ -32,7 +32,6 @@ from git_system_follower.git_api.gitlab_api import (
 from git_system_follower.git_api.git_api import checkout_to_new_branch, push_installed_packages
 from git_system_follower.git_api.utils import get_packages_str, get_git_repo
 from git_system_follower.typings.repository import RepositoryInfo
-from git_system_follower.utils.output import print_list
 from git_system_follower.utils.retry import retry
 from git_system_follower.states import (
     ChangeStatus, PackageState, StateFile,

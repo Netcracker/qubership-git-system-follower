@@ -21,7 +21,7 @@ from outlify.style import AnsiCodes, Colors, Styles
 from git_system_follower.typings.package import PackageLocalData
 
 
-__all__ = ['print_list', 'BrandedColors', 'COMMON_SETTINGS', 'banner', 'print_dependency_tree_one_level']
+__all__ = ['BrandedColors', 'COMMON_SETTINGS', 'banner', 'print_dependency_tree_one_level']
 
 
 WIDTH = 100
@@ -51,26 +51,6 @@ def banner(version: str, *, output_func: Callable = print):
 {BrandedColors.orange}'-. '-' .-'{Colors.reset}  ┗┛╹╹ ┗┛┗┛┗┛╹┗┛╹ ╹ ╹ ┗┛┗┛┗┛┗┛┗┻┛┗┛┛┗
  {BrandedColors.orange}'.`; ;`.'{Colors.reset}   {Colors.white}{Styles.bold}git-system-follower{Styles.reset} v{version}
     {BrandedColors.orange}`-`{Colors.reset}"""
-    output_func(content)
-
-
-def print_list(
-        elements: Sequence, title: str, width: int = WIDTH, *,
-        key: Callable, output_func: Callable = print
-) -> None:
-    """ Print the list by filtering the information from the list using the function
-
-    :param elements: value as dict: key/value
-    :param title: list's title
-    :param width: text content width
-    :param key: function for filtering the information from the list
-    :param output_func: output function
-    (e.g. key=lambda package: f"{package['name']}@{package['version']}")
-    """
-    content = f'{title} ({len(elements)})'
-    if len(elements) != 0:
-        elements_content = '  '.join([key(elem) for elem in elements])
-        content += f':\n{textwrap.fill(elements_content, width)}'
     output_func(content)
 
 

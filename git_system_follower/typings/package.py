@@ -39,6 +39,10 @@ class PackageData(TypedDict):
 
     dependencies: tuple[PackageCLI | PackageCLIImage | PackageCLITarGz | PackageCLISource, ...]
 
+    # TODO: refactoring: replace TypedDict with dataclass and use this method
+    # def __str__(self):
+    #     return f"{self['name']}@{self['version']}"
+
 
 class PackageLocalData(PackageData):
     """ Class for type hinting for python code: data from package.yaml with local data """

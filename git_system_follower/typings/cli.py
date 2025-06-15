@@ -87,6 +87,9 @@ class ExtraParam(NamedTuple):
     value: str
     masked: bool
 
+    def __str__(self):
+        return f"{self.name}={'*****' if self.masked else self.value}"
+
 
 class Credentials(NamedTuple):
     username: str

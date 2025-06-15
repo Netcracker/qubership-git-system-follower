@@ -16,6 +16,7 @@
 from pathlib import Path
 
 from gitlab.v4.objects import Project
+from outlify.list import TitledList
 
 from git_system_follower.logger import logger
 from git_system_follower.errors import UninstallationError
@@ -58,15 +59,19 @@ def uninstall(
     if not packages:
         logger.info('No packages of these versions found in state file')
         return
-    print_list(packages, title='Packages', output_func=logger.info,
-               key=lambda package: f"{package['name']}@{package['version']}")
+    logger.info(TitledList(
+        [f"{package['name']}@{package['version']}" for package in packages],
+        title='Packages'
+    ))
     logger.info('Processing branches')
     for i, branch in enumerate(branches, 1):
         logger.info(f'[{i}/{len(branches)}] Processing {branch} branch')
         logger.debug(f'Current state in {branch} branch:\n{states[branch]}')
         validated_packages = validate_packages_dependencies(packages, states[branch])
-        print_list(validated_packages, title=f'Uninstallation packages in {branch} branch', output_func=logger.info,
-                   key=lambda package: f"{package['name']}@{package['version']}")
+        logger.info(TitledList(
+            [f"{package['name']}@{package['version']}" for package in validated_packages],
+            title=f'Uninstallation packages in {branch} branch'
+        ))
         if not validated_packages:
             logger.info(f'There are no packages to delete. Skip deletion for {branch} branch')
             continue

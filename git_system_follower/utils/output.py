@@ -13,48 +13,45 @@
 # limitations under the License.
 
 """ Module with output info related utils """
-from typing import Mapping, Iterable, Callable, Sequence
+from typing import Iterable, Callable, Sequence
 import textwrap
+
+from outlify.style import AnsiCodes, Colors, Styles
 
 from git_system_follower.typings.package import PackageLocalData
 
 
-__all__ = ['print_params', 'print_list', 'banner', 'print_dependency_tree_one_level']
+__all__ = ['print_list', 'BrandedColors', 'COMMON_SETTINGS', 'banner', 'print_dependency_tree_one_level']
 
 
 WIDTH = 100
 
 
-def print_params(
-        params: Mapping, title='', width: int = WIDTH,
-        hidden_params: Iterable = (), *,
-        output_func: Callable = print
-) -> None:
-    """ Print parameters as "window" from value as dict
+class BrandedAnsiCodes(AnsiCodes):
+    orange = (38, 2, 244, 81, 30)  # color: #F4511E
 
-    :param params: value as dict: key/value
-    :param title: window's title
-    :param width: parameters window width
-    :param hidden_params: list of <params> keys to hide
-    :param output_func: output function
-    """
-    width = width - 2  # subtract the sides
-    max_length_param = len(max(params.keys(), key=lambda x: len(x)))
 
-    content = f'\n{_get_header(title, width=width)}\n'
-    for key, value in params.items():
-        param = key.ljust(max_length_param)
-        if key in hidden_params:
-            value = '*****' if value else ''
-        content += f'  {param} = {value}\n'
-    content += f"╰{'═' * width}╯"
+BrandedColors = BrandedAnsiCodes()
+COMMON_SETTINGS = {
+    'width': 100,
+    'title_style': [Colors.white],
+    'title_align': 'left',
+    'subtitle_style': [Colors.gray],
+    'subtitle_align': 'right',
+    'border': '╭╮╰╯═',
+    'border_style': [Colors.gray],
+}
+
+
+def banner(version: str, *, output_func: Callable = print):
+    content = f"""
+    {BrandedColors.orange}.-,{Colors.reset}
+ {BrandedColors.orange}.^.: :.^.{Colors.reset}   ┏┓╻┳ ┏┓╻╻┏┓┳┏┓┏┳┓ ┏┓┏┓╻ ╻ ┏┓┏ ┓┏┓┳┓
+{BrandedColors.orange},-' .-. '-,{Colors.reset}  ┃┓┃┃ ┗┓┗┃┗┓┃┣ ┃┃┃ ┣ ┃┃┃ ┃ ┃┃┃┃┃┣ ┣┛
+{BrandedColors.orange}'-. '-' .-'{Colors.reset}  ┗┛╹╹ ┗┛┗┛┗┛╹┗┛╹ ╹ ╹ ┗┛┗┛┗┛┗┛┗┻┛┗┛┛┗
+ {BrandedColors.orange}'.`; ;`.'{Colors.reset}   {Colors.white}{Styles.bold}git-system-follower{Styles.reset} v{version}
+    {BrandedColors.orange}`-`{Colors.reset}"""
     output_func(content)
-
-
-def _get_header(title: str, *, width: int) -> str:
-    title = f' {title} ' if title != '' else ''
-    header = title.center(width, '═')
-    return f'╭{header}╮'
 
 
 def print_list(
@@ -74,18 +71,6 @@ def print_list(
     if len(elements) != 0:
         elements_content = '  '.join([key(elem) for elem in elements])
         content += f':\n{textwrap.fill(elements_content, width)}'
-    output_func(content)
-
-
-def banner(version: str, *, output_func: Callable = print):
-    # This logo is colored #F4511E
-    content = f"""
-    \033[38;2;244;81;30m.-,\033[0m
- \033[38;2;244;81;30m.^.: :.^.\033[0m   ┏┓╻┳ ┏┓╻╻┏┓┳┏┓┏┳┓ ┏┓┏┓╻ ╻ ┏┓┏ ┓┏┓┳┓
-\033[38;2;244;81;30m,-' .-. '-,\033[0m  ┃┓┃┃ ┗┓┗┃┗┓┃┣ ┃┃┃ ┣ ┃┃┃ ┃ ┃┃┃┃┃┣ ┣┛
-\033[38;2;244;81;30m'-. '-' .-'\033[0m  ┗┛╹╹ ┗┛┗┛┗┛╹┗┛╹ ╹ ╹ ┗┛┗┛┗┛┗┛┗┻┛┗┛┛┗
- \033[38;2;244;81;30m'.`; ;`.'\033[0m   git-system-follower v{version}
-    \033[38;2;244;81;30m`-`\033[0m"""
     output_func(content)
 
 

@@ -59,7 +59,7 @@ class PluginManager:
             self.register(plugin())
             plugins.append(plugin)
 
-        logger.info(TitledList(
+        logger.debug(TitledList(
             [plugin.__name__ for plugin in plugins],
             title=f'Loaded plugins for input package processing ({self.group})'
         ))

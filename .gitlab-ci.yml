@@ -1,0 +1,14 @@
+default:
+  tags:
+    - ${TAG}
+
+
+stages:
+  - lint
+
+
+lint:
+  image: ${DOCKER_REGISTRY}/astral-sh/ruff:0.11.13-alpine
+  stage: lint
+  script:
+    - ruff check --output-format full .

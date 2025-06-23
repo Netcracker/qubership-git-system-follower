@@ -20,6 +20,7 @@ from gitlab.v4.objects import Project
 
 from git_system_follower.logger import logger
 from git_system_follower.errors import InstallationError, PackageNotFoundError, PackageNamePolicyError
+from git_system_follower.package.package_info import get_gear_info
 from git_system_follower.typings.cli import (
     PackageCLI, PackageCLIImage, PackageCLITarGz, PackageCLISource, ExtraParam
 )
@@ -207,7 +208,12 @@ def install_packages(
                 package, packages.rollback, repo, package_state,
                 created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force
             )
-            state.add_package(package, response, package_state)
+            if package_state is not None and 'structure_type' in package_state:
+                state.add_package(package, response, package_state, structure_type=package_state['structure_type'])
+            else:
+                state.add_package(
+                    package, response, package_state, structure_type=get_gear_info(package['path'])['structure_type']
+                )
             created_cicd_variables = update_created_cicd_variables(created_cicd_variables, response)
         except Exception:
             logger.critical(f"An error came out at one stage of installation. "
@@ -245,9 +251,15 @@ def install_package(
     if state_version < package_version:
         logger.debug(f"Installation version is higher the version installed in the repository "
                      f"({package['version']} > {state['version']}). Update version")
-        response = update(
-            package, repo, state, created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force
-        )
+        gear_info = get_gear_info(package['path'], state=state)
+        if gear_info['structure_type'] == 'simple':
+            response = init(
+                package, repo, created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force
+            )
+        elif gear_info['structure_type'] == 'complex':
+            response = update(
+                package, repo, state, created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force
+            )
         return response
 
     logger.debug(f"Installation version is lower the version installed in the repository "

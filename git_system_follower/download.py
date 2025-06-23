@@ -43,7 +43,8 @@ from git_system_follower.typings.registry import RegistryTypes, RegistryInfo
 from git_system_follower.plugins.cli.packages.default import TarGzPlugin
 from git_system_follower.typings.package import PackageLocalData
 from git_system_follower.package.package_info import (
-    DESCRIPTION_FILENAME, get_package_info, check_dependency_depth, add_dependencies
+    DESCRIPTION_FILENAME, get_package_info, check_dependency_depth, add_dependencies,
+    get_gear_info
 )
 from git_system_follower.utils.tmpdir import tempdir
 
@@ -353,6 +354,10 @@ def download(
         data['dependencies'] = tuple(fixed_dependency_names)
         result.append(data)
         result = add_dependencies(result, dependencies_data, is_deps_first)
+        logger.info(
+            f"{data['name']}@{data['version']} package is "
+            f"of {get_gear_info(data['path'])['structure_type']} structure type"
+        )
 
     if dependency_level == 0:
         logger.success('Download complete')

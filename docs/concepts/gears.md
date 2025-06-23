@@ -46,23 +46,61 @@ One gear may depend on any number of other gears. To add a dependency, it must b
 
 
 ### `scripts/` file structure
-The file structure contains version directories with python scripts and cookiecutter templates
-```text
-scripts/
-├─ <version>/
-│  ├─ delete.py
-│  ├─ init.py
-│  ├─ update.py
-│  └─ templates/
-│     ├─ <template>/
-│     │  ├─ cookiecutter.json
-│     │  └─ {{ cookiecutter.gsf_repository_name }}/
-│     │     └─ <template files>
-│     └─ <other template>
-│        └─ ...
-└─ <next version>/
-   └─ ...
-```
+
+The file structure contains python scripts and cookiecutter templates
+
+Depending on how you plan to manage changes to your package over time, you can choose between two kinds of gears.
+
+This distinction helps git-system-follower auto-determine how to apply updates and structure templates—whether with version-aware migrations or a simpler one-time setup by maintaining in `.state.yaml` file.
+
+1. Complex (Multiple Versions)
+
+    - Supports complex migrations between versions.
+    -  Preferred for long-term maintainability and extensibility.
+    - Uses a versioned directory structure under `scripts/`.
+    - Relies on `update.py` scripts for upgrades between versions.
+
+    ```text
+    scripts/
+    ├─ <version>/
+    │  ├─ delete.py
+    │  ├─ init.py
+    │  ├─ update.py
+    │  └─ templates/
+    │     ├─ <template>/
+    │     │  ├─ cookiecutter.json
+    │     │  └─ {{ cookiecutter.gsf_repository_name }}/
+    │     │     └─ <template files>
+    │     └─ <other template>
+    │        └─ ...
+    └─ <next version>/
+      └─ ...
+    ```
+
+2. Simple (Single Version)
+    
+    - Uses a non-versioned structure.
+    - Only supports a single version of the gear.
+    - Relies on `init.py` scripts with `--force` flag for upgrades between versions.
+
+    ```text
+    scripts/
+    ├─ delete.py
+    ├─ init.py
+    └─ templates/
+       ├─ <template>/
+       │  ├─ cookiecutter.json
+       │  └─ {{ cookiecutter.gsf_repository_name }}/
+       │     └─ <template files>
+       └─ <other template>
+          └─ ...
+    ```
+
+!!! tip
+    Complex gears evolve over time and benefit from controlled versioned updates.
+
+!!! warning
+    Simple gears shouldn't be installed on complex gear setups, and vice-versa. Mixing types is unsupported and may cause issues.
 
 ### python scripts
 scripts are used for different scenarios:

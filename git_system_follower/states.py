@@ -55,6 +55,7 @@ class PackageState(TypedDict):
     template_variables: dict[str, str]
     last_update: str
     dependencies: list[str]
+    structure_type: str
     cicd_variables: CICDVariablesSection
 
 
@@ -183,13 +184,15 @@ class StateFile:
                 return state
 
     def add_package(
-            self, package: PackageLocalData, response: ScriptResponse | None, state: PackageState | None
+            self, package: PackageLocalData, response: ScriptResponse | None, state: PackageState | None,
+            structure_type: str | None = None
     ) -> None:
         """ Add package to state file
 
         :param package: package which need to add to state file
         :param response: script response with information about used template, used ci/cd variables
         :param state: current state from state file (if package already installed but another versions)
+        :param structure_type: structure type of package
         """
         if response is None:
             return
@@ -201,6 +204,7 @@ class StateFile:
             used_template=response['template'],
             template_variables={name: mask_data(value) for name, value in response['template_variables'].items()},
             last_update=str(datetime.now()),
+            structure_type=structure_type,
             dependencies=[f"{dependency.name}@{dependency.version}" for dependency in package['dependencies']],
             cicd_variables=CICDVariablesSection(
                 names=variables_names,

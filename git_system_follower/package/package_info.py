@@ -14,7 +14,7 @@
 
 """ Package description file (package.yaml) processing module """
 from pathlib import Path
-from typing import TypedDict, Any
+from typing import TypedDict, Tuple, Optional, Any
 
 import yaml
 
@@ -22,9 +22,11 @@ from git_system_follower.logger import logger
 from git_system_follower.errors import (
     PackageNotFoundError, PackageDescriptionFileError, DescriptionSectionError, MaxDependencyDepthError
 )
-from git_system_follower.variables import PACKAGE_DIRNAME, PACKAGE_DESCRIPTION_FILE_API
+from git_system_follower.variables import PACKAGE_DIRNAME, PACKAGE_DESCRIPTION_FILE_API, SCRIPTS_DIR
 from git_system_follower.plugins.cli.packages.default import ImagePlugin
 from git_system_follower.typings.package import PackageData, PackageLocalData
+from git_system_follower.utils.versions import normalize_version
+from git_system_follower.states import PackageState
 
 
 __all__ = [
@@ -92,7 +94,7 @@ def get_package_info(directory: Path, name: str) -> PackageLocalData:
         data = _validate_package_info(data)
     except PackageDescriptionFileError:
         logger.critical(f'Error during validation of {DESCRIPTION_FILENAME} file ({path.absolute()})')
-        raise
+        raise SystemExit
 
     return PackageLocalData(
         **data,
@@ -171,3 +173,53 @@ def check_dependency_depth(level: int, tree: str) -> None:
     if level > MAX_DEPENDENCY_LEVEL:
         msg = f'The maximum dependency level has been reached ({MAX_DEPENDENCY_LEVEL}). Error for {tree}'
         raise MaxDependencyDepthError(msg)
+
+
+def get_scripts_dir_by_complexity(path: str, *, is_force: bool) -> Tuple[Path, bool]:
+    if path.exists():
+        return path, is_force
+    return path.parent, True
+
+def get_gear_info(path: Path, state: Optional[PackageState] = None) -> dict:
+    """ Checks whether the gear is of simple type with single version or complex with multiple versions
+
+    :param path: Path at which the gear is downloaded and extracted
+    :param state: Defaults to None but state can be passed to check if gear and repo types match
+    :return: Dictionary contents, where
+        'structure_type': 'simple' or 'complex' depending on gear type identified
+    """
+    def _determine_structure_type() -> str:
+        """ Determine gear structure type based on directory contents """
+        package_path = path / PACKAGE_DIRNAME / SCRIPTS_DIR
+
+        for item in package_path.glob('*'):
+            if item.is_file():
+                continue
+            try:
+                # If scripts/ directory has versions directories
+                normalize_version(item.name)
+                return 'complex'
+            except Exception:
+                # If scripts/ directory has no versions directories, it contains the package api at once
+                break
+        return 'simple'
+
+    def _handle_state_validation(structure_type: str) -> None:
+        """ Handle state validation and updates """
+        if 'structure_type' in state:
+            if state['structure_type'] != structure_type:
+                logger.critical(
+                    f"State and gear structure type mismatch. State structure type found "
+                    f"{state['structure_type']} and gear structure type found {structure_type}"
+                )
+                raise SystemExit
+        else:
+            state['structure_type'] = structure_type
+
+    structure_type = _determine_structure_type()
+    gear_info = {'structure_type': structure_type}
+
+    if state is not None:
+        _handle_state_validation(structure_type)
+
+    return gear_info

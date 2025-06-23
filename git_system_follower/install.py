@@ -208,7 +208,6 @@ def install_packages(
                 package, packages.rollback, repo, package_state,
                 created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force
             )
-            state.add_package(package, response, package_state)
             if package_state is not None and 'structure_type' in package_state:
                 state.add_package(package, response, package_state, structure_type=package_state['structure_type'])
             else:

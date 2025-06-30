@@ -16,19 +16,19 @@ import logging
 from pathlib import Path
 
 import click
-from colorama import Fore, Style
+from outlify.style import Colors, Styles
 
 
-# for banner + print_params
+# for banner + printing params
 NO_FORMAT = '%(message)s'
 NO_DATE_FORMAT = ''
 
 # for stdout
-SHORT_FORMAT = f'{Fore.CYAN}%(asctime)s.%(msecs)03d{Fore.RESET} %(message)s'
+SHORT_FORMAT = f'{Colors.cyan}%(asctime)s.%(msecs)03d{Colors.reset} %(message)s'
 SHORT_DATE_FORMAT = '%H:%M:%S'
 
 # for debug stdout
-SHORT_DEBUG_FORMAT = f'{Fore.CYAN}%(asctime)s.%(msecs)03d{Fore.RESET} %(levelname)-18s | %(message)s'
+SHORT_DEBUG_FORMAT = f'{Colors.cyan}%(asctime)s.%(msecs)03d{Colors.reset} %(levelname)-18s | %(message)s'
 SHORT_DEBUG_DATE_FORMAT = '%H:%M:%S'
 
 # for log file
@@ -43,20 +43,20 @@ SUCCESS_LEVEL_NAME = 'SUCCESS'
 class ColoredFormatter(logging.Formatter):
 
     COLORS = {
-        'DEBUG': Fore.BLUE,
-        'INFO': Fore.WHITE,
-        'SUCCESS': Fore.GREEN,
-        'WARNING': Fore.YELLOW,
-        'ERROR': Fore.RED,
-        'CRITICAL': f'{Fore.RED}{Style.BRIGHT}',
+        'DEBUG': Colors.gray,
+        'INFO': Colors.white,
+        'SUCCESS': Colors.green,
+        'WARNING': Colors.yellow,
+        'ERROR': Colors.red,
+        'CRITICAL': f'{Colors.red}{Styles.bold}',
     }
 
     def format(self, record):
         color = self.COLORS.get(record.levelname, '')
         if color:
-            record.name = f'{color}{record.name}{Fore.WHITE}'
-            record.levelname = f'{color}{record.levelname}{Fore.WHITE}'
-            record.msg = f'{color}{record.msg}{Fore.WHITE}'
+            record.name = f'{color}{record.name}{Colors.white}'
+            record.levelname = f'{color}{record.levelname}{Colors.white}'
+            record.msg = f'{color}{record.msg}{Styles.reset}'
         return logging.Formatter.format(self, record)
 
 

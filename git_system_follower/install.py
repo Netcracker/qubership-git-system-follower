@@ -17,6 +17,7 @@ from pathlib import Path
 from pprint import pformat
 
 from gitlab.v4.objects import Project
+from outlify.list import TitledList
 
 from git_system_follower.logger import logger
 from git_system_follower.errors import InstallationError, PackageNotFoundError, PackageNamePolicyError
@@ -37,7 +38,6 @@ from git_system_follower.states import (
     ChangeStatus, PackageState, StateFile,
     get_installed_packages, update_created_cicd_variables,
 )
-from git_system_follower.utils.output import print_list
 from git_system_follower.utils.retry import retry
 from git_system_follower.utils.versions import normalize_version
 from git_system_follower.package.initer import init
@@ -61,10 +61,14 @@ def install(
     states = get_states(project, branches)
 
     packages = get_packages(packages, states, registry=registry)
-    print_list(packages.install, title='Packages', output_func=logger.info,
-               key=lambda package: f"{package['name']}@{package['version']}")
-    print_list(packages.rollback, title='Additional rollback packages', output_func=logger.info,
-               key=lambda package: f"{package['name']}@{package['version']}")
+    logger.info(TitledList(
+        [f"{package['name']}@{package['version']}" for package in packages.install],
+        title='Packages'
+    ))
+    logger.info(TitledList(
+        [f"{package['name']}@{package['version']}" for package in packages.rollback],
+        title='Additional rollback packages'
+    ))
     logger.info('Processing branches')
     for i, branch in enumerate(branches, 1):
         logger.info(f'[{i}/{len(branches)}] Processing {branch} branch')

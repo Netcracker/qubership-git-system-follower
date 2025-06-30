@@ -127,11 +127,9 @@ class StateFile:
         variables = filter_cicd_variables_by_state(package, current_cicd_variables)
         computed_hash = self.__get_hash(variables)
         if computed_hash != package['cicd_variables']['hash']:
-            raise HashesMismatch(f"CI/CD variables hash specified in state file in "
-                                 f"{package['name']}@{package['version']} package "
-                                 f"({package['cicd_variables']['hash']}) "
-                                 f"and generated hash ({computed_hash}) do not match",
-                                 state_file_hash=package['cicd_variables']['hash'], generated_hash=computed_hash)
+            error = f"CI/CD variables hash specified in state file in {package['name']}@{package['version']} package " \
+                    f"({package['cicd_variables']['hash']}) and generated hash ({computed_hash}) do not match"
+            raise HashesMismatch(error, state_file_hash=package['cicd_variables']['hash'], generated_hash=computed_hash)
 
     def get_installed_packages(self) -> tuple[InstalledPackage, ...]:
         packages = []

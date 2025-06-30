@@ -21,6 +21,7 @@ from cookiecutter.main import cookiecutter
 
 from git_system_follower.logger import logger
 from git_system_follower.errors import PackageApiError
+from git_system_follower.package.package_info import get_gear_info
 from git_system_follower.utils.tmpdir import tempdir, multi_tempdirs
 
 
@@ -63,11 +64,14 @@ def create_template(
             template=str(current_version_dir), output_dir=current_version_path, no_input=True,
             extra_context=_get_extra_content(target, variables=variables)
         )
-    _copy_files(new_version_path / target.name, current_version_path / target.name, target, is_force=is_force)
+    _copy_files(
+        new_version_path / target.name, current_version_path / target.name, target,
+        script_dir=script_dir, is_force=is_force
+    )
     logger.info(f'\t\tSuccessful use template ({path})')
 
 
-def _copy_files(source: Path, source_current: Path, target: Path, *, is_force: bool) -> None:
+def _copy_files(source: Path, source_current: Path, target: Path, *, script_dir: Path, is_force: bool) -> None:
     paths = source.glob('**/*')
     for path in paths:
         if path.is_dir():
@@ -84,6 +88,7 @@ def _copy_files(source: Path, source_current: Path, target: Path, *, is_force: b
         path_hash = _calculate_hash(path)
         current_path_hash = _calculate_hash(current_path)
         target_path_hash = _calculate_hash(target_path)
+        gear_info = get_gear_info(script_dir.parent.parent)
         if path_hash == target_path_hash:
             logger.info(f'\t\tContent of {relative_path} file is same. Skip operations')
             continue
@@ -92,7 +97,10 @@ def _copy_files(source: Path, source_current: Path, target: Path, *, is_force: b
             shutil.copy(path, target_path)
             continue
         elif path_hash != target_path_hash and current_path_hash != target_path_hash:
-            logger.warning(f'\t\tUser changes found for file {relative_path}. Cannot copy. Skip operations')
+            if gear_info['structure_type'] == 'simple':
+                shutil.copy(path, target_path)
+            elif gear_info['structure_type'] == 'complex':
+                logger.warning(f'\t\tUser changes found for file {relative_path}. Cannot copy. Skip operations')
             continue
 
         if is_force:

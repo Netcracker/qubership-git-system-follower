@@ -53,7 +53,7 @@ python -m venv .venv && source .venv/bin/activate
 git clone https://github.com/Netcracker/qubership-git-system-follower.git
 
 # Install git-system-follower
-pip install -e git-system-follower/
+pip install -e qubership-git-system-follower/
 ```
 
 ## Additional git-system-follower configuration

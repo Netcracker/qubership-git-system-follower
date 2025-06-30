@@ -15,7 +15,6 @@
 from pathlib import Path
 
 import click
-from outlify.panel import ParamsPanel
 
 from git_system_follower.logger import logger, set_level
 from git_system_follower.errors import CLIParamsError
@@ -23,7 +22,7 @@ from git_system_follower.plugins.cli.packages.specs import HookSpec
 from git_system_follower.typings.cli import ExtraParam
 from git_system_follower.typings.registry import RegistryTypes, RegistryInfo
 from git_system_follower.utils.cli import Package, ExtraParamTuple, resolve_credentials, add_options, get_gears
-from git_system_follower.utils.output import banner, COMMON_SETTINGS
+from git_system_follower.utils.output import banner, display_params
 from git_system_follower.git_api.utils import get_config
 from git_system_follower.download import download
 from git_system_follower.install import install
@@ -86,19 +85,13 @@ def download_command(
         'directory': directory.absolute(),
         'debug': is_debug,
     }
-    logger.info(ParamsPanel(
-        common_params, title='1. Common parameters ', subtitle=f'total: {len(common_params)}', **COMMON_SETTINGS
-    ))
-
     registry_params = {
         'registry-type': registry_type,
         'registry-username': credentials.username if credentials is not None else '',
         'registry-password': credentials.password if credentials is not None else '',
         'insecure-registry': is_insecure,
     }
-    logger.info(ParamsPanel(
-        registry_params, title='2. Registry parameters ', subtitle=f'total: {len(registry_params)}', **COMMON_SETTINGS
-    ))
+    display_params({'Common': common_params, 'Registry': registry_params})
 
     if gears == ():
         raise CLIParamsError('Gears for downloading are not specified')
@@ -195,20 +188,12 @@ def install_command(
         'force': is_force,
         'debug': is_debug,
     }
-    logger.info(ParamsPanel(
-        common_params, title='1. Common parameters ', subtitle=f'total: {len(common_params)}', **COMMON_SETTINGS
-    ))
-
     registry_params = {
         'registry-type': registry_type,
         'registry-username': credentials.username if credentials is not None else '',
         'registry-password': credentials.password if credentials is not None else '',
         'insecure-registry': is_insecure,
     }
-    logger.info(ParamsPanel(
-        registry_params, title='2. Registry parameters ', subtitle=f'total: {len(registry_params)}', **COMMON_SETTINGS
-    ))
-
     git_params = {
         'repo': repo,
         'branches': ', '.join(branches),
@@ -217,9 +202,7 @@ def install_command(
         'git-username': username,
         'git-email': email,
     }
-    logger.info(ParamsPanel(
-        git_params, title='3. Git parameters ', subtitle=f'total: {len(git_params)}', **COMMON_SETTINGS
-    ))
+    display_params({'Common': common_params, 'Registry': registry_params, 'Git': git_params})
 
     if gears == ():
         raise CLIParamsError('Gears for installation are not specified')
@@ -322,20 +305,12 @@ def uninstall_command(
         'force': is_force,
         'debug': is_debug,
     }
-    logger.info(ParamsPanel(
-        common_params, title='1. Common parameters ', subtitle=f'total: {len(common_params)}', **COMMON_SETTINGS
-    ))
-
     registry_params = {
         'registry-type': registry_type,
         'registry-username': credentials.username if credentials is not None else '',
         'registry-password': credentials.password if credentials is not None else '',
         'insecure-registry': is_insecure,
     }
-    logger.info(ParamsPanel(
-        registry_params, title='2. Registry parameters ', subtitle=f'total: {len(registry_params)}', **COMMON_SETTINGS
-    ))
-
     git_params = {
         'repo': repo,
         'branches': ', '.join(branches),
@@ -344,9 +319,7 @@ def uninstall_command(
         'git-username': username,
         'git-email': email,
     }
-    logger.info(ParamsPanel(
-        git_params, title='3. Git parameters ', subtitle=f'total: {len(git_params)}', **COMMON_SETTINGS
-    ))
+    display_params({'Common': common_params, 'Registry': registry_params, 'Git': git_params})
 
     if gears == ():
         raise CLIParamsError('Gears for uninstallation are not specified')

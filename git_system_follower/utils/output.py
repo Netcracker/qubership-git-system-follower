@@ -15,12 +15,14 @@
 """ Module with output info related utils """
 from typing import Iterable, Callable
 
+from outlify.panel import ParamsPanel
 from outlify.style import AnsiCodes, Colors, Styles
 
+from git_system_follower.logger import logger
 from git_system_follower.typings.package import PackageLocalData
 
 
-__all__ = ['BrandedColors', 'COMMON_SETTINGS', 'banner', 'print_dependency_tree_one_level']
+__all__ = ['BrandedColors', 'banner', 'display_params', 'print_dependency_tree_one_level']
 
 
 WIDTH = 100
@@ -51,6 +53,16 @@ def banner(version: str, *, output_func: Callable = print):
  {BrandedColors.orange}'.`; ;`.'{Colors.reset}   {Colors.white}{Styles.bold}git-system-follower{Styles.reset} v{version}
     {BrandedColors.orange}`-`{Colors.reset}"""
     output_func(content)
+
+
+def display_params(data: dict[str, dict]) -> None:
+    """ Display parameters in a compact format
+
+    :param data: data to display where key - section name, value - parameters
+    """
+    for i, (name, params) in enumerate(data.items(), 1):
+        title, subtitle = f'{i}. {name} parameters', f'total: {len(params)}'
+        logger.info(ParamsPanel(params, title=title, subtitle=subtitle, **COMMON_SETTINGS))
 
 
 def print_dependency_tree_one_level(

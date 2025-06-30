@@ -97,8 +97,7 @@ def download_command(
         'insecure-registry': is_insecure,
     }
     logger.info(ParamsPanel(
-        registry_params, title='2. Registry parameters ', subtitle=f'total: {len(registry_params)}',
-        hidden=('registry-password',), **COMMON_SETTINGS
+        registry_params, title='2. Registry parameters ', subtitle=f'total: {len(registry_params)}', **COMMON_SETTINGS
     ))
 
     if gears == ():
@@ -207,8 +206,7 @@ def install_command(
         'insecure-registry': is_insecure,
     }
     logger.info(ParamsPanel(
-        registry_params, title='2. Registry parameters ', subtitle=f'total: {len(registry_params)}',
-        hidden=('registry-password',), **COMMON_SETTINGS
+        registry_params, title='2. Registry parameters ', subtitle=f'total: {len(registry_params)}', **COMMON_SETTINGS
     ))
 
     git_params = {
@@ -220,8 +218,7 @@ def install_command(
         'git-email': email,
     }
     logger.info(ParamsPanel(
-        git_params, title='3. Git parameters ', subtitle=f'total: {len(git_params)}',
-        hidden=('token',), **COMMON_SETTINGS
+        git_params, title='3. Git parameters ', subtitle=f'total: {len(git_params)}', **COMMON_SETTINGS
     ))
 
     if gears == ():
@@ -336,8 +333,7 @@ def uninstall_command(
         'insecure-registry': is_insecure,
     }
     logger.info(ParamsPanel(
-        registry_params, title='2. Registry parameters ', subtitle=f'total: {len(registry_params)}',
-        hidden=('registry-password',), **COMMON_SETTINGS
+        registry_params, title='2. Registry parameters ', subtitle=f'total: {len(registry_params)}', **COMMON_SETTINGS
     ))
 
     git_params = {
@@ -349,8 +345,7 @@ def uninstall_command(
         'git-email': email,
     }
     logger.info(ParamsPanel(
-        git_params, title='3. Git parameters ', subtitle=f'total: {len(git_params)}',
-        hidden=('token',), **COMMON_SETTINGS
+        git_params, title='3. Git parameters ', subtitle=f'total: {len(git_params)}', **COMMON_SETTINGS
     ))
 
     if gears == ():

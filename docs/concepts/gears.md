@@ -25,9 +25,6 @@ dependencies: # A list of the Gear requirements (optional)
   - Another docker image of another package
 ```
 
-### Gears and Versioning
-Every Gears must have a version number. A version must follow TBD
-
 ### The `apiVersion` field
 `apiVersion` field allows git-system-follower to understand which version of this Gear
 
@@ -36,10 +33,15 @@ You can check [available `apiVersion` list](api_version_list/index.md)
 ### The `type` field
 `type` field allows git-system-follower to understand how work with this Gear
 
-### The `name` field
+### Naming: the `name` field
 `name` field allows git-system-follower to uniquely identify the Gear. Acceptable characters: letter, digits, `.`, `-`, `_`
 
-### Gears dependencies
+### Versioning: the `version` field 
+Every Gears must have a version number. A version must follow TBD
+
+For more detailed description of the version sync policy, see [Version Synchronization](version.md).
+
+### Gears dependencies: the `dependencies` field
 One gear may depend on any number of other gears. To add a dependency, it must be specified as a docker image in the `dependencies` section.
 
 ## The package API (`scripts/` directory)

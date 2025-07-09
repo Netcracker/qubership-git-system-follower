@@ -97,6 +97,7 @@ nav:
     - apiVersion list: 
       - concepts/api_version_list/index.md
       - apiVersion v1: concepts/api_version_list/v1.md
+    - Version Synchronization: concepts/version.md
     - .state.yaml Guide: concepts/state.md
     - Plugins Guide:
       - concepts/plugins/index.md

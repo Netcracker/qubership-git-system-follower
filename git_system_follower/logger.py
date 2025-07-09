@@ -14,8 +14,6 @@
 
 import logging
 
-from colorama import init
-
 from git_system_follower.variables import ROOT_DIR
 from git_system_follower.utils.logger import (
     SUCCESS_LEVEL_NUM, SUCCESS_LEVEL_NAME,
@@ -29,8 +27,6 @@ __all__ = ['LOG_FILE_PATH', 'logger', 'set_level']
 
 LOG_FILE_PATH = ROOT_DIR / 'git-system-follower.log'
 
-
-init(autoreset=True)
 
 # New logging level
 logging.addLevelName(SUCCESS_LEVEL_NUM, SUCCESS_LEVEL_NAME)

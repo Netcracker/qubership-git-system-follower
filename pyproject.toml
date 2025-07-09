@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "qubership-git-system-follower"
-version = "0.6.1"
+version = "0.6.2"
 description = "The package manager for Git providers"
 authors = ["Qubership"]
 license = "Apache-2.0"

@@ -144,12 +144,10 @@ def __add_info_about_template(template: str, variables: dict[str, str]) -> None:
 def __update_template_variables(variables: dict[str, str] | None) -> dict[str, str]:
     with open(__PACKAGE_API_RESULT, 'r') as file:
         content = json.load(file)
-    template_variables = content['template_variables'].copy()
-    template_variables.update(__get_variables(variables))
-    content['template_variables'] = template_variables
+    content['template_variables'] = __get_variables(variables)
     with open(__PACKAGE_API_RESULT, 'w') as file:
         json.dump(content, file)
-    return template_variables
+    return content['template_variables']
 
 
 def __delete_info_about_template() -> None:
@@ -175,11 +173,10 @@ def __get_variables(variables: Optional[ExtraParams | dict[str, str]] = None) ->
         return {}
 
     if not isinstance(variables, dict):
-        raise PackageAPIDevelopmentError(f"Invalid variables type. 'dict' or 'ExtraParams' is required. "
-                                         f"Current type={type(variables)}")
+        error = f"Invalid variables type. 'dict' or 'ExtraParams' is required. Current type={type(variables)}"
+        raise PackageAPIDevelopmentError(error)
     elif all(isinstance(k, str) and isinstance(v, str) for k, v in variables.items()):
         return variables
     elif all(isinstance(k, str) and isinstance(v, ExtraParam) for k, v in variables.items()):
         return {variable.name: variable.value for variable in variables.values()}
-    else:
-        raise PackageAPIDevelopmentError('Invalid variables value type')
+    raise PackageAPIDevelopmentError('Invalid variables value type')

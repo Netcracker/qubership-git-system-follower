@@ -59,7 +59,7 @@ def get_cicd_variables(project: Project) -> dict[str, CICDVariable]:
 def create_variable(
         project: Project, variable: CICDVariable, *,
         is_force: bool
-) -> RESTObject | None:
+) -> CICDVariable:
     """ Creating CI/CD variable
 
     :param project: Gitlab project
@@ -80,18 +80,18 @@ def create_variable(
         if variable['value'] == remote_var.value:
             logger.info(f"\t\tVariable with this name ({variable['name']}) and "
                         f"value ({masked_value}) already exist. Skip creation")
-            return remote_var
+            return _serialize_var(remote_var)
         if is_force:
             remote_var.value = variable['value']
             remote_var.save()
             logger.warning(f"\t\tVariable with this name ({variable['name']}) already exist with different value "
                            f"(old value: {remote_masked_value}, new value: {masked_value}). "
                            f"Force flag enabled. Overwrote CI/CD variable")
-            return remote_var
+            return _serialize_var(remote_var)
         logger.warning(f"\t\tVariable with this name ({variable['name']}) already exist with different value "
                        f"(old value: {remote_masked_value}, new value: {masked_value}). "
                        f"Force flag disabled. Skip creation/update")
-        return
+        return _serialize_var(remote_var)
     try:
         variable = project.variables.create({
             'key': variable['name'], 'value': variable['value'], 'environment_scope': variable['env'],
@@ -111,7 +111,7 @@ def create_variable(
     logger.info(f"\t\tVariable with name {variable.key} with value {masked_value} has been created "
                 f"in {variable.environment_scope} environment")
     logger.debug(f'\t\tResponse:\n{variable.pformat()}')
-    return variable
+    return _serialize_var(variable)
 
 
 def delete_variable(
@@ -149,3 +149,11 @@ def delete_variable(
                        f"Force flag disabled. Skip deletion")
         return
     logger.info(f"\t\tNot found CI/CD variable with {variable['name']} name for deletion")
+
+def _serialize_var(remote_var: RESTObject)-> CICDVariable:
+    return CICDVariable(
+        name = remote_var.key,
+        value = remote_var.value,
+        env = remote_var.environment_scope,
+        masked = remote_var.masked
+    )

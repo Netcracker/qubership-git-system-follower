@@ -1,0 +1,4 @@
+apiVersion: v1
+type: gitlab-ci-pipeline
+name: simple-gear
+version: 0.0.1

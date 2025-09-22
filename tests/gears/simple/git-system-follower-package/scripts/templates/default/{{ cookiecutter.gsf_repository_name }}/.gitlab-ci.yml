@@ -1,0 +1,7 @@
+stages:
+  - hello
+
+hello-world:
+  stage: hello
+  tags: [{{ cookiecutter.tags }}]
+  script: echo "Hello {{ cookiecutter.name }}!"

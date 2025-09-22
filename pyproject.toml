@@ -27,6 +27,8 @@ gsf = "git_system_follower.cli:cli"
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.4"
 ruff = "^0.9.1"
+tox = "^4.13.0"
+vcrpy = "^7.0.0"
 
 mkdocs-material = "9.6.11"
 mike = "2.1.3"
@@ -35,6 +37,9 @@ mike = "2.1.3"
 line-length = 120
 target-version = "py310"
 output-format = "github"
+exclude = [
+  "tests/gears",
+]
 
 [tool.ruff.lint]
 # See list of rules at: https://docs.astral.sh/ruff/rules/
@@ -48,3 +53,7 @@ testpaths = [
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+#Optional [[tool.poetry.source]]
+#Optional name = "gsf"
+#Optional url = "REPLACE_WITH_CUSTOM_PYPI_REPO"

@@ -1,0 +1,277 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-type:
+      - application/json
+      User-Agent:
+      - python-gitlab/4.13.0
+    method: GET
+    uri: /api/v4/projects/42352/variables
+  response:
+    body:
+      string: '[{"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value",
+        "protected": false, "masked": true, "raw": false, "environment_scope": "*",
+        "description": null}, {"variable_type": "env_var", "key": "Dummy key", "value":
+        "Dummy value", "protected": false, "masked": false, "raw": false, "environment_scope":
+        "*", "description": null}, {"variable_type": "env_var", "key": "Dummy key",
+        "value": "Dummy value", "protected": false, "masked": false, "raw": false,
+        "environment_scope": "*", "description": null}, {"variable_type": "env_var",
+        "key": "Dummy key", "value": "Dummy value", "protected": false, "masked":
+        false, "raw": false, "environment_scope": "*", "description": null}, {"variable_type":
+        "env_var", "key": "Dummy key", "value": "Dummy value", "protected": false,
+        "masked": false, "raw": false, "environment_scope": "*", "description": null},
+        {"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value", "protected":
+        false, "masked": false, "raw": false, "environment_scope": "*", "description":
+        null}]'
+    headers:
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 23 Jul 2025 18:39:38 GMT
+      Etag:
+      - W/"a7745b749e3d6cfbc01377d780014bd9"
+      Link:
+      - <https://gitlab.dummy.org/api/v4/projects/42352/variables?id=42352&page=1&per_page=20>;
+        rel="first", <https://gitlab.dummy.org/api/v4/projects/42352/variables?id=42352&page=1&per_page=20>;
+        rel="last"
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Server:
+      - nginx
+      Strict-Transport-Security:
+      - max-age=63072000
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Accept-Encoding
+      - Origin
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-Gitlab-Meta:
+      - '{"correlation_id":"01K0W9B054YFFQWENHVVZ38CWQ","version":"1"}'
+      X-Next-Page:
+      - ''
+      X-Page:
+      - '1'
+      X-Per-Page:
+      - '20'
+      X-Prev-Page:
+      - ''
+      X-Request-Id:
+      - 01K0W9B054YFFQWENHVVZ38CWQ
+      X-Runtime:
+      - '0.081956'
+      X-Total:
+      - '6'
+      X-Total-Pages:
+      - '1'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"key": "test_variable", "value": "test", "environment_scope": "test_env",
+      "masked": false}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '91'
+      Content-type:
+      - application/json
+      User-Agent:
+      - python-gitlab/4.13.0
+    method: POST
+    uri: /api/v4/projects/42352/variables
+  response:
+    body:
+      string: '{"variable_type": "env_var", "key": "test_variable", "value": "test",
+        "protected": false, "masked": false, "raw": false, "environment_scope": "test_env",
+        "description": null}'
+    headers:
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '159'
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 23 Jul 2025 18:39:39 GMT
+      Etag:
+      - W/"560954fc6d542c1312e23f2dc82880a2"
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Server:
+      - nginx
+      Strict-Transport-Security:
+      - max-age=63072000
+      Vary:
+      - Origin
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-Gitlab-Meta:
+      - '{"correlation_id":"01K0W9B1BFEA59TS90KDSA86AW","version":"1"}'
+      X-Request-Id:
+      - 01K0W9B1BFEA59TS90KDSA86AW
+      X-Runtime:
+      - '0.082969'
+    status:
+      code: 201
+      message: Created
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-type:
+      - application/json
+      User-Agent:
+      - python-gitlab/4.13.0
+    method: GET
+    uri: /api/v4/projects/42352/variables
+  response:
+    body:
+      string: '[{"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value",
+        "protected": false, "masked": true, "raw": false, "environment_scope": "*",
+        "description": null}, {"variable_type": "env_var", "key": "Dummy key", "value":
+        "Dummy value", "protected": false, "masked": false, "raw": false, "environment_scope":
+        "*", "description": null}, {"variable_type": "env_var", "key": "Dummy key",
+        "value": "Dummy value", "protected": false, "masked": false, "raw": false,
+        "environment_scope": "*", "description": null}, {"variable_type": "env_var",
+        "key": "Dummy key", "value": "Dummy value", "protected": false, "masked":
+        false, "raw": false, "environment_scope": "*", "description": null}, {"variable_type":
+        "env_var", "key": "Dummy key", "value": "Dummy value", "protected": false,
+        "masked": false, "raw": false, "environment_scope": "*", "description": null},
+        {"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value", "protected":
+        false, "masked": false, "raw": false, "environment_scope": "*", "description":
+        null}, {"variable_type": "env_var", "key": "test_variable", "value": "test",
+        "protected": false, "masked": false, "raw": false, "environment_scope": "test_env",
+        "description": null}]'
+    headers:
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 23 Jul 2025 18:39:41 GMT
+      Etag:
+      - W/"bbab7f29ff84bef043ee46635263af5f"
+      Link:
+      - <https://gitlab.dummy.org/api/v4/projects/42352/variables?id=42352&page=1&per_page=20>;
+        rel="first", <https://gitlab.dummy.org/api/v4/projects/42352/variables?id=42352&page=1&per_page=20>;
+        rel="last"
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Server:
+      - nginx
+      Strict-Transport-Security:
+      - max-age=63072000
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Accept-Encoding
+      - Origin
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-Gitlab-Meta:
+      - '{"correlation_id":"01K0W9B2HEZGG4B5H314VGGF5J","version":"1"}'
+      X-Next-Page:
+      - ''
+      X-Page:
+      - '1'
+      X-Per-Page:
+      - '20'
+      X-Prev-Page:
+      - ''
+      X-Request-Id:
+      - 01K0W9B2HEZGG4B5H314VGGF5J
+      X-Runtime:
+      - '0.071352'
+      X-Total:
+      - '7'
+      X-Total-Pages:
+      - '1'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '0'
+      Content-type:
+      - application/json
+      User-Agent:
+      - python-gitlab/4.13.0
+    method: DELETE
+    uri: /api/v4/projects/42352/variables/test_variable
+  response:
+    body:
+      string: ''
+    headers:
+      Cache-Control:
+      - no-cache
+      Connection:
+      - keep-alive
+      Date:
+      - Wed, 23 Jul 2025 18:39:42 GMT
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Server:
+      - nginx
+      Strict-Transport-Security:
+      - max-age=63072000
+      Vary:
+      - Origin
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-Gitlab-Meta:
+      - '{"correlation_id":"01K0W9B3QDS7ZBABQQQXMPVW9D","version":"1"}'
+      X-Request-Id:
+      - 01K0W9B3QDS7ZBABQQQXMPVW9D
+      X-Runtime:
+      - '0.042785'
+    status:
+      code: 204
+      message: No Content
+version: 1

@@ -1,0 +1,359 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-type:
+      - application/json
+      User-Agent:
+      - python-gitlab/4.13.0
+    method: GET
+    uri: /api/v4/projects/42352/variables
+  response:
+    body:
+      string: '[{"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value",
+        "protected": false, "masked": true, "raw": false, "environment_scope": "*",
+        "description": null}, {"variable_type": "env_var", "key": "Dummy key", "value":
+        "Dummy value", "protected": false, "masked": false, "raw": false, "environment_scope":
+        "*", "description": null}, {"variable_type": "env_var", "key": "Dummy key",
+        "value": "Dummy value", "protected": false, "masked": false, "raw": false,
+        "environment_scope": "*", "description": null}, {"variable_type": "env_var",
+        "key": "Dummy key", "value": "Dummy value", "protected": false, "masked":
+        false, "raw": false, "environment_scope": "*", "description": null}, {"variable_type":
+        "env_var", "key": "Dummy key", "value": "Dummy value", "protected": false,
+        "masked": false, "raw": false, "environment_scope": "*", "description": null},
+        {"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value", "protected":
+        false, "masked": false, "raw": false, "environment_scope": "*", "description":
+        null}]'
+    headers:
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 22 Jul 2025 14:35:55 GMT
+      Etag:
+      - W/"a7745b749e3d6cfbc01377d780014bd9"
+      Link:
+      - <https://gitlab.dummy.org/api/v4/projects/42352/variables?id=42352&page=1&per_page=20>;
+        rel="first", <https://gitlab.dummy.org/api/v4/projects/42352/variables?id=42352&page=1&per_page=20>;
+        rel="last"
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Server:
+      - nginx
+      Strict-Transport-Security:
+      - max-age=63072000
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Accept-Encoding
+      - Origin
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-Gitlab-Meta:
+      - '{"correlation_id":"01K0S9006S0B6RMTGCYSN83B01","version":"1"}'
+      X-Next-Page:
+      - ''
+      X-Page:
+      - '1'
+      X-Per-Page:
+      - '20'
+      X-Prev-Page:
+      - ''
+      X-Request-Id:
+      - 01K0S9006S0B6RMTGCYSN83B01
+      X-Runtime:
+      - '0.067616'
+      X-Total:
+      - '6'
+      X-Total-Pages:
+      - '1'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '0'
+      Content-type:
+      - application/json
+      User-Agent:
+      - python-gitlab/4.13.0
+    method: DELETE
+    uri: /api/v4/projects/42352/repository/branches/test.temp-manage-packages
+  response:
+    body:
+      string: ''
+    headers:
+      Cache-Control:
+      - no-cache
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 22 Jul 2025 14:35:57 GMT
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Server:
+      - nginx
+      Strict-Transport-Security:
+      - max-age=63072000
+      Vary:
+      - Origin
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-Gitlab-Meta:
+      - '{"correlation_id":"01K0S901E6TDF64M9RWMZKQ74R","version":"1"}'
+      X-Request-Id:
+      - 01K0S901E6TDF64M9RWMZKQ74R
+      X-Runtime:
+      - '0.782682'
+    status:
+      code: 204
+      message: No Content
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-type:
+      - application/json
+      User-Agent:
+      - python-gitlab/4.13.0
+    method: GET
+    uri: /api/v4/projects/42352/repository/branches/test.temp-manage-packages
+  response:
+    body:
+      string: null
+    headers:
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 22 Jul 2025 14:36:02 GMT
+      Etag:
+      - W/"4450e9acc21eba2209d300afb8736026"
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Server:
+      - nginx
+      Strict-Transport-Security:
+      - max-age=63072000
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Accept-Encoding
+      - Origin
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-Gitlab-Meta:
+      - '{"correlation_id":"01K0S9076BWQQGS659K0C9692Q","version":"1"}'
+      X-Request-Id:
+      - 01K0S9076BWQQGS659K0C9692Q
+      X-Runtime:
+      - '0.080707'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"source_branch": "test.temp-manage-packages", "target_branch": "test",
+      "title": "Uninstalled gear(s)", "description": "Installed package(s): simple-gear@1.0.0",
+      "squash": true, "remove_source_branch": true}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '207'
+      Content-type:
+      - application/json
+      User-Agent:
+      - python-gitlab/4.13.0
+    method: POST
+    uri: /api/v4/projects/42352/merge_requests
+  response:
+    body:
+      string: null
+    headers:
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '1927'
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 22 Jul 2025 14:36:03 GMT
+      Etag:
+      - W/"9d9fe53394602217f9e56c10c2c85a6e"
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Server:
+      - nginx
+      Strict-Transport-Security:
+      - max-age=63072000
+      Vary:
+      - Origin
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-Gitlab-Meta:
+      - '{"correlation_id":"01K0S908CJ49YFG3JYAA4J7WXY","version":"1"}'
+      X-Request-Id:
+      - 01K0S908CJ49YFG3JYAA4J7WXY
+      X-Runtime:
+      - '0.256149'
+    status:
+      code: 201
+      message: Created
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-type:
+      - application/json
+      User-Agent:
+      - python-gitlab/4.13.0
+    method: GET
+    uri: /api/v4/projects/42352/merge_requests/321
+  response:
+    body:
+      string: null
+    headers:
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 22 Jul 2025 14:36:05 GMT
+      Etag:
+      - W/"82a9c45cfc6844df8c8f966ca38335eb"
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Server:
+      - nginx
+      Strict-Transport-Security:
+      - max-age=63072000
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Accept-Encoding
+      - Origin
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-Gitlab-Meta:
+      - '{"correlation_id":"01K0S909QXE59G8QKG8KPHD9PH","version":"1"}'
+      X-Request-Id:
+      - 01K0S909QXE59G8QKG8KPHD9PH
+      X-Runtime:
+      - '0.291408'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '2'
+      Content-type:
+      - application/json
+      User-Agent:
+      - python-gitlab/4.13.0
+    method: PUT
+    uri: /api/v4/projects/42352/merge_requests/321/merge
+  response:
+    body:
+      string: null
+    headers:
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 22 Jul 2025 14:36:07 GMT
+      Etag:
+      - W/"e44b2ac53a98990ed5020df251395877"
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Server:
+      - nginx
+      Strict-Transport-Security:
+      - max-age=63072000
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Accept-Encoding
+      - Origin
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-Gitlab-Meta:
+      - '{"correlation_id":"01K0S90B4FDVD6ZP342TXJ7PTA","version":"1"}'
+      X-Request-Id:
+      - 01K0S90B4FDVD6ZP342TXJ7PTA
+      X-Runtime:
+      - '1.377826'
+    status:
+      code: 200
+      message: OK
+version: 1

@@ -5,6 +5,7 @@ default:
 
 stages:
   - lint
+  - test
 
 
 lint:
@@ -12,3 +13,23 @@ lint:
   stage: lint
   script:
     - ruff check --output-format full .
+
+test:
+  image: ${DOCKER_REG_TESTS}/python:${PYTHON_VERSION}-alpine
+  stage: test
+  variables:
+    PIP_INDEX_URL: ${PIP_REPO}
+    PIP_TRUSTED_HOST: ${TRUSTED_HOST}
+    PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  script: |
+    pip install -qq --progress-bar=off tox poetry
+    sed -i 's/#Optional//g' pyproject.toml
+    sed -i "s|REPLACE_WITH_CUSTOM_PYPI_REPO|$PIP_REPO|g" pyproject.toml
+    echo "${APK_REPO}main" >> /etc/apk/repositories
+    echo "${APK_REPO}community" >> /etc/apk/repositories
+    apk add --no-cache git
+    tox -e unit
+    tox -e functional
+  parallel:
+    matrix:
+      - PYTHON_VERSION: ["3.10", "3.11", "3.12", "3.13"]

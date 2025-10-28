@@ -88,7 +88,7 @@ def _copy_files(source: Path, source_current: Path, target: Path, *, script_dir:
         path_hash = _calculate_hash(path)
         current_path_hash = _calculate_hash(current_path)
         target_path_hash = _calculate_hash(target_path)
-        gear_info = get_gear_info(script_dir.parent.parent)
+        gear_info = get_gear_info(script_dir.parents[2])
         if path_hash == target_path_hash:
             logger.info(f'\t\tContent of {relative_path} file is same. Skip operations')
             continue

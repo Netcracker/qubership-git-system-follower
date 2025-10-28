@@ -12,16 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import pytest
 import re
 import os
 import json
 import shutil
 from pathlib import Path
 from unittest.mock import patch, PropertyMock
+
+import pytest
+
 from git_system_follower.typings.repository import RepositoryInfo
 from git_system_follower.git_api.utils import get_git_repo
-
 from git_system_follower.package.initer import init
 from git_system_follower.package.updater import update
 from git_system_follower.package.deleter import delete
@@ -170,3 +171,53 @@ def test_package(
         install_package(states, branch, package, is_force, project, extras)
         update_package(states, branch, package, is_force, project, extras)
         uninstall_package(states, branch, package, is_force, project, extras)
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "gear_type, name, value, masked, is_force, states",
+    [
+        ('complex', 'test1', '1', False, False, get_states_cfg()),
+    ]
+)
+@patch("test_package.get_git_repo")
+@patch("git_system_follower.package.templates.logger.warning")
+@vcr_instance.use_cassette('test_package')
+def test_templates_copy_files(
+    mock_logger_warning, mock_get_git_clone,
+    gear_type, name, value, masked, is_force, states):
+    mock_git_clone = _get_git_clone_mock(mock_get_git_clone.return_value)
+    mock_get_git_clone.return_value = mock_git_clone
+    GEARS_DIR = Path(__file__).parent.parent / "gears"
+    package_path = GEARS_DIR / gear_type / 'git-system-follower-package'
+    package = get_package_details(path=package_path)
+    package['dependencies'] = []
+    extras = build_extras(name, value, masked)
+    for branch in BRANCHES:
+        install_package(states, branch, package, is_force, project, extras)
+
+    custom_file_path = package_path / "scripts" / package['version'] \
+        / "templates/default" / "{{ cookiecutter.gsf_repository_name }}" \
+        / '.gitlab-ci.yml'
+    with open(custom_file_path, "a", encoding="utf-8") as f:
+        f.write("\n" + "# This is custom gear")
+
+    try:
+        for branch in BRANCHES:
+            install_package(states, branch, package, is_force, project, extras)
+    except Exception:
+        pass
+    mock_logger_warning.assert_called_once_with(
+        "\t\tUser changes found for file .gitlab-ci.yml. Cannot copy. Skip operations"
+    )
+    print("Success: User changes discovered.")
+
+    with open(custom_file_path, "r", encoding="utf-8", newline="") as f:
+        text = f.read()
+    lines = text.splitlines(keepends=False)
+    if len(lines) >= 2:
+        lines = lines[:-2]
+    out = "\r\n".join(lines)
+    out += "\r\n"
+    with open(custom_file_path, "w", encoding="utf-8", newline="") as f:
+        f.write(out)

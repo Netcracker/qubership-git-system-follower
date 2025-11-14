@@ -39,13 +39,14 @@ jobs:
         with:
           fetch-depth: 0  # mike requires full access to history and commits
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
       - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+        run: uv python install
 
       - name: Install dependencies
-        run: pip install poetry && poetry install --with dev
+        run: uv pip install -e ".[docs]"
 
       - name: Configure Git
         run: |
@@ -55,4 +56,4 @@ jobs:
       - name: Deploy versioned docs
         run: |
           VERSION=${GITHUB_REF#refs/tags/}
-          poetry run mike deploy --push --update-aliases "$VERSION" latest
+          uv run mike deploy --push --update-aliases "$VERSION" latest

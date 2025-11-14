@@ -38,7 +38,7 @@ jobs:
        run: uv python install ${{ matrix.python-version }}
 
      - name: Install dependencies
-       run: uv pip install -e ".[dev]"
+       run: uv pip install -e ".[dev]" --system
 
      - name: Run tests
        run: |

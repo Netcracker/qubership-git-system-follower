@@ -37,19 +37,19 @@ def update(
 ) -> ScriptResponse:
     logger.info('==> Package update')
     workdir = Path(repo.git.working_dir)
-    versions = get_version_dirs(package, state['version'])
+    versions, current_version = get_version_dirs(package, state['version'])
     response = None
     for version_dir in versions:
         current_cicd_variables = get_cicd_variables(repo.gitlab)
         response = run_update_script(
-            version_dir, workdir, repo.gitlab, current_cicd_variables, state,
+            version_dir, workdir, repo.gitlab, current_cicd_variables, state, current_version_dir=current_version,
             created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force
         )
         logger.info(f"Updated to {package['name']}@{version_dir.name} version")
     return response
 
 
-def get_version_dirs(package: PackageLocalData, start_version: str) -> tuple[Path, ...]:
+def get_version_dirs(package: PackageLocalData, start_version: str) -> tuple[tuple[Path, ...], Path]:
     path = package['path'] / PACKAGE_DIRNAME / SCRIPTS_DIR
     if not path.exists():
         raise FileNotFoundError(f'Scripts directory is missing ({path.absolute()})')
@@ -57,6 +57,7 @@ def get_version_dirs(package: PackageLocalData, start_version: str) -> tuple[Pat
     start_version = normalize_version(start_version)
     end_version = normalize_version(package['version'])
     versions = []
+    current_version = Path()
     files = path.glob('*')
     for file in files:
         if file.is_file():
@@ -64,19 +65,21 @@ def get_version_dirs(package: PackageLocalData, start_version: str) -> tuple[Pat
         file_version = normalize_version(file.name)
         if start_version < file_version <= end_version:
             versions.append(file)
+        if start_version == file_version:
+            current_version = file
     versions = sorted(versions, key=lambda v: normalize_version(v.name))
-    return tuple(versions)
+    return tuple(versions), current_version
 
 
 def run_update_script(
         script_dir: Path, workdir: Path, project: Project, current_cicd_variables: dict[str, CICDVariable],
-        state: PackageState, *,
+        state: PackageState, *, current_version_dir: Path,
         created_cicd_variables: tuple[str, ...], extras: tuple[ExtraParam, ...], is_force: bool
 ) -> ScriptResponse:
     logger.info('\tRunning update package api')
     path = script_dir / 'update.py'
     response = run_script(
-        path, workdir, project, current_cicd_variables, state['used_template'],
+        path, workdir, project, current_cicd_variables, state['used_template'], current_version_dir=current_version_dir,
         created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force, state=state
     )
     return response

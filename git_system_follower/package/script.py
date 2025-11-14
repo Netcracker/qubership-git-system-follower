@@ -44,7 +44,8 @@ def run_script(
         path: Path, workdir: Path, project: Project, all_cicd_variables: dict[str, CICDVariable],
         used_template: str | None, *,
         extras: tuple[ExtraParam, ...], is_force: bool, state: PackageState | None = None,
-        created_cicd_variables: tuple[str, ...]
+        created_cicd_variables: tuple[str, ...],
+        current_version_dir: Path | None = None
 ) -> ScriptResponse:
     """ Run script (package api): init/update/delete
 
@@ -64,7 +65,7 @@ def run_script(
     created_cicd_vars_in_other_pkgs = _fetch_cicd_vars_except_package(created_cicd_variables, cicd_variables)
     default_package_api = init_default_main if path.name == 'init.py' else delete_default_main
     response = execute_package_api(
-        path, workdir, project, used_template,
+        path, workdir, current_version_dir, project, used_template,
         template_variables=template_variables,
         cicd_variables={variable['name']: variable for variable in cicd_variables},
         all_cicd_variables=all_cicd_variables, created_cicd_vars_in_other_pkgs=created_cicd_vars_in_other_pkgs,
@@ -98,20 +99,25 @@ def _fetch_cicd_vars_except_package(all_vars_names: tuple[str, ...], pkg_variabl
 
 def execute_module(func):
     """ Wrapper for executing package api: import module, change workdir """
-    def wrapper(path: Path, workdir: Path, *args, default: str | None = None, **kwargs):
+    def wrapper(
+            path: Path, workdir: Path, current_version_dir: Path | None, *args, default: str | None = None,
+            **kwargs
+    ):
         """ Wrapper for execute_module decorator
 
         :param path: path to package api
         :param workdir: working directory for package api
         :param default: default package api code if package api doesn't exist (for init.py, delete.py)
         """
+        if current_version_dir:
+            current_version_dir = current_version_dir.absolute()
         path = path.absolute()
         workdir = workdir.absolute()
 
         module = _load_module(path, default=default)
         old = os.getcwd()
         os.chdir(workdir)
-        result = func(path, workdir, *args, **kwargs, module=module)
+        result = func(path, workdir, current_version_dir, *args, **kwargs, module=module)
         os.chdir(old)
         os.remove(PACKAGE_API_RESULT)
         return result
@@ -148,7 +154,8 @@ def _load_module(path: Path, *, default: str | None):
 
 @execute_module
 def execute_package_api(
-        path: Path, workdir: Path, project: Project, used_template: str | None, *,
+        path: Path, workdir: Path, current_version_dir: Path | None,
+        project: Project, used_template: str | None, *,
         module,
         template_variables: dict[str, str],
         cicd_variables: dict[str, CICDVariable], all_cicd_variables: dict[str, CICDVariable],
@@ -176,7 +183,8 @@ def execute_package_api(
         cicd_variables=cicd_variables,
         all_cicd_variables=all_cicd_variables,
         used_template=used_template,
-        template_variables=template_variables
+        template_variables=template_variables,
+        current_version_dir=current_version_dir
     )
     module.main(params)
 

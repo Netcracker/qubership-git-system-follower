@@ -1,7 +1,7 @@
 <div align="center">
 <br />
 
-<img src="https://raw.githubusercontent.com/Netcracker/qubership-git-system-follower/master/logo.svg" alt="git-system-follower logo" width="100">
+<img src="https://raw.githubusercontent.com/Netcracker/qubership-git-system-follower/master/docs/assets/logo.svg" alt="git-system-follower logo" width="100">
 
 # git-system-follower
 **git-system-follower (gsf)** is a package manager for Git providers.
@@ -38,7 +38,7 @@ By automating installations, updates, and removals, **gsf** reduces manual inter
 prevents errors, and ensures a consistent state across projects.
 
 If you’re managing CI/CD pipelines, infrastructure configurations, or any repository-bound tools,
-**gsf** is here to make your work easier, faster, and more reliable using [Git packages, aka Gears](docs/concepts/gears.md).
+**gsf** is here to make your work easier, faster, and more reliable using [Git packages, aka Gears](https://netcracker.github.io/qubership-git-system-follower/latest/concepts/gears/).
 
 ## :wrench: Problems It Solves
 Have you used versioned `.gitlab-ci.yml` that require a specific file structure in the repository?
@@ -101,38 +101,10 @@ migration steps and other actions with precision.
 DevOps engineers, SRE engineers and other professionals working with GitOps repositories, for example, configuring projects linked to ArgoCD, GitLab CI/CD, or similar tools.
 
 ## :package: Install
-See [Installation Guide](docs/getting_started/installation.md).
+See [Installation Guide](https://netcracker.github.io/qubership-git-system-follower/latest/getting_started/installation/).
 
 ## :page_with_curl: Docs
-Get started with the [Quick Start Guide](docs/getting_started/quickstart.md) or plunge into the [complete documentation](docs/docs_home.md).
-
-### Navigation
-1. [Docs Home](docs/docs_home.md)
-2. [Getting Started Guides](docs/getting_started.md)  
-   1. [Quickstart Guide](docs/getting_started/quickstart.md)
-   2. [Installation Guide](docs/getting_started/installation.md)
-3. [Concepts Guides](docs/concepts.md)  
-   1. [Gears Guide](docs/concepts/gears.md)
-   2. [apiVersion list](docs/concepts/api_version_list.md)
-      1. [apiVersion v1](docs/concepts/api_version_list/v1.md) 
-   3. [.state.yaml Guide](docs/concepts/state.md)
-   4. [Plugins Guide](docs/concepts/plugins.md)
-      1. [CLI Arguments Extension Point](docs/concepts/plugins/cli_arguments.md)
-4. [How-to Guides](docs/how_to.md)  
-   1. [Build Guide](docs/how_to/build.md)
-   2. [Gear Development Cases](docs/how_to/gear_development_cases.md)
-   3. [Integration with semantic-release](docs/how_to/integration_with_semantic_release.md)
-5. [CLI reference](docs/cli_reference.md) 
-   1. [download](docs/cli_reference/download.md)
-   2. [install](docs/cli_reference/install.md) 
-   3. [list](docs/cli_reference/list.md)
-   4. [uninstall](docs/cli_reference/uninstall.md)
-   5. [version](docs/cli_reference/version.md)
-6. [API reference](docs/api_reference.md)  
-   1. [Develop interface](docs/api_reference/develop_interface.md)  
-      1. [types Module](docs/api_reference/develop_interface/types.md)
-      2. [cicd_variables Module](docs/api_reference/develop_interface/cicd_variables.md)
-      3. [templates Module](docs/api_reference/develop_interface/templates.md)
+Get started with the [Quick Start Guide](https://netcracker.github.io/qubership-git-system-follower/latest/getting_started/quickstart/) or plunge into the [complete documentation](https://netcracker.github.io/qubership-git-system-follower/latest/home/).
 
 ## :handshake: Contributing 
 * [CODE-OF-CONDUCT.md](CODE-OF-CONDUCT.md)  

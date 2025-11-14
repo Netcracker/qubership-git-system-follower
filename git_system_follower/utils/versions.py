@@ -22,7 +22,7 @@ __all__ = ['normalize_version']
 def normalize_version(version: str) -> Version:
     # Remove prefixes and replace characters
     # Examples:
-    #   v24.4_r1ю0ю0 -> 24.4.1.0.0
+    #   v24.4_r1.0.0 -> 24.4.1.0.0
     #   v2alpha1 -> 2.1
     #   v3-beta-4 -> 3.4
     #   1.0.0 -> 1.0.0

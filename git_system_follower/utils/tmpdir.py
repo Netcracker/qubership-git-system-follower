@@ -13,13 +13,14 @@
 # limitations under the License.
 
 from pathlib import Path
+from functools import wraps
 import tempfile
 import shutil
 
 from git_system_follower.logger import logger
 
 
-__all__ = ['tempdir']
+__all__ = ['tempdir', 'multi_tempdirs']
 
 
 def tempdir(func):
@@ -32,3 +33,24 @@ def tempdir(func):
         logger.debug(f'Temporary directory was removed at {directory}')
         return result
     return wrapper
+
+
+def multi_tempdirs(count: int):
+    """Creating multiple temporary directories while executing function."""
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            dirs = []
+            try:
+                for _ in range(count):
+                    d = Path(tempfile.mkdtemp(prefix='gsf-package-manager-'))
+                    logger.debug(f'Temporary directory was created at {d}')
+                    dirs.append(d)
+
+                return func(*args, **kwargs, tmpdir=tuple(dirs))
+            finally:
+                for d in dirs:
+                    shutil.rmtree(d)
+                    logger.debug(f'Temporary directory was removed at {d}')
+        return wrapper
+    return decorator

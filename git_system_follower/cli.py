@@ -22,7 +22,7 @@ from git_system_follower.plugins.cli.packages.specs import HookSpec
 from git_system_follower.typings.cli import ExtraParam
 from git_system_follower.typings.registry import RegistryTypes, RegistryInfo
 from git_system_follower.utils.cli import Package, ExtraParamTuple, resolve_credentials, add_options, get_gears
-from git_system_follower.utils.output import banner, print_params
+from git_system_follower.utils.output import banner, display_params
 from git_system_follower.git_api.utils import get_config
 from git_system_follower.download import download
 from git_system_follower.install import install
@@ -50,11 +50,13 @@ GIT_EMAIL = config.get_value('user', 'email', default='unknown@example.com')
     help='Specify the registry type or use automatic detection'
 )
 @click.option(
-    '--registry-username', type=str, required=False, default=None, envvar='GSF_REGISTRY_USERNAME',
+    # env variable is specified in resolve_credentials because of priority
+    '--registry-username', type=str, required=False, default=None,
     help='Username for basic authentication in the registry when downloading Gears'
 )
 @click.option(
-    '--registry-password', type=str, required=False, default=None, envvar='GSF_REGISTRY_PASSWORD',
+    # env variable is specified in resolve_credentials because of priority
+    '--registry-password', type=str, required=False, default=None,
     help='Password for basic authentication in the registry when downloading Gears'
 )
 @click.option(
@@ -77,15 +79,20 @@ def download_command(
     """
     credentials = resolve_credentials(registry_username, registry_password)
     banner(version=__version__, output_func=logger.info)
-    print_params({
-        'gears': ', '.join([str(gear) for gear in gears]),
+
+    common_params = {
+        'gears': ', '.join(map(str, gears)),
         'directory': directory.absolute(),
+        'debug': is_debug,
+    }
+    registry_params = {
         'registry-type': registry_type,
         'registry-username': credentials.username if credentials is not None else '',
         'registry-password': credentials.password if credentials is not None else '',
         'insecure-registry': is_insecure,
-        'debug': is_debug
-    }, 'Start parameters', hidden_params=('token', 'registry-password'), output_func=logger.info)
+    }
+    display_params({'Common': common_params, 'Registry': registry_params})
+
     if gears == ():
         raise CLIParamsError('Gears for downloading are not specified')
     set_level(is_debug)
@@ -135,11 +142,13 @@ def download_command(
     help='Specify the registry type or use automatic detection'
 )
 @click.option(
-    '--registry-username', type=str, required=False, default=None, envvar='GSF_REGISTRY_USERNAME',
+    # env variable is specified in resolve_credentials because of priority
+    '--registry-username', type=str, required=False, default=None,
     help='Username for basic authentication in the registry when downloading Gears'
 )
 @click.option(
-    '--registry-password', type=str, required=False, default=None, envvar='GSF_REGISTRY_PASSWORD',
+    # env variable is specified in resolve_credentials because of priority
+    '--registry-password', type=str, required=False, default=None,
     help='Password for basic authentication in the registry when downloading Gears'
 )
 @click.option(
@@ -172,22 +181,29 @@ def install_command(
     """
     credentials = resolve_credentials(registry_username, registry_password)
     banner(version=__version__, output_func=logger.info)
-    print_params({
-        'gears': ', '.join([str(gear) for gear in gears]),
-        'repo': repo,
-        'branches': ', '.join(branches),
-        'token': token,
-        'extras': ', '.join([f"{var.name}={'*****' if var.masked else var.value}" for var in extras]),
-        'message': message,
-        'git-username': username,
-        'git-email': email,
+
+    common_params = {
+        'gears': ', '.join(map(str, gears)),
+        'extras': ', '.join(map(str, extras)),
+        'force': is_force,
+        'debug': is_debug,
+    }
+    registry_params = {
         'registry-type': registry_type,
         'registry-username': credentials.username if credentials is not None else '',
         'registry-password': credentials.password if credentials is not None else '',
         'insecure-registry': is_insecure,
-        'force': is_force,
-        'debug': is_debug
-    }, 'Start parameters', hidden_params=('token', 'registry-password'), output_func=logger.info)
+    }
+    git_params = {
+        'repo': repo,
+        'branches': ', '.join(branches),
+        'token': token,
+        'message': message,
+        'git-username': username,
+        'git-email': email,
+    }
+    display_params({'Common': common_params, 'Registry': registry_params, 'Git': git_params})
+
     if gears == ():
         raise CLIParamsError('Gears for installation are not specified')
     set_level(is_debug)
@@ -241,11 +257,13 @@ def install_command(
     help='Specify the registry type or use automatic detection'
 )
 @click.option(
-    '--registry-username', type=str, required=False, default=None, envvar='GSF_REGISTRY_USERNAME',
+    # env variable is specified in resolve_credentials because of priority
+    '--registry-username', type=str, required=False, default=None,
     help='Username for basic authentication in the registry when downloading Gears'
 )
 @click.option(
-    '--registry-password', type=str, required=False, default=None, envvar='GSF_REGISTRY_PASSWORD',
+    # env variable is specified in resolve_credentials because of priority
+    '--registry-password', type=str, required=False, default=None,
     help='Password for basic authentication in the registry when downloading Gears'
 )
 @click.option(
@@ -280,22 +298,29 @@ def uninstall_command(
     """
     credentials = resolve_credentials(registry_username, registry_password)
     banner(version=__version__, output_func=logger.info)
-    print_params({
-        'gears': ', '.join([str(gear) for gear in gears]),
-        'repo': repo,
-        'branches': ', '.join(branches),
-        'token': token,
-        'extras': ', '.join([f"{var.name}={'*****' if var.masked else var.value}" for var in extras]),
-        'message': message,
-        'git-username': username,
-        'git-email': email,
+
+    common_params = {
+        'gears': ', '.join(map(str, gears)),
+        'extras': ', '.join(map(str, extras)),
+        'force': is_force,
+        'debug': is_debug,
+    }
+    registry_params = {
         'registry-type': registry_type,
         'registry-username': credentials.username if credentials is not None else '',
         'registry-password': credentials.password if credentials is not None else '',
         'insecure-registry': is_insecure,
-        'force': is_force,
-        'debug': is_debug
-    }, 'Start parameters', hidden_params=('token', 'registry-password'), output_func=logger.info)
+    }
+    git_params = {
+        'repo': repo,
+        'branches': ', '.join(branches),
+        'token': token,
+        'message': message,
+        'git-username': username,
+        'git-email': email,
+    }
+    display_params({'Common': common_params, 'Registry': registry_params, 'Git': git_params})
+
     if gears == ():
         raise CLIParamsError('Gears for uninstallation are not specified')
     set_level(is_debug)
@@ -322,7 +347,7 @@ def version_command():
 
 
 @click.group()
-@click.version_option(__version__)
+@click.version_option(__version__, message='%(version)s')
 def cli():
     """ The package manager for Git providers. """
 

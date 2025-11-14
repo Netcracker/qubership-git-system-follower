@@ -13,80 +13,56 @@
 # limitations under the License.
 
 """ Module with output info related utils """
-from typing import Mapping, Iterable, Callable, Sequence
-import textwrap
+from typing import Iterable, Callable
 
+from outlify.panel import ParamsPanel
+from outlify.style import AnsiCodes, Colors, Styles
+
+from git_system_follower.logger import logger
 from git_system_follower.typings.package import PackageLocalData
 
 
-__all__ = ['print_params', 'print_list', 'banner', 'print_dependency_tree_one_level']
+__all__ = ['BrandedColors', 'banner', 'display_params', 'print_dependency_tree_one_level']
 
 
 WIDTH = 100
 
 
-def print_params(
-        params: Mapping, title='', width: int = WIDTH,
-        hidden_params: Iterable = (), *,
-        output_func: Callable = print
-) -> None:
-    """ Print parameters as "window" from value as dict
-
-    :param params: value as dict: key/value
-    :param title: window's title
-    :param width: parameters window width
-    :param hidden_params: list of <params> keys to hide
-    :param output_func: output function
-    """
-    width = width - 2  # subtract the sides
-    max_length_param = len(max(params.keys(), key=lambda x: len(x)))
-
-    content = f'\n{_get_header(title, width=width)}\n'
-    for key, value in params.items():
-        param = key.ljust(max_length_param)
-        if key in hidden_params:
-            value = '*****' if value else ''
-        content += f'  {param} = {value}\n'
-    content += f"╰{'═' * width}╯"
-    output_func(content)
+class BrandedAnsiCodes(AnsiCodes):
+    orange = (38, 2, 244, 81, 30)  # color: #F4511E
 
 
-def _get_header(title: str, *, width: int) -> str:
-    title = f' {title} ' if title != '' else ''
-    header = title.center(width, '═')
-    return f'╭{header}╮'
-
-
-def print_list(
-        elements: Sequence, title: str, width: int = WIDTH, *,
-        key: Callable, output_func: Callable = print
-) -> None:
-    """ Print the list by filtering the information from the list using the function
-
-    :param elements: value as dict: key/value
-    :param title: list's title
-    :param width: text content width
-    :param key: function for filtering the information from the list
-    :param output_func: output function
-    (e.g. key=lambda package: f"{package['name']}@{package['version']}")
-    """
-    content = f'{title} ({len(elements)})'
-    if len(elements) != 0:
-        elements_content = '  '.join([key(elem) for elem in elements])
-        content += f':\n{textwrap.fill(elements_content, width)}'
-    output_func(content)
+BrandedColors = BrandedAnsiCodes()
+COMMON_SETTINGS = {
+    'width': 100,
+    'title_style': [Colors.white],
+    'title_align': 'left',
+    'subtitle_style': [Colors.gray],
+    'subtitle_align': 'right',
+    'border': '╭╮╰╯═',
+    'border_style': [Colors.gray],
+}
 
 
 def banner(version: str, *, output_func: Callable = print):
-    # This logo is colored #F4511E
     content = f"""
-    \033[38;2;244;81;30m.-,\033[0m
- \033[38;2;244;81;30m.^.: :.^.\033[0m   ┏┓╻┳ ┏┓╻╻┏┓┳┏┓┏┳┓ ┏┓┏┓╻ ╻ ┏┓┏ ┓┏┓┳┓
-\033[38;2;244;81;30m,-' .-. '-,\033[0m  ┃┓┃┃ ┗┓┗┃┗┓┃┣ ┃┃┃ ┣ ┃┃┃ ┃ ┃┃┃┃┃┣ ┣┛
-\033[38;2;244;81;30m'-. '-' .-'\033[0m  ┗┛╹╹ ┗┛┗┛┗┛╹┗┛╹ ╹ ╹ ┗┛┗┛┗┛┗┛┗┻┛┗┛┛┗
- \033[38;2;244;81;30m'.`; ;`.'\033[0m   git-system-follower v{version}
-    \033[38;2;244;81;30m`-`\033[0m"""
+    {BrandedColors.orange}.-,{Colors.reset}
+ {BrandedColors.orange}.^.: :.^.{Colors.reset}   ┏┓╻┳ ┏┓╻╻┏┓┳┏┓┏┳┓ ┏┓┏┓╻ ╻ ┏┓┏ ┓┏┓┳┓
+{BrandedColors.orange},-' .-. '-,{Colors.reset}  ┃┓┃┃ ┗┓┗┃┗┓┃┣ ┃┃┃ ┣ ┃┃┃ ┃ ┃┃┃┃┃┣ ┣┛
+{BrandedColors.orange}'-. '-' .-'{Colors.reset}  ┗┛╹╹ ┗┛┗┛┗┛╹┗┛╹ ╹ ╹ ┗┛┗┛┗┛┗┛┗┻┛┗┛┛┗
+ {BrandedColors.orange}'.`; ;`.'{Colors.reset}   {Colors.white}{Styles.bold}git-system-follower{Styles.reset} v{version}
+    {BrandedColors.orange}`-`{Colors.reset}"""
     output_func(content)
+
+
+def display_params(data: dict[str, dict]) -> None:
+    """ Display parameters in a compact format
+
+    :param data: data to display where key - section name, value - parameters
+    """
+    for i, (name, params) in enumerate(data.items(), 1):
+        title, subtitle = f'{i}. {name} parameters', f'total: {len(params)}'
+        logger.info(ParamsPanel(params, title=title, subtitle=subtitle, **COMMON_SETTINGS))
 
 
 def print_dependency_tree_one_level(

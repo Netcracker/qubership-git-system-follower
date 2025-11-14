@@ -28,6 +28,7 @@ def init_default_main(parameters: Parameters):
         if template is None:
             raise ValueError('There are more than 1 template in the package, '
                              'specify which one you want to use with the TEMPLATE variable')
+        template = template.value
     else:
         template = templates[0]
 

@@ -55,6 +55,7 @@ class PackageState(TypedDict):
     template_variables: dict[str, str]
     last_update: str
     dependencies: list[str]
+    structure_type: str
     cicd_variables: CICDVariablesSection
 
 
@@ -126,11 +127,9 @@ class StateFile:
         variables = filter_cicd_variables_by_state(package, current_cicd_variables)
         computed_hash = self.__get_hash(variables)
         if computed_hash != package['cicd_variables']['hash']:
-            raise HashesMismatch(f"CI/CD variables hash specified in state file in "
-                                 f"{package['name']}@{package['version']} package "
-                                 f"({package['cicd_variables']['hash']}) "
-                                 f"and generated hash ({computed_hash}) do not match",
-                                 state_file_hash=package['cicd_variables']['hash'], generated_hash=computed_hash)
+            error = f"CI/CD variables hash specified in state file in {package['name']}@{package['version']} package " \
+                    f"({package['cicd_variables']['hash']}) and generated hash ({computed_hash}) do not match"
+            raise HashesMismatch(error, state_file_hash=package['cicd_variables']['hash'], generated_hash=computed_hash)
 
     def get_installed_packages(self) -> tuple[InstalledPackage, ...]:
         packages = []
@@ -183,13 +182,15 @@ class StateFile:
                 return state
 
     def add_package(
-            self, package: PackageLocalData, response: ScriptResponse | None, state: PackageState | None
+            self, package: PackageLocalData, response: ScriptResponse | None, state: PackageState | None,
+            structure_type: str | None = None
     ) -> None:
         """ Add package to state file
 
         :param package: package which need to add to state file
         :param response: script response with information about used template, used ci/cd variables
         :param state: current state from state file (if package already installed but another versions)
+        :param structure_type: structure type of package
         """
         if response is None:
             return
@@ -201,6 +202,7 @@ class StateFile:
             used_template=response['template'],
             template_variables={name: mask_data(value) for name, value in response['template_variables'].items()},
             last_update=str(datetime.now()),
+            structure_type=structure_type,
             dependencies=[f"{dependency.name}@{dependency.version}" for dependency in package['dependencies']],
             cicd_variables=CICDVariablesSection(
                 names=variables_names,
@@ -276,12 +278,11 @@ def get_installed_packages(states: dict[str, StateFile]) -> set[PackageCLI]:
 
 
 def update_created_cicd_variables(
-        created_cicd_variables: list[str], response: ScriptResponse
-) -> list[str]:
-    response_variables = response['cicd_variables'] if response is not None else []
-    for variable in response_variables:
-        created_cicd_variables.append(variable['name'])
-    return created_cicd_variables
+        created_cicd_variables: tuple[str, ...], response: ScriptResponse | None
+) -> tuple[str, ...]:
+    if response is None:
+        return created_cicd_variables
+    return created_cicd_variables + tuple(variable['name'] for variable in response['cicd_variables'])
 
 
 def mask_data(data: str) -> str:

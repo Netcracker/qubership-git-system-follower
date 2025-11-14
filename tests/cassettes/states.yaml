@@ -1,0 +1,246 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-type:
+      - application/json
+      User-Agent:
+      - python-gitlab/4.13.0
+    method: GET
+    uri: /api/v4/projects/42352/repository/branches
+  response:
+    body:
+      string: '[{"name": "test", "commit": {"id": "a93d615c20ebc46e9fa28a0df47062f2d3414034",
+        "short_id": "a93d615c", "created_at": "2025-07-22T14:36:06.000+00:00", "parent_ids":
+        ["bf19691b493f42cafe2a67c44280d4fbc4e8f9c6", "25ad2ebae864250ab7fffe59a35447d4f6197695"],
+        "title": "Merge branch ''test.temp-manage-packages'' into ''test''", "message":
+        "Merge branch ''test.temp-manage-packages'' into ''test''\n\nUninstalled gear(s)\n\nSee
+        merge request dummy_path/automation-test-sandbox/gsf-test!321", "author_name":
+        "DUMMY_name", "author_email": "DUMMY_email", "authored_date": "2025-07-22T14:36:06.000+00:00",
+        "committer_name": "DUMMY_name", "committer_email": "DUMMY_email", "committed_date":
+        "2025-07-22T14:36:06.000+00:00", "trailers": {}, "extended_trailers": {},
+        "web_url": "https://gitlab.dummy.org/dummy_path/automation-test-sandbox/gsf-test/-/commit/a93d615c20ebc46e9fa28a0df47062f2d3414034"},
+        "merged": false, "protected": false, "developers_can_push": false, "developers_can_merge":
+        false, "can_push": true, "default": false, "web_url": "https://gitlab.dummy.org/dummy_path/automation-test-sandbox/gsf-test/-/tree/test"}]'
+    headers:
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 21 Aug 2025 16:21:19 GMT
+      Etag:
+      - W/"cb3a002334b7647fe3dcd0f29a3da859"
+      Link:
+      - <https://gitlab.dummy.org/api/v4/projects/42352/repository/branches?id=42352&page=1&per_page=20>;
+        rel="first", <https://gitlab.dummy.org/api/v4/projects/42352/repository/branches?id=42352&page=1&per_page=20>;
+        rel="last"
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Server:
+      - nginx
+      Strict-Transport-Security:
+      - max-age=63072000
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Accept-Encoding
+      - Origin
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-Gitlab-Meta:
+      - '{"correlation_id":"01K36PYJ297B9TJWQ1Q8DDED51","version":"1"}'
+      X-Next-Page:
+      - ''
+      X-Page:
+      - '1'
+      X-Per-Page:
+      - '20'
+      X-Prev-Page:
+      - ''
+      X-Request-Id:
+      - 01K36PYJ297B9TJWQ1Q8DDED51
+      X-Runtime:
+      - '0.064462'
+      X-Total:
+      - '10'
+      X-Total-Pages:
+      - '1'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-type:
+      - application/json
+      User-Agent:
+      - python-gitlab/4.13.0
+    method: GET
+    uri: /api/v4/projects/42352/variables
+  response:
+    body:
+      string: '[{"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value",
+        "protected": false, "masked": false, "raw": false, "environment_scope": "*",
+        "description": null}, {"variable_type": "env_var", "key": "Dummy key", "value":
+        "Dummy value", "protected": false, "masked": false, "raw": false, "environment_scope":
+        "*", "description": null}, {"variable_type": "env_var", "key": "Dummy key",
+        "value": "Dummy value", "protected": false, "masked": true, "raw": false,
+        "environment_scope": "*", "description": null}, {"variable_type": "env_var",
+        "key": "Dummy key", "value": "Dummy value", "protected": false, "masked":
+        false, "raw": false, "environment_scope": "*", "description": null}, {"variable_type":
+        "env_var", "key": "Dummy key", "value": "Dummy value", "protected": false,
+        "masked": true, "raw": false, "environment_scope": "*", "description": null},
+        {"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value", "protected":
+        false, "masked": false, "raw": false, "environment_scope": "*", "description":
+        null}]'
+    headers:
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 21 Aug 2025 16:21:20 GMT
+      Etag:
+      - W/"82d802fe55bac23b8e86c1cbc7cf4d8b"
+      Link:
+      - <https://gitlab.dummy.org/api/v4/projects/42352/variables?id=42352&page=1&per_page=20>;
+        rel="first", <https://gitlab.dummy.org/api/v4/projects/42352/variables?id=42352&page=1&per_page=20>;
+        rel="last"
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Server:
+      - nginx
+      Strict-Transport-Security:
+      - max-age=63072000
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Accept-Encoding
+      - Origin
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-Gitlab-Meta:
+      - '{"correlation_id":"01K36PYK980STYNHVQJ1Q7A793","version":"1"}'
+      X-Next-Page:
+      - ''
+      X-Page:
+      - '1'
+      X-Per-Page:
+      - '20'
+      X-Prev-Page:
+      - ''
+      X-Request-Id:
+      - 01K36PYK980STYNHVQJ1Q7A793
+      X-Runtime:
+      - '0.069628'
+      X-Total:
+      - '6'
+      X-Total-Pages:
+      - '1'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-type:
+      - application/json
+      User-Agent:
+      - python-gitlab/4.13.0
+    method: GET
+    uri: /api/v4/projects/42352/repository/files/.state.yaml/raw?ref=test
+  response:
+    body:
+      string: 'hash: 4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945
+
+        packages: []
+
+        '
+    headers:
+      Cache-Control:
+      - max-age=0, private, must-revalidate, no-store, no-cache
+      Connection:
+      - keep-alive
+      Content-Disposition:
+      - inline; filename=".state.yaml"; filename*=UTF-8''.state.yaml
+      Content-Length:
+      - '84'
+      Content-Type:
+      - text/plain; charset=utf-8
+      Date:
+      - Thu, 21 Aug 2025 16:21:21 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Server:
+      - nginx
+      Strict-Transport-Security:
+      - max-age=63072000
+      Vary:
+      - Origin
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-Gitlab-Blob-Id:
+      - 6a3837ad0e4cf8a84520872992de148de00b0178
+      X-Gitlab-Commit-Id:
+      - a93d615c20ebc46e9fa28a0df47062f2d3414034
+      X-Gitlab-Content-Sha256:
+      - dfc09900182578281aa32e78059967ace577594e16df6e4f156d9e77b10e92e3
+      X-Gitlab-Encoding:
+      - base64
+      X-Gitlab-Execute-Filemode:
+      - 'false'
+      X-Gitlab-File-Name:
+      - .state.yaml
+      X-Gitlab-File-Path:
+      - .state.yaml
+      X-Gitlab-Last-Commit-Id:
+      - 25ad2ebae864250ab7fffe59a35447d4f6197695
+      X-Gitlab-Meta:
+      - '{"correlation_id":"01K36PYMGNQVS2TVRHX95RR18E","version":"1"}'
+      X-Gitlab-Ref:
+      - test
+      X-Gitlab-Size:
+      - '84'
+      X-Request-Id:
+      - 01K36PYMGNQVS2TVRHX95RR18E
+      X-Runtime:
+      - '0.075681'
+    status:
+      code: 200
+      message: OK
+version: 1

@@ -23,6 +23,7 @@ from git_system_follower.typings.package import PackageLocalData
 from git_system_follower.typings.cli import ExtraParam
 from git_system_follower.typings.script import ScriptResponse
 from git_system_follower.package.script import run_script
+from git_system_follower.package.package_info import get_scripts_dir_by_complexity
 from git_system_follower.package.cicd_variables import CICDVariable, get_cicd_variables
 
 
@@ -35,7 +36,10 @@ def init(
 ) -> ScriptResponse:
     logger.info('==> Package initialization')
     workdir = Path(repo.git.working_dir)
-    scripts_dir = package['path'] / PACKAGE_DIRNAME / SCRIPTS_DIR / package['version']
+    scripts_dir, is_force = get_scripts_dir_by_complexity(
+        path=package['path'] / PACKAGE_DIRNAME / SCRIPTS_DIR / package['version'],
+        is_force=is_force,
+    )
     if not scripts_dir.exists():
         raise FileNotFoundError(f'Scripts directory is missing ({scripts_dir.absolute()})')
 

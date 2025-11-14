@@ -15,8 +15,6 @@
 """ Module with api to work with CI/CD variables for package developers """
 import json
 
-from gitlab.base import RESTObject
-
 from git_system_follower.variables import PACKAGE_API_RESULT as __PACKAGE_API_RESULT
 from git_system_follower.develop.api.types import Parameters
 from git_system_follower.errors import PackageCICDVariablePolicyError
@@ -30,7 +28,7 @@ from git_system_follower.package.cicd_variables import (
 __all__ = ['CICDVariable', 'create_variable', 'delete_variable']
 
 
-def create_variable(parameters: Parameters, variable: CICDVariable, *, is_force: bool = False) -> RESTObject | None:
+def create_variable(parameters: Parameters, variable: CICDVariable, *, is_force: bool = False) -> CICDVariable:
     """ Create CI/CD variable using gitlab REST API
 
     If <is_force> parameter is False, then it will necessarily be safe to create CI/CD variable:
@@ -61,7 +59,7 @@ def create_variable(parameters: Parameters, variable: CICDVariable, *, is_force:
     response = __create_variable(
         system_params.project, variable, is_force=is_force
     )
-    __add_info_about_variable(variable)
+    __add_info_about_variable(response)
     return response
 
 

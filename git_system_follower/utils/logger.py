@@ -16,16 +16,24 @@ import logging
 from pathlib import Path
 
 import click
-from colorama import Fore, Style
+from outlify.style import Colors, Styles
 
+
+# for banner + printing params
+NO_FORMAT = '%(message)s'
+NO_DATE_FORMAT = ''
 
 # for stdout
-_SHORT_FORMAT = '[%(asctime)s.%(msecs)03d] %(levelname)-18s | %(message)s'
-_SHORT_DATE_FORMAT = '%H:%M:%S'
+SHORT_FORMAT = f'{Colors.cyan}%(asctime)s.%(msecs)03d{Colors.reset} %(message)s'
+SHORT_DATE_FORMAT = '%H:%M:%S'
+
+# for debug stdout
+SHORT_DEBUG_FORMAT = f'{Colors.cyan}%(asctime)s.%(msecs)03d{Colors.reset} %(levelname)-18s | %(message)s'
+SHORT_DEBUG_DATE_FORMAT = '%H:%M:%S'
 
 # for log file
-_FORMAT = '[%(asctime)s.%(msecs)03d] %(levelname)-8s | %(filename)s:%(funcName)s:%(lineno)d - %(message)s'
-_DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
+FORMAT = '[%(asctime)s.%(msecs)03d] %(levelname)-8s | %(filename)s:%(funcName)s:%(lineno)d - %(message)s'
+DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 # New logging level
 SUCCESS_LEVEL_NUM = 25
@@ -35,20 +43,20 @@ SUCCESS_LEVEL_NAME = 'SUCCESS'
 class ColoredFormatter(logging.Formatter):
 
     COLORS = {
-        'DEBUG': Fore.BLUE,
-        'INFO': Fore.WHITE,
-        'SUCCESS': Fore.GREEN,
-        'WARNING': Fore.YELLOW,
-        'ERROR': Fore.RED,
-        'CRITICAL': f'{Fore.RED}{Style.BRIGHT}',
+        'DEBUG': Colors.gray,
+        'INFO': Colors.white,
+        'SUCCESS': Colors.green,
+        'WARNING': Colors.yellow,
+        'ERROR': Colors.red,
+        'CRITICAL': f'{Colors.red}{Styles.bold}',
     }
 
     def format(self, record):
         color = self.COLORS.get(record.levelname, '')
         if color:
-            record.name = f'{color}{record.name}{Fore.WHITE}'
-            record.levelname = f'{color}{record.levelname}{Fore.WHITE}'
-            record.msg = f'{color}{record.msg}{Fore.WHITE}'
+            record.name = f'{color}{record.name}{Colors.white}'
+            record.levelname = f'{color}{record.levelname}{Colors.white}'
+            record.msg = f'{color}{record.msg}{Styles.reset}'
         return logging.Formatter.format(self, record)
 
 
@@ -61,7 +69,7 @@ class RemoveColorFilter(logging.Filter):
         return True
 
 
-file_formatter = logging.Formatter(fmt=_FORMAT, datefmt=_DATE_FORMAT)
+file_formatter = logging.Formatter(fmt=FORMAT, datefmt=DATE_FORMAT)
 
 
 def disable_info_for_other_loggers(names: list[str]) -> None:
@@ -73,7 +81,7 @@ def disable_info_for_other_loggers(names: list[str]) -> None:
 def get_stream_handler() -> logging.StreamHandler:
     handler = logging.StreamHandler()
     handler.setLevel(level=logging.INFO)
-    handler.setFormatter(ColoredFormatter(fmt=_SHORT_FORMAT, datefmt=_SHORT_DATE_FORMAT))
+    handler.setFormatter(ColoredFormatter(fmt=NO_FORMAT, datefmt=NO_DATE_FORMAT))
     return handler
 
 

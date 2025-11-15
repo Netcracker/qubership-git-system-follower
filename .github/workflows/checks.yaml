@@ -41,5 +41,5 @@ jobs:
 
       - name: Run tests
         run: |
-          uv run tox -e unit
-          uv run tox -e functional
+          tox -e unit
+          tox -e functional

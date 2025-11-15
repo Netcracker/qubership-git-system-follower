@@ -45,7 +45,6 @@ dependencies = [
 dev = [
     "pytest == 8.3.4",
     "ruff == 0.9.1",
-    "tox == 4.13.0",
     "vcrpy == 7.0.0",
 ]
 

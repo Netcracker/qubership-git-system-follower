@@ -39,7 +39,10 @@ jobs:
       - name: Install dependencies
         run: uv sync --extra dev
 
+      - name: Install tox
+        run: uv tool install tox==4.13.0
+
       - name: Run tests
         run: |
-          tox -e unit
-          tox -e functional
+          uvx tox -e unit
+          uvx tox -e functional

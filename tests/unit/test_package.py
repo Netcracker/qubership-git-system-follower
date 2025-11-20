@@ -73,10 +73,10 @@ def process_body(raw_body):
 
 
 # Package Operation Helpers
-def bump_patch_version(version: str) -> str:
+def bump_patch_version(version: str, bump_by: str) -> str:
     return re.sub(
         r"^(\d+\.\d+\.)(\d+)$",
-        lambda m: m.group(1) + str(int(m.group(2)) + 1),
+        lambda m: m.group(1) + str(int(m.group(2)) + int(bump_by)),
         version
     )
 
@@ -104,8 +104,8 @@ def install_package(states, branch, package, is_force, project, extras):
         package, for_delete=False
     )['cicd_variables']['hash'], "Issue with get_hash"
 
-def update_package(states, branch, package, is_force, project, extras):
-    package['version'] = bump_patch_version(package['version'])
+def update_package(states, branch, package, is_force, project, bump_by, extras):
+    package['version'] = bump_patch_version(package['version'], bump_by)
     package_state = states[branch].get_package(package, for_delete=False)
     response = update(
         package=package,
@@ -140,6 +140,8 @@ def _get_git_clone_mock(mock_get_git_clone):
     dst_dir = os.path.join(current_file_dir, ".git-system-follower/repositories/gsf-test")
     os.makedirs(dst_dir, exist_ok=True)
     src_dir = os.path.join(os.path.dirname(current_file_dir), "test_repo")
+    # print(src_dir)
+    # print(dst_dir)
     shutil.copytree(src_dir, dst_dir, dirs_exist_ok=True)
     type(mock_get_git_clone).working_tree_dir = PropertyMock(return_value=dst_dir)
     type(mock_get_git_clone).working_dir = PropertyMock(return_value=dst_dir)
@@ -151,15 +153,15 @@ vcr_instance = clone_vcr(before_record_response=before_record_response)
 vcr_instance.register_matcher("uri_no_host", path_matcher)
 
 @pytest.mark.unit
-@pytest.mark.parametrize("gear_type, name, value, masked, is_force, states", [
-    ('complex', 'test1', '1', False, False, get_states_cfg()),
-    ('complex', 'test2', '2', False, False, get_states_cfg()),
+@pytest.mark.parametrize("gear_type, name, value, bump_by, masked, is_force, states", [
+    ('complex', 'test1', '1', '1', False, False, get_states_cfg()),
+    ('complex', 'test1', '1', '2', False, False, get_states_cfg()),
 ])
 @patch("test_package.get_git_repo")
 @vcr_instance.use_cassette('test_package')
 def test_package(
     mock_get_git_clone,
-    gear_type, name, value, masked, is_force, states):
+    gear_type, name, value, bump_by, masked, is_force, states):
     mock_git_clone = _get_git_clone_mock(mock_get_git_clone.return_value)
     mock_get_git_clone.return_value = mock_git_clone
     GEARS_DIR = Path(__file__).parent.parent / "gears"
@@ -169,7 +171,7 @@ def test_package(
     extras = build_extras(name, value, masked)
     for branch in BRANCHES:
         install_package(states, branch, package, is_force, project, extras)
-        update_package(states, branch, package, is_force, project, extras)
+        update_package(states, branch, package, is_force, project, bump_by, extras)
         uninstall_package(states, branch, package, is_force, project, extras)
 
 

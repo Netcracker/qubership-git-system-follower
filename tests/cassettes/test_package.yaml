@@ -16,16 +16,7 @@ interactions:
     uri: /api/v4/projects/42352/variables
   response:
     body:
-      string: '[{"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value",
-        "protected": false, "masked": true, "raw": false, "environment_scope": "*",
-        "description": null}, {"variable_type": "env_var", "key": "Dummy key", "value":
-        "Dummy value", "protected": false, "masked": false, "raw": false, "environment_scope":
-        "*", "description": null}, {"variable_type": "env_var", "key": "Dummy key",
-        "value": "Dummy value", "protected": false, "masked": false, "raw": false,
-        "environment_scope": "*", "description": null}, {"variable_type": "env_var",
-        "key": "Dummy key", "value": "Dummy value", "protected": false, "masked":
-        false, "raw": false, "environment_scope": "*", "description": null}, {"variable_type":
-        "env_var", "key": "Dummy key", "value": "Dummy value", "protected": false,
+      string: '[{"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value", "protected": false,
         "masked": false, "raw": false, "environment_scope": "*", "description": null},
         {"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value", "protected":
         false, "masked": false, "raw": false, "environment_scope": "*", "description":
@@ -53,8 +44,6 @@ interactions:
       - nginx
       Strict-Transport-Security:
       - max-age=63072000
-      Transfer-Encoding:
-      - chunked
       Vary:
       - Accept-Encoding
       - Origin
@@ -100,18 +89,7 @@ interactions:
     uri: /api/v4/projects/42352/variables
   response:
     body:
-      string: '[{"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value",
-        "protected": false, "masked": true, "raw": false, "environment_scope": "*",
-        "description": null}, {"variable_type": "env_var", "key": "Dummy key", "value":
-        "Dummy value", "protected": false, "masked": false, "raw": false, "environment_scope":
-        "*", "description": null}, {"variable_type": "env_var", "key": "Dummy key",
-        "value": "Dummy value", "protected": false, "masked": false, "raw": false,
-        "environment_scope": "*", "description": null}, {"variable_type": "env_var",
-        "key": "Dummy key", "value": "Dummy value", "protected": false, "masked":
-        false, "raw": false, "environment_scope": "*", "description": null}, {"variable_type":
-        "env_var", "key": "Dummy key", "value": "Dummy value", "protected": false,
-        "masked": false, "raw": false, "environment_scope": "*", "description": null},
-        {"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value", "protected":
+      string: '[{"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value", "protected":
         false, "masked": false, "raw": false, "environment_scope": "*", "description":
         null}]'
     headers:
@@ -137,8 +115,6 @@ interactions:
       - nginx
       Strict-Transport-Security:
       - max-age=63072000
-      Transfer-Encoding:
-      - chunked
       Vary:
       - Accept-Encoding
       - Origin
@@ -240,18 +216,7 @@ interactions:
     uri: /api/v4/projects/42352/variables
   response:
     body:
-      string: '[{"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value",
-        "protected": false, "masked": true, "raw": false, "environment_scope": "*",
-        "description": null}, {"variable_type": "env_var", "key": "Dummy key", "value":
-        "Dummy value", "protected": false, "masked": false, "raw": false, "environment_scope":
-        "*", "description": null}, {"variable_type": "env_var", "key": "Dummy key",
-        "value": "Dummy value", "protected": false, "masked": false, "raw": false,
-        "environment_scope": "*", "description": null}, {"variable_type": "env_var",
-        "key": "Dummy key", "value": "Dummy value", "protected": false, "masked":
-        false, "raw": false, "environment_scope": "*", "description": null}, {"variable_type":
-        "env_var", "key": "Dummy key", "value": "Dummy value", "protected": false,
-        "masked": false, "raw": false, "environment_scope": "*", "description": null},
-        {"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value", "protected":
+      string: '[{"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value", "protected":
         false, "masked": false, "raw": false, "environment_scope": "*", "description":
         null}, {"variable_type": "env_var", "key": "test1", "value": "1", "protected":
         false, "masked": false, "raw": false, "environment_scope": "*", "description":
@@ -281,8 +246,6 @@ interactions:
       - nginx
       Strict-Transport-Security:
       - max-age=63072000
-      Transfer-Encoding:
-      - chunked
       Vary:
       - Accept-Encoding
       - Origin
@@ -328,18 +291,7 @@ interactions:
     uri: /api/v4/projects/42352/variables
   response:
     body:
-      string: '[{"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value",
-        "protected": false, "masked": true, "raw": false, "environment_scope": "*",
-        "description": null}, {"variable_type": "env_var", "key": "Dummy key", "value":
-        "Dummy value", "protected": false, "masked": false, "raw": false, "environment_scope":
-        "*", "description": null}, {"variable_type": "env_var", "key": "Dummy key",
-        "value": "Dummy value", "protected": false, "masked": false, "raw": false,
-        "environment_scope": "*", "description": null}, {"variable_type": "env_var",
-        "key": "Dummy key", "value": "Dummy value", "protected": false, "masked":
-        false, "raw": false, "environment_scope": "*", "description": null}, {"variable_type":
-        "env_var", "key": "Dummy key", "value": "Dummy value", "protected": false,
-        "masked": false, "raw": false, "environment_scope": "*", "description": null},
-        {"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value", "protected":
+      string: '[{"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value", "protected":
         false, "masked": false, "raw": false, "environment_scope": "*", "description":
         null}, {"variable_type": "env_var", "key": "test1", "value": "1", "protected":
         false, "masked": false, "raw": false, "environment_scope": "*", "description":
@@ -369,8 +321,6 @@ interactions:
       - nginx
       Strict-Transport-Security:
       - max-age=63072000
-      Transfer-Encoding:
-      - chunked
       Vary:
       - Accept-Encoding
       - Origin
@@ -464,16 +414,7 @@ interactions:
     uri: /api/v4/projects/42352/variables
   response:
     body:
-      string: '[{"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value",
-        "protected": false, "masked": true, "raw": false, "environment_scope": "*",
-        "description": null}, {"variable_type": "env_var", "key": "Dummy key", "value":
-        "Dummy value", "protected": false, "masked": false, "raw": false, "environment_scope":
-        "*", "description": null}, {"variable_type": "env_var", "key": "Dummy key",
-        "value": "Dummy value", "protected": false, "masked": false, "raw": false,
-        "environment_scope": "*", "description": null}, {"variable_type": "env_var",
-        "key": "Dummy key", "value": "Dummy value", "protected": false, "masked":
-        false, "raw": false, "environment_scope": "*", "description": null}, {"variable_type":
-        "env_var", "key": "Dummy key", "value": "Dummy value", "protected": false,
+      string: '[{"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value", "protected": false,
         "masked": false, "raw": false, "environment_scope": "*", "description": null},
         {"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value", "protected":
         false, "masked": false, "raw": false, "environment_scope": "*", "description":
@@ -501,8 +442,6 @@ interactions:
       - nginx
       Strict-Transport-Security:
       - max-age=63072000
-      Transfer-Encoding:
-      - chunked
       Vary:
       - Accept-Encoding
       - Origin
@@ -604,18 +543,7 @@ interactions:
     uri: /api/v4/projects/42352/variables
   response:
     body:
-      string: '[{"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value",
-        "protected": false, "masked": true, "raw": false, "environment_scope": "*",
-        "description": null}, {"variable_type": "env_var", "key": "Dummy key", "value":
-        "Dummy value", "protected": false, "masked": false, "raw": false, "environment_scope":
-        "*", "description": null}, {"variable_type": "env_var", "key": "Dummy key",
-        "value": "Dummy value", "protected": false, "masked": false, "raw": false,
-        "environment_scope": "*", "description": null}, {"variable_type": "env_var",
-        "key": "Dummy key", "value": "Dummy value", "protected": false, "masked":
-        false, "raw": false, "environment_scope": "*", "description": null}, {"variable_type":
-        "env_var", "key": "Dummy key", "value": "Dummy value", "protected": false,
-        "masked": false, "raw": false, "environment_scope": "*", "description": null},
-        {"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value", "protected":
+      string: '[{"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value", "protected":
         false, "masked": false, "raw": false, "environment_scope": "*", "description":
         null}, {"variable_type": "env_var", "key": "test1", "value": "1", "protected":
         false, "masked": false, "raw": false, "environment_scope": "*", "description":
@@ -645,8 +573,6 @@ interactions:
       - nginx
       Strict-Transport-Security:
       - max-age=63072000
-      Transfer-Encoding:
-      - chunked
       Vary:
       - Accept-Encoding
       - Origin
@@ -692,18 +618,7 @@ interactions:
     uri: /api/v4/projects/42352/variables
   response:
     body:
-      string: '[{"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value",
-        "protected": false, "masked": true, "raw": false, "environment_scope": "*",
-        "description": null}, {"variable_type": "env_var", "key": "Dummy key", "value":
-        "Dummy value", "protected": false, "masked": false, "raw": false, "environment_scope":
-        "*", "description": null}, {"variable_type": "env_var", "key": "Dummy key",
-        "value": "Dummy value", "protected": false, "masked": false, "raw": false,
-        "environment_scope": "*", "description": null}, {"variable_type": "env_var",
-        "key": "Dummy key", "value": "Dummy value", "protected": false, "masked":
-        false, "raw": false, "environment_scope": "*", "description": null}, {"variable_type":
-        "env_var", "key": "Dummy key", "value": "Dummy value", "protected": false,
-        "masked": false, "raw": false, "environment_scope": "*", "description": null},
-        {"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value", "protected":
+      string: '[{"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value", "protected":
         false, "masked": false, "raw": false, "environment_scope": "*", "description":
         null}, {"variable_type": "env_var", "key": "test1", "value": "1", "protected":
         false, "masked": false, "raw": false, "environment_scope": "*", "description":
@@ -733,8 +648,6 @@ interactions:
       - nginx
       Strict-Transport-Security:
       - max-age=63072000
-      Transfer-Encoding:
-      - chunked
       Vary:
       - Accept-Encoding
       - Origin
@@ -828,16 +741,7 @@ interactions:
     uri: /api/v4/projects/42352/variables
   response:
     body:
-      string: '[{"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value",
-        "protected": false, "masked": true, "raw": false, "environment_scope": "*",
-        "description": null}, {"variable_type": "env_var", "key": "Dummy key", "value":
-        "Dummy value", "protected": false, "masked": false, "raw": false, "environment_scope":
-        "*", "description": null}, {"variable_type": "env_var", "key": "Dummy key",
-        "value": "Dummy value", "protected": false, "masked": false, "raw": false,
-        "environment_scope": "*", "description": null}, {"variable_type": "env_var",
-        "key": "Dummy key", "value": "Dummy value", "protected": false, "masked":
-        false, "raw": false, "environment_scope": "*", "description": null}, {"variable_type":
-        "env_var", "key": "Dummy key", "value": "Dummy value", "protected": false,
+      string: '[{"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value", "protected": false,
         "masked": false, "raw": false, "environment_scope": "*", "description": null},
         {"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value", "protected":
         false, "masked": false, "raw": false, "environment_scope": "*", "description":
@@ -865,8 +769,6 @@ interactions:
       - nginx
       Strict-Transport-Security:
       - max-age=63072000
-      Transfer-Encoding:
-      - chunked
       Vary:
       - Accept-Encoding
       - Origin
@@ -912,16 +814,7 @@ interactions:
     uri: /api/v4/projects/42352/variables
   response:
     body:
-      string: '[{"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value",
-        "protected": false, "masked": true, "raw": false, "environment_scope": "*",
-        "description": null}, {"variable_type": "env_var", "key": "Dummy key", "value":
-        "Dummy value", "protected": false, "masked": false, "raw": false, "environment_scope":
-        "*", "description": null}, {"variable_type": "env_var", "key": "Dummy key",
-        "value": "Dummy value", "protected": false, "masked": false, "raw": false,
-        "environment_scope": "*", "description": null}, {"variable_type": "env_var",
-        "key": "Dummy key", "value": "Dummy value", "protected": false, "masked":
-        false, "raw": false, "environment_scope": "*", "description": null}, {"variable_type":
-        "env_var", "key": "Dummy key", "value": "Dummy value", "protected": false,
+      string: '[{"variable_type":"env_var", "key": "Dummy key", "value": "Dummy value", "protected": false,
         "masked": false, "raw": false, "environment_scope": "*", "description": null},
         {"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value", "protected":
         false, "masked": false, "raw": false, "environment_scope": "*", "description":
@@ -949,8 +842,6 @@ interactions:
       - nginx
       Strict-Transport-Security:
       - max-age=63072000
-      Transfer-Encoding:
-      - chunked
       Vary:
       - Accept-Encoding
       - Origin
@@ -1052,18 +943,7 @@ interactions:
     uri: /api/v4/projects/42352/variables
   response:
     body:
-      string: '[{"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value",
-        "protected": false, "masked": true, "raw": false, "environment_scope": "*",
-        "description": null}, {"variable_type": "env_var", "key": "Dummy key", "value":
-        "Dummy value", "protected": false, "masked": false, "raw": false, "environment_scope":
-        "*", "description": null}, {"variable_type": "env_var", "key": "Dummy key",
-        "value": "Dummy value", "protected": false, "masked": false, "raw": false,
-        "environment_scope": "*", "description": null}, {"variable_type": "env_var",
-        "key": "Dummy key", "value": "Dummy value", "protected": false, "masked":
-        false, "raw": false, "environment_scope": "*", "description": null}, {"variable_type":
-        "env_var", "key": "Dummy key", "value": "Dummy value", "protected": false,
-        "masked": false, "raw": false, "environment_scope": "*", "description": null},
-        {"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value", "protected":
+      string: '[{"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value", "protected":
         false, "masked": false, "raw": false, "environment_scope": "*", "description":
         null}, {"variable_type": "env_var", "key": "test2", "value": "2", "protected":
         false, "masked": false, "raw": false, "environment_scope": "*", "description":
@@ -1138,18 +1018,7 @@ interactions:
     uri: /api/v4/projects/42352/variables
   response:
     body:
-      string: '[{"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value",
-        "protected": false, "masked": true, "raw": false, "environment_scope": "*",
-        "description": null}, {"variable_type": "env_var", "key": "Dummy key", "value":
-        "Dummy value", "protected": false, "masked": false, "raw": false, "environment_scope":
-        "*", "description": null}, {"variable_type": "env_var", "key": "Dummy key",
-        "value": "Dummy value", "protected": false, "masked": false, "raw": false,
-        "environment_scope": "*", "description": null}, {"variable_type": "env_var",
-        "key": "Dummy key", "value": "Dummy value", "protected": false, "masked":
-        false, "raw": false, "environment_scope": "*", "description": null}, {"variable_type":
-        "env_var", "key": "Dummy key", "value": "Dummy value", "protected": false,
-        "masked": false, "raw": false, "environment_scope": "*", "description": null},
-        {"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value", "protected":
+      string: '[{"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value", "protected":
         false, "masked": false, "raw": false, "environment_scope": "*", "description":
         null}, {"variable_type": "env_var", "key": "test2", "value": "2", "protected":
         false, "masked": false, "raw": false, "environment_scope": "*", "description":
@@ -1272,16 +1141,7 @@ interactions:
     uri: /api/v4/projects/42352/variables
   response:
     body:
-      string: '[{"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value",
-        "protected": false, "masked": true, "raw": false, "environment_scope": "*",
-        "description": null}, {"variable_type": "env_var", "key": "Dummy key", "value":
-        "Dummy value", "protected": false, "masked": false, "raw": false, "environment_scope":
-        "*", "description": null}, {"variable_type": "env_var", "key": "Dummy key",
-        "value": "Dummy value", "protected": false, "masked": false, "raw": false,
-        "environment_scope": "*", "description": null}, {"variable_type": "env_var",
-        "key": "Dummy key", "value": "Dummy value", "protected": false, "masked":
-        false, "raw": false, "environment_scope": "*", "description": null}, {"variable_type":
-        "env_var", "key": "Dummy key", "value": "Dummy value", "protected": false,
+      string: '[{"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value", "protected": false,
         "masked": false, "raw": false, "environment_scope": "*", "description": null},
         {"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value", "protected":
         false, "masked": false, "raw": false, "environment_scope": "*", "description":
@@ -1412,18 +1272,7 @@ interactions:
     uri: /api/v4/projects/42352/variables
   response:
     body:
-      string: '[{"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value",
-        "protected": false, "masked": true, "raw": false, "environment_scope": "*",
-        "description": null}, {"variable_type": "env_var", "key": "Dummy key", "value":
-        "Dummy value", "protected": false, "masked": false, "raw": false, "environment_scope":
-        "*", "description": null}, {"variable_type": "env_var", "key": "Dummy key",
-        "value": "Dummy value", "protected": false, "masked": false, "raw": false,
-        "environment_scope": "*", "description": null}, {"variable_type": "env_var",
-        "key": "Dummy key", "value": "Dummy value", "protected": false, "masked":
-        false, "raw": false, "environment_scope": "*", "description": null}, {"variable_type":
-        "env_var", "key": "Dummy key", "value": "Dummy value", "protected": false,
-        "masked": false, "raw": false, "environment_scope": "*", "description": null},
-        {"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value", "protected":
+      string: '[{"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value", "protected":
         false, "masked": false, "raw": false, "environment_scope": "*", "description":
         null}, {"variable_type": "env_var", "key": "test2", "value": "2", "protected":
         false, "masked": false, "raw": false, "environment_scope": "*", "description":
@@ -1498,18 +1347,7 @@ interactions:
     uri: /api/v4/projects/42352/variables
   response:
     body:
-      string: '[{"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value",
-        "protected": false, "masked": true, "raw": false, "environment_scope": "*",
-        "description": null}, {"variable_type": "env_var", "key": "Dummy key", "value":
-        "Dummy value", "protected": false, "masked": false, "raw": false, "environment_scope":
-        "*", "description": null}, {"variable_type": "env_var", "key": "Dummy key",
-        "value": "Dummy value", "protected": false, "masked": false, "raw": false,
-        "environment_scope": "*", "description": null}, {"variable_type": "env_var",
-        "key": "Dummy key", "value": "Dummy value", "protected": false, "masked":
-        false, "raw": false, "environment_scope": "*", "description": null}, {"variable_type":
-        "env_var", "key": "Dummy key", "value": "Dummy value", "protected": false,
-        "masked": false, "raw": false, "environment_scope": "*", "description": null},
-        {"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value", "protected":
+      string: '[{"variable_type": "env_var", "key": "Dummy key", "value": "Dummy value", "protected":
         false, "masked": false, "raw": false, "environment_scope": "*", "description":
         null}, {"variable_type": "env_var", "key": "test2", "value": "2", "protected":
         false, "masked": false, "raw": false, "environment_scope": "*", "description":
@@ -1615,4 +1453,60 @@ interactions:
     status:
       code: 204
       message: No Content
+- request:
+    body: '{"key": "test1", "value": "1", "environment_scope": "*", "masked": false}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '73'
+      Content-type:
+      - application/json
+      User-Agent:
+      - python-gitlab/4.13.0
+    method: POST
+    uri: /api/v4/projects/42352/variables
+  response:
+    body:
+      string: '{"variable_type": "env_var", "key": "test1", "value": "1", "hidden":
+        false, "protected": false, "masked": false, "raw": false, "environment_scope":
+        "*", "description": null}'
+    headers:
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '156'
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 07 Nov 2025 09:32:35 GMT
+      Etag:
+      - W/"9839ad9089adbb0dd67b0f0de3ff39e5"
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Server:
+      - nginx
+      Strict-Transport-Security:
+      - max-age=63072000
+      Vary:
+      - Origin
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-Gitlab-Meta:
+      - '{"correlation_id":"01K9ETJ7KZNQ26AW8WNP71HXH4","version":"1"}'
+      X-Request-Id:
+      - 01K9ETJ7KZNQ26AW8WNP71HXH4
+      X-Runtime:
+      - '0.057788'
+    status:
+      code: 201
+      message: Created
 version: 1

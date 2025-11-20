@@ -46,6 +46,7 @@ def update(
             created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force
         )
         logger.info(f"Updated to {package['name']}@{version_dir.name} version")
+        current_version = version_dir
     return response
 
 

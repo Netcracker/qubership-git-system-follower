@@ -68,6 +68,16 @@ gsf = "git_system_follower.cli:cli"
 [tool.hatch.build.targets.wheel]
 packages = ["git_system_follower"]
 
+[tool.uv]
+# exclude useless dependencies of cookiecutter:
+#   1. rich (not itself, only deps. Otherwise, an import error will be raised),
+#   2. arrow
+exclude-dependencies = [
+    "pygments",
+    "markdown-it-py",
+    "arrow"
+]
+
 [tool.ruff]
 line-length = 120
 target-version = "py310"

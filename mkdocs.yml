@@ -73,7 +73,8 @@ markdown_extensions:
       line_spans: __span
       pygments_lang_class: true
   - pymdownx.inlinehilite
-  - pymdownx.snippets
+  - pymdownx.snippets:
+      dedent_subsections: true
   - pymdownx.superfences
   - pymdownx.details
   - pymdownx.tabbed:
@@ -81,6 +82,7 @@ markdown_extensions:
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.blocks.html
   - def_list
 
 # Page tree
@@ -103,6 +105,9 @@ nav:
       - concepts/plugins/index.md
       - CLI Arguments Extension Point: concepts/plugins/cli_arguments.md
       # - Versioning: concepts/plugins/versioning.md
+    - Internals:
+      - concepts/internals/index.md
+      - Gear lifecycle: concepts/internals/gear-lifecycle.md
   - How to:
     - how_to/index.md
     - Build Gear: how_to/build.md

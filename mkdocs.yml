@@ -129,4 +129,4 @@ nav:
       - templates Module: api_reference/develop_interface/templates.md
   - ADRs:
     - ADRs/index.md
-    - ADR-0001 Storing Gear in a repository as text: ADRs/ADR-0001-storing-gear-in-repo-as-text
+    - ADR-0001 Storing Gear in a repository as text: ADRs/ADR-0001-storing-gear-in-repo-as-text.md

@@ -140,7 +140,7 @@ To work with protobuf, we'll need the `protobuf` library (size: 1.6MB) and the `
 
 A comparison of Gear serialization sizes using yaml/json vs protobuf:
 
-??? example "For test Gear [`tests/gears/complex`](../../tests/gears/complex)"
+??? example "For test Gear `tests/gears/complex`"
     | Format     | Raw      | Gzip      | Base64    |
     |------------|----------|-----------|-----------|
     | yaml/json  | 11.8 KB  | 2.0 KB    | 2.7 KB    |

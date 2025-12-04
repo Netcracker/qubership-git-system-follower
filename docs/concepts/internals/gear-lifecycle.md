@@ -77,6 +77,13 @@ We use an approach similar to a 3-way merge when working with two gear versions 
 2. Source: the `v2` version of the gear - the new version we want to install into the repository.
 3. Target: the current state of the repository - which may contain user changes and is where we aim to apply the new (Source) version.
 
+gsf clones the repository (target) and generates two versions of the gear in a temporary directory (`/tmp`):
+
+* `v1` (base): generated using the variables from the `packages[].template_variables` field in `.state.yaml`, i.e., with the variables that were used during the previous installation of the current (old) version of the gear.
+* `v2` (source): generated using the variables obtained from the package API of the new gear version.
+
+Then, gsf compares the files between the base (`v1`) and the target (the current repository). If the files differ, it means the user has made changes (user changes). This way, gsf determines the list of files that were not modified by the user. These files can be replaced: for them, new versions from `v2` (source) are taken and updated in the target repository. User changes are not overwritten.
+
 ## Deletion
 
 Before deleting a gear, gsf determines the type of structure (simple or complex) and locates the corresponding scripts directory. It then executes the `delete.py` script from the gear package, setting the repository as the working directory. The `delete.py` script uses the templates API to identify which files should be deleted. To decide which files to remove, gsf generates templates in a temporary directory and compares their hashes to those of files in the repository. Files that match the original template and have not been modified by the user are deleted, while user-modified files are preserved. After completing the deletion process, gsf removes the gear’s entry from `.state.yaml` to update the state of installed packages.

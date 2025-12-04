@@ -161,7 +161,7 @@ Actual space saving in `.state.yaml`: protobuf a 40–60% size reduction compare
 /// html | div[style='float: left; width: 48%;']
 Pros:
 
-- More compact than plain text thanks to protobuf + gzip
+- More compact than plain text because of protobuf + gzip
 ///
 
 /// html | div[style='float: right;width: 4%;']

@@ -234,7 +234,9 @@ Cons:
 
 - Separate `git push origin refs/notes/gsf-gears/*` needed to sync notes
 - Separate `git fetch origin refs/notes/gsf-gears/*` needed to fetch notes
-- Git notes are a less widely known mechanism—can be unfamiliar to users
+- Git notes are a less widely known mechanism - can be unfamiliar to users
+- Notes per commit. This means one installation = one gear
+- Notes are tied to commits; if a commit is deleted, its note is orphaned and removed by `git notes prune`
 ///
 
 /// html | div[style='clear: both;']

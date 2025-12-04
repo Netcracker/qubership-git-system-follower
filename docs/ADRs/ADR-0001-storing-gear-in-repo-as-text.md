@@ -20,7 +20,7 @@ failure "Rejected // yyyy-mm-dd"
 * **`v1`, `v2`, `v3`** - gear versions
 * **Complex structure** - versioned structure with `scripts/<version>/` and `update.py` for sequential upgrades. Ex. from `v1` to `v3` like `v1` → `v2` → `v3`
 * **Simple structure** - non-versioned structure with `scripts/` and only `init.py`, upgrades via `--force`. Ex. from `v1` to `v3` like `v1` → `v3`
-* **Blob** – in this context, a blob refers to the raw contents of a file
+* **Blob** - in this context, a blob refers to the raw contents of a file
 
 ## Context and Problem Statement
 Simple structure Gears have a simplified structure without versioning. The absence of a previous version of Gear makes it impossible to intelligently delete template files (no [3-way merge](../concepts/internals/gear-lifecycle.md#3-way-merge)) and shifts this responsibility from gsf (package manager) to Gear developer.
@@ -86,7 +86,7 @@ In this approach, the previous version of the Gear is fully stored in the reposi
 /// html | div[style='float: left; width: 48%;']
 Pros:
 
-- Text format — makes it easy to compare versions (`git diff`);
+- Text format - makes it easy to compare versions (`git diff`);
 - Local access to versions, no registry required;
 - Unused versions can be easily deleted;
 - Standard git commands work as usual;
@@ -102,7 +102,7 @@ Cons:
 - Repository size can grow quickly with a large number of versions;
 - Directory gets cluttered with additional files;
 - Harder to manage in large projects;
-- You cannot restore only specific Gears — the entire branch is copied.
+- You cannot restore only specific Gears - the entire branch is copied.
 ///
 
 /// html | div[style='clear: both;']
@@ -136,7 +136,7 @@ Cons:
 
 This approach creates a **remote cache** within the repository too  as in the [previous section](#storing-the-entire-previous-version-in-the-repository-as-full-directory-plain-text), allowing quick retrieval or deletion of Gears that have been used in this repository. One option is to use a method similar to Helm: store the entire Gear as a protobuf object + compress + encode in base64 or just compress + encode in base64 (in both cases resulting: a large single string).
 
-To work with protobuf, we'll need the `protobuf` library (size: 1.6MB) and the `protobuf-compiler` (size: 18.7MB), as well as some overhead related to using it: developers must understand this protocol, generate or store a prepared `.proto` file (see [Protocol Buffers Documentation](https://protobuf.dev/)), fields in the file may change, and it’s necessary to consider support for backward compatibility.
+To work with protobuf, we'll need the `protobuf` library (size: 1.6MB) and the `protobuf-compiler` (size: 18.7MB), as well as some overhead related to using it: developers must understand this protocol, generate or store a prepared `.proto` file (see [Protocol Buffers Documentation](https://protobuf.dev/)), fields in the file may change, and it's necessary to consider support for backward compatibility.
 
 A comparison of Gear serialization sizes using yaml/json vs protobuf:
 
@@ -146,7 +146,7 @@ A comparison of Gear serialization sizes using yaml/json vs protobuf:
     | yaml/json  | 11.8 KB  | 2.0 KB    | 2.7 KB    |
     | Protobuf   | 8.8 KB   | 1.2 KB    | 1.6 KB    |
     ||
-    | **Savings**| −25% (−3.0 KB) | −39% (−0.8 KB) | −41% (−1.1 KB) |
+    | **Savings**| -25% (-3.0 KB) | -39% (-0.8 KB) | -41% (-1.1 KB) |
 
 ??? example "For a big Gear"
     | Format     | Raw      | Gzip      | Base64    |
@@ -154,9 +154,9 @@ A comparison of Gear serialization sizes using yaml/json vs protobuf:
     | yaml/json  | 2.3 MB   | 325.4 KB  | 433.8 KB  |
     | Protobuf   | 1.7 MB   | 131.1 KB  | 174.8 KB  |
     ||
-    | **Savings**| −25% (−589 KB) | −60% (−194 KB) | −60% (−259 KB) |
+    | **Savings**| -25% (-589 KB) | -60% (-194 KB) | -60% (-259 KB) |
 
-Actual space saving in `.state.yaml`: protobuf a 40–60% size reduction compared to yaml/json.
+Actual space saving in `.state.yaml`: protobuf a 40-60% size reduction compared to yaml/json.
 
 /// html | div[style='float: left; width: 48%;']
 Pros:
@@ -222,7 +222,7 @@ Pros:
 - Easy to delete outdated items: `git update-ref -d`
 - Selective fetch of required Gears
 - Namespace isolation
-- `.state.yaml` stays compact—contains only links
+- `.state.yaml` stays compact-contains only links
 - Repository cleanup with `git gc` after removing old gears
 ///
 
@@ -267,7 +267,7 @@ Pros:
 /// html | div[style='float: right;width: 48%;']
 Cons:
 
-- Encrypting `.state.yaml` with `sops` or similar tools completely changes the `packages[].snapshot` section — fast growth of git history
+- Encrypting `.state.yaml` with `sops` or similar tools completely changes the `packages[].snapshot` section - fast growth of git history
 - Many Gears make `.state.yaml` large
 ///
 

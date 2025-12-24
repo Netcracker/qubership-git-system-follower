@@ -139,7 +139,6 @@ def test_install_uninstall(
     GEARS_DIR = Path(__file__).parent.parent / "gears" / gear_type
     registry = RegistryInfo(
         credentials=resolve_credentials(None, None),
-        # type=RegistryTypes(REG_TYPE),
         is_insecure=IS_INSECURE
     )
     extras = build_extras("testvar1", "test1", False)

@@ -29,7 +29,7 @@ from git_system_follower.uninstall import (
     managing_branch as uninstall_managing_branch
 )
 from git_system_follower.utils.cli import resolve_credentials
-from git_system_follower.typings.registry import RegistryTypes, RegistryInfo
+from git_system_follower.typings.registry import RegistryInfo
 from git_system_follower.typings.cli import PackageCLISource
 from git_system_follower.states import ChangeStatus
 from unittest.mock import patch, PropertyMock
@@ -39,7 +39,6 @@ from tests.config import (
 )
 
 IS_FORCE = False
-REG_TYPE = 'Autodetect'
 IS_INSECURE = False
 
 
@@ -140,7 +139,7 @@ def test_install_uninstall(
     GEARS_DIR = Path(__file__).parent.parent / "gears" / gear_type
     registry = RegistryInfo(
         credentials=resolve_credentials(None, None),
-        type=RegistryTypes(REG_TYPE),
+        # type=RegistryTypes(REG_TYPE),
         is_insecure=IS_INSECURE
     )
     extras = build_extras("testvar1", "test1", False)

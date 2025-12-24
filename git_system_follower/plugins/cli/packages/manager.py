@@ -109,5 +109,5 @@ class PluginManager:
             # fix to get plugins in the correct order, not self.pm.get_plugins()
             plugins = [plugin[1].__class__.__name__ for plugin in self.pm.list_name_plugin()]
 
-            err = f"Cannot determine package type for '{value}': {exc}. Available plugins: {", ".join(plugins)}"
+            err = f"Cannot determine package type for '{value}': {exc}. Available plugins: {', '.join(plugins)}"
             raise ParsePackageNameError(err)

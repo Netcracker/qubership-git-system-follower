@@ -20,7 +20,7 @@ from git_system_follower.logger import logger, set_level
 from git_system_follower.errors import CLIParamsError
 from git_system_follower.plugins.cli.packages.specs import HookSpec
 from git_system_follower.typings.cli import ExtraParam
-from git_system_follower.typings.registry import RegistryTypes, RegistryInfo
+from git_system_follower.typings.registry import RegistryInfo
 from git_system_follower.utils.cli import Package, ExtraParamTuple, resolve_credentials, add_options, get_gears
 from git_system_follower.utils.output import banner, display_params
 from git_system_follower.git_api.utils import get_config
@@ -66,7 +66,7 @@ GIT_EMAIL = config.get_value('user', 'email', default='unknown@example.com')
 @click.option('--debug', 'is_debug', is_flag=True, default=False, help='Show debug level messages')
 def download_command(
         gears: tuple[HookSpec, ...], directory: Path,
-        # registry_type: str, 
+        # registry_type: str,
         registry_username: str | None, registry_password: str | None, is_insecure: bool,
         is_debug: bool,
         *args, **kwargs  # dont delete, these parameters for plugin manager

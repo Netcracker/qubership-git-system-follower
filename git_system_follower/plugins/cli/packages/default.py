@@ -13,9 +13,7 @@
 # limitations under the License.
 
 from pathlib import Path
-import re
 
-from git_system_follower.errors import ParsePackageNameError
 from git_system_follower.typings.cli import PackageCLISource, PackageCLITarGz, PackageCLIImage
 from git_system_follower.plugins.cli.packages import hookimpl
 from git_system_follower.plugins.cli.packages.specs import HookSpec
@@ -77,19 +75,22 @@ class ImagePlugin(HookSpec):
             registry, parts = parts[0], parts[1:]
         else:
             registry = self.default_registry
-        
+
         if not parts:
             err = f"Invalid image reference: {ref}"
             raise ValueError(err)
-        
-        # docker.io case: separate services for different things: api - registry-1.docker.io, auth - auth.docker.io, etc.
+
+        # docker.io case: separate services for different things:
+        #   api - registry-1.docker.io,
+        #   auth - auth.docker.io,
+        #   etc.
         if registry == self.default_registry and len(parts) == 1:
             repository, image = self.default_repository, parts[0]
         else:
             repository, image = "/".join(parts[:-1]), parts[-1]
-        
+
         return PackageCLIImage(registry=registry, repository=repository, image=image, ref=ref)
-    
+
     def _resolve_nameref(self, image: str) -> tuple[str, str]:
         if "@" in image:
             return image.rsplit("@", 1)

@@ -26,13 +26,12 @@ import oras.container
 import oras.auth
 import oras.defaults
 import requests
-from requests.auth import HTTPBasicAuth
 import yaml
 
 from git_system_follower.variables import IMAGE_PACKAGE_MAP, PACKAGES_PATH, PACKAGE_DIRNAME
 from git_system_follower.logger import logger
 from git_system_follower.errors import (
-    RemoteRepositoryError, DownloadPackageError, UnknownRegistryError, PackageNotFoundError
+    DownloadPackageError, PackageNotFoundError
 )
 from git_system_follower.typings.cli import (
     PackageCLI, PackageCLITypes,

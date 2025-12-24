@@ -25,14 +25,14 @@ from git_system_follower.plugins.cli.packages.default import ImagePlugin
         (
             "alpine@sha256:a738d442f54893d4f45cf5675e965d2d16f90adb4d1a1bf22e540513c1ce8e83",
             PackageCLIImage(
-                registry="docker.io", repository="library", image="alpine", 
+                registry="docker.io", repository="library", image="alpine",
                 ref="sha256:a738d442f54893d4f45cf5675e965d2d16f90adb4d1a1bf22e540513c1ce8e83"
         )),
         ("mcp/time", PackageCLIImage(registry="docker.io", repository="mcp", image="time", ref="latest")),
         ("ghcr.io/org/app:v1", PackageCLIImage(registry="ghcr.io", repository="org", image="app", ref="v1")),
         ("localhost/app", PackageCLIImage(registry="localhost", repository="", image="app", ref="latest")),
         (
-            "nexus.company.com:5000/alpine", 
+            "nexus.company.com:5000/alpine",
             PackageCLIImage(registry="nexus.company.com:5000", repository="", image="alpine", ref="latest")
         ),
     ]

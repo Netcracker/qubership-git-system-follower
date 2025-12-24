@@ -43,12 +43,12 @@ GIT_EMAIL = config.get_value('user', 'email', default='unknown@example.com')
     '-d', '--directory', type=click.Path(exists=True, dir_okay=True, file_okay=False, path_type=Path),
     default=Path('.'), help='Directory where gears will be downloaded'
 )
-@click.option(
-    '--registry-type',
-    type=click.Choice([registry_type.value for registry_type in RegistryTypes], case_sensitive=False),
-    required=False, default='Autodetect',
-    help='Specify the registry type or use automatic detection'
-)
+# @click.option(
+#     '--registry-type',
+#     type=click.Choice([registry_type.value for registry_type in RegistryTypes], case_sensitive=False),
+#     required=False, default='Autodetect',
+#     help='Specify the registry type or use automatic detection'
+# )
 @click.option(
     # env variable is specified in resolve_credentials because of priority
     '--registry-username', type=str, required=False, default=None,
@@ -66,7 +66,8 @@ GIT_EMAIL = config.get_value('user', 'email', default='unknown@example.com')
 @click.option('--debug', 'is_debug', is_flag=True, default=False, help='Show debug level messages')
 def download_command(
         gears: tuple[HookSpec, ...], directory: Path,
-        registry_type: str, registry_username: str | None, registry_password: str | None, is_insecure: bool,
+        # registry_type: str, 
+        registry_username: str | None, registry_password: str | None, is_insecure: bool,
         is_debug: bool,
         *args, **kwargs  # dont delete, these parameters for plugin manager
 ):
@@ -86,7 +87,7 @@ def download_command(
         'debug': is_debug,
     }
     registry_params = {
-        'registry-type': registry_type,
+        # 'registry-type': registry_type,
         'registry-username': credentials.username if credentials is not None else '',
         'registry-password': credentials.password if credentials is not None else '',
         'insecure-registry': is_insecure,
@@ -98,7 +99,8 @@ def download_command(
     set_level(is_debug)
 
     gears = get_gears(gears)
-    registry = RegistryInfo(credentials=credentials, type=RegistryTypes(registry_type), is_insecure=is_insecure)
+    # registry = RegistryInfo(credentials=credentials, type=RegistryTypes(registry_type), is_insecure=is_insecure)
+    registry = RegistryInfo(credentials=credentials, is_insecure=is_insecure)
     download(gears, directory, is_deps_first=True, registry=registry)
 
 
@@ -135,12 +137,12 @@ def download_command(
     '--git-email', 'email', type=str, envvar='GSF_GIT_EMAIL', default=GIT_EMAIL,
     help='User email under which the commit will be made to the repository', metavar='EMAIL'
 )
-@click.option(
-    '--registry-type',
-    type=click.Choice([registry_type.value for registry_type in RegistryTypes], case_sensitive=False),
-    required=False, default='Autodetect',
-    help='Specify the registry type or use automatic detection'
-)
+# @click.option(
+#     '--registry-type',
+#     type=click.Choice([registry_type.value for registry_type in RegistryTypes], case_sensitive=False),
+#     required=False, default='Autodetect',
+#     help='Specify the registry type or use automatic detection'
+# )
 @click.option(
     # env variable is specified in resolve_credentials because of priority
     '--registry-username', type=str, required=False, default=None,
@@ -164,7 +166,8 @@ def install_command(
         gears: tuple[HookSpec, ...], repo: str,
         branches: tuple[str, ...], token: str, extras: tuple[ExtraParam],
         message: str, username: str, email: str,
-        registry_type: str, registry_username: str | None, registry_password: str | None, is_insecure: bool,
+        # registry_type: str,
+        registry_username: str | None, registry_password: str | None, is_insecure: bool,
         is_force: bool, is_debug: bool,
         *args, **kwargs  # dont delete, these parameters for plugin manager
 ):
@@ -189,7 +192,7 @@ def install_command(
         'debug': is_debug,
     }
     registry_params = {
-        'registry-type': registry_type,
+        # 'registry-type': registry_type,
         'registry-username': credentials.username if credentials is not None else '',
         'registry-password': credentials.password if credentials is not None else '',
         'insecure-registry': is_insecure,
@@ -209,7 +212,8 @@ def install_command(
     set_level(is_debug)
 
     gears = get_gears(gears)
-    registry = RegistryInfo(credentials=credentials, type=RegistryTypes(registry_type), is_insecure=is_insecure)
+    # registry = RegistryInfo(credentials=credentials, type=RegistryTypes(registry_type), is_insecure=is_insecure)
+    registry = RegistryInfo(credentials=credentials, is_insecure=is_insecure)
     install(
         gears, repo, branches, token, extras=extras,
         commit_message=message, username=username, user_email=email,
@@ -250,12 +254,12 @@ def install_command(
     '--git-email', 'email', type=str, envvar='GSF_GIT_EMAIL', default=GIT_EMAIL,
     help='User email under which the commit will be made to the repository', metavar='EMAIL'
 )
-@click.option(
-    '--registry-type',
-    type=click.Choice([registry_type.value for registry_type in RegistryTypes], case_sensitive=False),
-    required=False, default='Autodetect',
-    help='Specify the registry type or use automatic detection'
-)
+# @click.option(
+#     '--registry-type',
+#     type=click.Choice([registry_type.value for registry_type in RegistryTypes], case_sensitive=False),
+#     required=False, default='Autodetect',
+#     help='Specify the registry type or use automatic detection'
+# )
 @click.option(
     # env variable is specified in resolve_credentials because of priority
     '--registry-username', type=str, required=False, default=None,
@@ -306,7 +310,7 @@ def uninstall_command(
         'debug': is_debug,
     }
     registry_params = {
-        'registry-type': registry_type,
+        # 'registry-type': registry_type,
         'registry-username': credentials.username if credentials is not None else '',
         'registry-password': credentials.password if credentials is not None else '',
         'insecure-registry': is_insecure,
@@ -326,7 +330,8 @@ def uninstall_command(
     set_level(is_debug)
 
     gears = get_gears(gears)
-    registry = RegistryInfo(credentials=credentials, type=RegistryTypes(registry_type), is_insecure=is_insecure)
+    # registry = RegistryInfo(credentials=credentials, type=RegistryTypes(registry_type), is_insecure=is_insecure)
+    registry = RegistryInfo(credentials=credentials, is_insecure=is_insecure)
     uninstall(
         gears, repo, branches, token, extras=extras,
         commit_message=message, username=username, user_email=email,

@@ -33,5 +33,5 @@ class RegistryTypes(Enum):
 @dataclass
 class RegistryInfo:
     credentials: Optional[Credentials]
-    type: RegistryTypes
+    # type: RegistryTypes
     is_insecure: bool

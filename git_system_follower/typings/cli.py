@@ -51,12 +51,12 @@ class PackageCLIImage(PackageCLI):
     registry: str
     repository: str
     image: str
-    tag: str = 'latest'
+    ref: str = 'latest'
 
     def get_image_path(self) -> str:
         """ Get image path (without registry) """
         path = f'{self.repository}/' if self.repository else ''
-        return f'{path}{self.image}:{self.tag}'
+        return f'{path}{self.image}:{self.ref}'
 
     def __str__(self):
         return f'{self.registry}/{self.get_image_path()}'

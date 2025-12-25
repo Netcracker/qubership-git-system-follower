@@ -19,13 +19,11 @@ from abc import ABC, abstractmethod
 import tarfile
 import json
 import shutil
-import re
 
 import oras.client
 import oras.container
 import oras.auth
 import oras.defaults
-import requests
 import yaml
 
 from git_system_follower.variables import IMAGE_PACKAGE_MAP, PACKAGES_PATH, PACKAGE_DIRNAME
@@ -38,7 +36,7 @@ from git_system_follower.typings.cli import (
     PackageCLIImage, PackageCLITarGz, PackageCLISource,
     Credentials
 )
-from git_system_follower.typings.registry import RegistryTypes, RegistryInfo
+from git_system_follower.typings.registry import RegistryInfo
 from git_system_follower.plugins.cli.packages.default import TarGzPlugin
 from git_system_follower.typings.package import PackageLocalData
 from git_system_follower.package.package_info import (

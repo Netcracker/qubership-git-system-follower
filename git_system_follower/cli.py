@@ -43,12 +43,6 @@ GIT_EMAIL = config.get_value('user', 'email', default='unknown@example.com')
     '-d', '--directory', type=click.Path(exists=True, dir_okay=True, file_okay=False, path_type=Path),
     default=Path('.'), help='Directory where gears will be downloaded'
 )
-# @click.option(
-#     '--registry-type',
-#     type=click.Choice([registry_type.value for registry_type in RegistryTypes], case_sensitive=False),
-#     required=False, default='Autodetect',
-#     help='Specify the registry type or use automatic detection'
-# )
 @click.option(
     # env variable is specified in resolve_credentials because of priority
     '--registry-username', type=str, required=False, default=None,
@@ -99,7 +93,6 @@ def download_command(
     set_level(is_debug)
 
     gears = get_gears(gears)
-    # registry = RegistryInfo(credentials=credentials, type=RegistryTypes(registry_type), is_insecure=is_insecure)
     registry = RegistryInfo(credentials=credentials, is_insecure=is_insecure)
     download(gears, directory, is_deps_first=True, registry=registry)
 
@@ -137,12 +130,6 @@ def download_command(
     '--git-email', 'email', type=str, envvar='GSF_GIT_EMAIL', default=GIT_EMAIL,
     help='User email under which the commit will be made to the repository', metavar='EMAIL'
 )
-# @click.option(
-#     '--registry-type',
-#     type=click.Choice([registry_type.value for registry_type in RegistryTypes], case_sensitive=False),
-#     required=False, default='Autodetect',
-#     help='Specify the registry type or use automatic detection'
-# )
 @click.option(
     # env variable is specified in resolve_credentials because of priority
     '--registry-username', type=str, required=False, default=None,
@@ -212,7 +199,6 @@ def install_command(
     set_level(is_debug)
 
     gears = get_gears(gears)
-    # registry = RegistryInfo(credentials=credentials, type=RegistryTypes(registry_type), is_insecure=is_insecure)
     registry = RegistryInfo(credentials=credentials, is_insecure=is_insecure)
     install(
         gears, repo, branches, token, extras=extras,
@@ -254,12 +240,6 @@ def install_command(
     '--git-email', 'email', type=str, envvar='GSF_GIT_EMAIL', default=GIT_EMAIL,
     help='User email under which the commit will be made to the repository', metavar='EMAIL'
 )
-# @click.option(
-#     '--registry-type',
-#     type=click.Choice([registry_type.value for registry_type in RegistryTypes], case_sensitive=False),
-#     required=False, default='Autodetect',
-#     help='Specify the registry type or use automatic detection'
-# )
 @click.option(
     # env variable is specified in resolve_credentials because of priority
     '--registry-username', type=str, required=False, default=None,
@@ -330,7 +310,6 @@ def uninstall_command(
     set_level(is_debug)
 
     gears = get_gears(gears)
-    # registry = RegistryInfo(credentials=credentials, type=RegistryTypes(registry_type), is_insecure=is_insecure)
     registry = RegistryInfo(credentials=credentials, is_insecure=is_insecure)
     uninstall(
         gears, repo, branches, token, extras=extras,

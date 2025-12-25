@@ -60,7 +60,6 @@ GIT_EMAIL = config.get_value('user', 'email', default='unknown@example.com')
 @click.option('--debug', 'is_debug', is_flag=True, default=False, help='Show debug level messages')
 def download_command(
         gears: tuple[HookSpec, ...], directory: Path,
-        # registry_type: str,
         registry_username: str | None, registry_password: str | None, is_insecure: bool,
         is_debug: bool,
         *args, **kwargs  # dont delete, these parameters for plugin manager
@@ -81,7 +80,6 @@ def download_command(
         'debug': is_debug,
     }
     registry_params = {
-        # 'registry-type': registry_type,
         'registry-username': credentials.username if credentials is not None else '',
         'registry-password': credentials.password if credentials is not None else '',
         'insecure-registry': is_insecure,
@@ -153,7 +151,6 @@ def install_command(
         gears: tuple[HookSpec, ...], repo: str,
         branches: tuple[str, ...], token: str, extras: tuple[ExtraParam],
         message: str, username: str, email: str,
-        # registry_type: str,
         registry_username: str | None, registry_password: str | None, is_insecure: bool,
         is_force: bool, is_debug: bool,
         *args, **kwargs  # dont delete, these parameters for plugin manager
@@ -179,7 +176,6 @@ def install_command(
         'debug': is_debug,
     }
     registry_params = {
-        # 'registry-type': registry_type,
         'registry-username': credentials.username if credentials is not None else '',
         'registry-password': credentials.password if credentials is not None else '',
         'insecure-registry': is_insecure,
@@ -263,7 +259,7 @@ def uninstall_command(
         gears: tuple[HookSpec, ...], repo: str,
         branches: tuple[str, ...], token: str, extras: tuple[ExtraParam, ...],
         message: str, username: str, email: str,
-        registry_type: str, registry_username: str | None, registry_password: str | None, is_insecure: bool,
+        registry_username: str | None, registry_password: str | None, is_insecure: bool,
         is_force: bool, is_debug: bool,
         *args, **kwargs  # dont delete, these parameters for plugin manager
 ):
@@ -290,7 +286,6 @@ def uninstall_command(
         'debug': is_debug,
     }
     registry_params = {
-        # 'registry-type': registry_type,
         'registry-username': credentials.username if credentials is not None else '',
         'registry-password': credentials.password if credentials is not None else '',
         'insecure-registry': is_insecure,

@@ -249,7 +249,10 @@ def download(
         data = get_package_info(source.parent, source.name)
         if isinstance(package, PackageCLIImage):
             if data['version'] != package.ref:
-                logger.warning(f"Mismatch found in version of gear ({package.ref})and package.yaml ({data['version']})")
+                logger.warning(
+                    f"Version mismatch detected: gear tag '{package.ref}' differs "
+                    f"from package.yaml version '{data['version']}'. Using package.yaml version"
+                )
         if data['dependencies']:
             logger.info(f"Package dependencies: {', '.join([str(dep) for dep in data['dependencies']])}")
         dependencies_data = download(

@@ -161,14 +161,13 @@ class Registry(RegistryBase):
         layer = layers[0]
         digest, package_path = layer['digest'], outdir / 'gear.tar.gz'
         self.download_blob(container, digest, str(package_path.absolute()))
-        logger.debug(f'Downloaded {digest} layer to {package_path}')
+        logger.debug(f'Downloaded layer {digest} to temp directory: {package_path}')
         try:
             new_package_path = package_path.parent / self._get_package_filename(package_path)
         except DownloadPackageError as error:
             raise DownloadPackageError(f'{error}. Image: {container}, layer digest: {digest}')
 
         package_path.rename(new_package_path)
-        logger.debug(f'Renamed {package_path} to {new_package_path}')
         return new_package_path
 
 def get_name_and_version_version_from_targz(path: Path) -> tuple[str, str]:
@@ -249,12 +248,9 @@ def download(
         data = get_package_info(source.parent, source.name)
         if isinstance(package, PackageCLIImage):
             if data['version'] != package.ref:
-                logger.warning(
-                    f"Version mismatch detected: gear tag '{package.ref}' differs "
-                    f"from package.yaml version '{data['version']}'. Using package.yaml version"
-                )
+                logger.warning(f"Gear tag differs from package.yaml version: using {data['version']}")
         if data['dependencies']:
-            logger.info(f"Package dependencies: {', '.join([str(dep) for dep in data['dependencies']])}")
+            logger.info(f"Gear dependencies: {', '.join([str(dep) for dep in data['dependencies']])}")
         dependencies_data = download(
             data['dependencies'], directory, registry=registry,
             dependency_tree=new_dep_tree, dependency_level=dependency_level + 1, is_deps_first=is_deps_first
@@ -347,7 +343,7 @@ def download_package(
     outfile = _get_current_path_using_mapping(package, outdir)
     if outfile is not None:
         logger.info(f'{_get_filename_without_suffix(outfile)} package is provided as docker image (Image: {package})')
-        logger.info(f'Package has already been downloaded to {outfile} from {package}. Skip downloading')
+        logger.info(f'Gear has already been downloaded to {outfile} from {package}. Skip downloading')
         return outfile
 
     client = get_client(package.registry, registry=registry)
@@ -358,10 +354,10 @@ def download_package(
 
     outfile = outdir / package_tmp_path.name
     if outfile.exists():
-        logger.warning(f'Package {outfile} already exist. Skip Moving {package_tmp_path} to {outfile}')
+        logger.warning(f'Skipped moving temporary file to {outfile}: gear already exists')
     else:
         shutil.move(package_tmp_path, outfile)
-        logger.debug(f'Moved {package_tmp_path} to {outfile}')
+        logger.debug(f'Saved as {outfile}')
     logger.info(f'{_get_filename_without_suffix(outfile)} package is provided as docker image (Image: {package})')
     logger.success(f'Downloaded package from {package} to {outfile}')
     _save_info_about_downloaded_package(package, outfile)

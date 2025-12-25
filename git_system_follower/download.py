@@ -75,7 +75,10 @@ class RegistryBase(ABC, oras.client.OrasClient):
         :return: manifest
         """
         manifest = self.get_manifest(
-            container, allowed_media_type=['application/vnd.docker.distribution.manifest.v2+json']
+            container, allowed_media_type=[
+                'application/vnd.docker.distribution.manifest.v2+json',
+                oras.defaults.default_manifest_media_type
+            ]
         )
         logger.debug(f'Found manifest:\n{json.dumps(manifest, indent=2)}')
         return manifest

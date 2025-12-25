@@ -347,7 +347,6 @@ def download_package(
         return outfile
 
     client = get_client(package.registry, registry=registry)
-    print(client.headers)
     image = package.get_image_path()
     package_tmp_path = client.download(image, outdir=tmpdir)
     exit()
@@ -399,76 +398,7 @@ def get_client(
     """
     # left the function with the suspicion that there would be more specs
     # that would differ from those that oras could support
-    return Registry(hostname=registry_address, credentials=registry.credentials)
-
-
-def is_dockerhub(scheme: str, registry: str, *, registry_type: RegistryTypes, is_insecure: bool) -> bool:
-    """ Check if the given registry is Dockerhub """
-    if registry_type == RegistryTypes.dockerhub:
-        return True
-    if registry_type != RegistryTypes.auto:
-        return False
-
-    url = f'{scheme}://index.{registry}/v2'
-    try:
-        response = requests.get(url, timeout=3, verify=not is_insecure)
-    except requests.exceptions.RequestException as error:
-        logger.debug(f'DockerHub REST API call error: {error}')
-        return False
-    # dockerhub always returns 401 code and 'www-authenticate' header in this end point
-    return response.status_code == 401 and 'docker.io/token' in response.headers.get('www-authenticate', '')
-
-
-def is_artifactory(scheme: str, registry: str, *, registry_type: RegistryTypes, is_insecure: bool) -> bool:
-    """ Check if the given registry is Artifactory """
-    if registry_type == RegistryTypes.artifactory:
-        return True
-    if registry_type != RegistryTypes.auto:
-        return False
-
-    url = f'{scheme}://{registry}/artifactory/api/system/version'
-    try:
-        response = requests.get(url, timeout=3, verify=not is_insecure)
-    except requests.exceptions.RequestException as error:
-        logger.debug(f'Artifactory REST API call error: {error}')
-        return False
-    return response.status_code == 200
-
-
-def is_nexus(scheme: str, registry: str, *, registry_type: RegistryTypes, is_insecure: bool) -> bool:
-    """ Check if the given registry is Nexus """
-    if registry_type == RegistryTypes.nexus:
-        return True
-    if registry_type != RegistryTypes.auto:
-        return False
-
-    url = f'{scheme}://{registry}/v2/_catalog'
-    try:
-        response = requests.get(url, timeout=3, verify=not is_insecure)
-    except requests.exceptions.RequestException as error:
-        logger.debug(f'Nexus REST API call error: {error}')
-        return False
-    return response.status_code == 200 and 'Nexus' in response.headers.get('Server', '')
-
-
-def is_awsecr(scheme: str, registry: str, *, registry_type: RegistryTypes, is_insecure: bool) -> bool:
-    """ Check if the given registry is Aws ECR """
-    if registry_type == RegistryTypes.awsecr:
-        return True
-    if registry_type != RegistryTypes.auto:
-        return False
-
-    url = f'{scheme}://{registry}'
-    try:
-        response = requests.get(url, timeout=3, verify=not is_insecure)
-    except requests.exceptions.RequestException as error:
-        logger.debug(f'AWS API call error: {error}')
-        return False
-
-    regex = re.compile(r'(\w+)=["\']([^"\']+)["\']')
-    auth_header = response.headers.get('Www-Authenticate', '')
-    headers = dict(regex.findall(auth_header))
-    return headers.get('service', '') == 'ecr.amazonaws.com'
+    return Registry(hostname=registry_address, credentials=registry.credentials, insecure=registry.is_insecure)
 
 
 def _save_info_about_downloaded_package(package: PackageCLI, current_package: Path) -> None:

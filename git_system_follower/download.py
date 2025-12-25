@@ -350,7 +350,6 @@ def download_package(
     client = get_client(package.registry, registry=registry)
     image = package.get_image_path()
     package_tmp_path = client.download(image, outdir=tmpdir)
-    exit()
     if package_tmp_path is None:  # image is not git-system-follower package
         return None
 

@@ -18,6 +18,7 @@ from git_system_follower.typings.cli import PackageCLIImage
 from git_system_follower.plugins.cli.packages.default import ImagePlugin
 
 
+@pytest.mark.unit
 @pytest.mark.parametrize(
     "image,result", [
         ("alpine", PackageCLIImage(registry="docker.io", repository="library", image="alpine", ref="latest")),
@@ -35,7 +36,24 @@ from git_system_follower.plugins.cli.packages.default import ImagePlugin
             "nexus.company.com:5000/alpine",
             PackageCLIImage(registry="nexus.company.com:5000", repository="", image="alpine", ref="latest")
         ),
+        (
+            "ghcr.io/netcracker/qubership-gsf-discovery:feature_ns-filter-support_20251225-054807",
+            PackageCLIImage(registry='ghcr.io', repository='netcracker', image='qubership-gsf-discovery', ref='feature_ns-filter-support_20251225-054807')
+        ),
     ]
 )
 def test_resolve_image(image: str, result: PackageCLIImage):
-    assert ImagePlugin().parse_image(image) == result
+    actual = ImagePlugin().parse_image(image)
+    print(repr(actual))
+    assert actual.registry == result.registry, f"registry mismatch for {image}"
+    assert actual.repository == result.repository, f"repository mismatch for {image}"
+    assert actual.image == result.image, f"image mismatch for {image}"
+    assert actual.ref == result.ref, f"ref mismatch for {image}"
+
+    assert result.registry == actual.registry, \
+           f"registry mismatch for {image}:\nexpected '{result.registry}', actual '{actual.registry}'"
+    assert result.repository == actual.repository, \
+           f"repository mismatch for {image}:\nexpected '{result.repository}', actual '{actual.repository}'"
+    assert result.image == actual.image, \
+           f"image mismatch for {image}:\nexpected '{result.image}', actual '{actual.image}'"
+    assert result.ref == actual.ref, f"ref mismatch for {image}:\nexpected '{result.ref}', actual '{actual.ref}'"

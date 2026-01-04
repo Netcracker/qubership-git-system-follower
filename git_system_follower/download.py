@@ -25,6 +25,7 @@ import oras.container
 import oras.auth
 import oras.defaults
 import yaml
+from outlify.decorators import timer
 
 from git_system_follower.variables import IMAGE_PACKAGE_MAP, PACKAGES_PATH, PACKAGE_DIRNAME
 from git_system_follower.logger import logger
@@ -212,15 +213,49 @@ def _get_name_and_version_from_description(content: dict, description: str) -> t
         raise DownloadPackageError(f"Section 'version' not found in {description} file")
     return name, version
 
-
+@timer("Download completed", connector="in", output_func=logger.success)
 def download(
         packages: Iterable[PackageCLI | PackageCLIImage | PackageCLITarGz | PackageCLISource],
         directory: Path = PACKAGES_PATH, *,
-        registry: RegistryInfo, dependency_tree: str = '', dependency_level: int = 0, is_deps_first: bool
+        registry: RegistryInfo, is_deps_first: bool
 ) -> list[PackageLocalData]:
     """ Download packages
 
     :param packages: packages to be downloaded
+    :param directory: directory where need to download package
+    :param registry: registry information like credentials for auth, insecure mode, etc.
+    :param is_deps_first: whether dependencies should be specified first, and then the main package. This is necessary
+                          for the order in which package are handled, e.g. installation starts with dependencies,
+                          uninstallation with the main package
+    :return: paths to packages (.tar.gz files)
+    """
+    if not packages:
+        logger.info("No packages to download")
+        return []
+
+    logger.info(':: Downloading packages')
+
+    result: list[PackageLocalData] = []
+    for package in packages:
+        data = _rdownload(package, directory=directory, registry=registry, is_deps_first=is_deps_first)
+        if data is None:
+            continue
+        result.append(data)
+        dependencies_data = _rdownload(
+            data['dependencies'], directory, registry=registry,
+            dependency_tree='', dependency_level=0, is_deps_first=is_deps_first
+        )
+        result = add_dependencies(result, dependencies_data, is_deps_first)
+    return result
+
+def _rdownload(
+        package: PackageCLI | PackageCLIImage | PackageCLITarGz | PackageCLISource,
+        directory: Path = PACKAGES_PATH, *,
+        registry: RegistryInfo, dependency_tree: str = '', dependency_level: int = 0, is_deps_first: bool
+) -> PackageLocalData | None:
+    """ Recursive download packages
+
+    :param package: package to be downloaded
     :param directory: directory where need to download package
     :param registry: registry information like credentials for auth, insecure mode, etc.
     :param dependency_tree: current dependency tree, e.g. `root-package -> root's-dependency`
@@ -228,48 +263,32 @@ def download(
     :param is_deps_first: whether dependencies should be specified first, and then the main package. This is necessary
                           for the order in which package are handled, e.g. installation starts with dependencies,
                           uninstallation with the main package
-    :return: paths to packages (.tar.gz files)
+    :return: paths to package (.tar.gz file)
     """
-    if not packages:
-        return []
+    logger.info(f'-> Downloading {package}')
+    new_dep_tree = f'{dependency_tree} -> {package.name}' if dependency_level != 0 else package.name
+    check_dependency_depth(dependency_level, new_dep_tree)
 
-    if dependency_level == 0:
-        logger.info(':: Downloading packages')
+    source = get_source(package, directory, registry=registry)
+    if source is None:
+        return None
+    data = get_package_info(source.parent, source.name)
+    if isinstance(package, PackageCLIImage):
+        if data['version'] != package.ref:
+            logger.warning(f"Gear tag differs from package.yaml version: using {data['version']}")
+    if data['dependencies']:
+        logger.info(f"Gear dependencies: {', '.join([str(dep) for dep in data['dependencies']])}")
 
-    result = []
-    for i, package in enumerate(packages, 1):
-        logger.info(f'-> Downloading {package}')
-        new_dep_tree = f'{dependency_tree} -> {package.name}' if dependency_level != 0 else package.name
-        check_dependency_depth(dependency_level, new_dep_tree)
-
-        source = get_source(package, directory, registry=registry)
-        if source is None:
-            continue
-        data = get_package_info(source.parent, source.name)
-        if isinstance(package, PackageCLIImage):
-            if data['version'] != package.ref:
-                logger.warning(f"Gear tag differs from package.yaml version: using {data['version']}")
-        if data['dependencies']:
-            logger.info(f"Gear dependencies: {', '.join([str(dep) for dep in data['dependencies']])}")
-        dependencies_data = download(
-            data['dependencies'], directory, registry=registry,
-            dependency_tree=new_dep_tree, dependency_level=dependency_level + 1, is_deps_first=is_deps_first
-        )
-        fixed_dependency_names = []
-        for dependency in data['dependencies']:
-            fixed_dependency_names.append(_get_fixed_package_using_mapping(dependency))
-        data['dependencies'] = tuple(fixed_dependency_names)
-        result.append(data)
-        result = add_dependencies(result, dependencies_data, is_deps_first)
-        logger.info(
-            f"{data['name']}@{data['version']} package is "
-            f"of {get_gear_info(data['path'])['structure_type']} structure type"
-        )
-
-    if dependency_level == 0:
-        logger.success('Download complete')
-    return result
-
+    fixed_dependency_names = [
+        _get_fixed_package_using_mapping(dependency)
+        for dependency in data['dependencies']
+    ]
+    data['dependencies'] = tuple(fixed_dependency_names)
+    logger.info(
+        f"{data['name']}@{data['version']} package is "
+        f"of {get_gear_info(data['path'])['structure_type']} structure type"
+    )
+    return data
 
 def get_source(
         package: PackageCLI | PackageCLIImage | PackageCLITarGz | PackageCLISource, directory: Path, *,
@@ -364,6 +383,20 @@ def download_package(
     return outfile
 
 
+def get_client(
+        registry_address: str, *, registry: RegistryInfo
+) -> Registry:
+    """ Identifies registry type and returns appropriate client
+
+    :param registry_address: image registry (eg 'docker.io', 'artifactory.example.com:17001', 'nexus.host.com:16001')
+    :param registry: registry information like credentials for auth, insecure mode, etc.
+    :returns: specific registry client
+    """
+    # left the function with the suspicion that there would be more specs
+    # that would differ from those that oras could support
+    return Registry(hostname=registry_address, credentials=registry.credentials, insecure=registry.is_insecure)
+
+
 def _get_current_path_using_mapping(package: PackageCLI | PackageCLIImage, packages_dir: Path) -> Path | None:
     """ Get ratio of downloaded package to image from which they were obtained
 
@@ -371,8 +404,12 @@ def _get_current_path_using_mapping(package: PackageCLI | PackageCLIImage, packa
     :param packages_dir: directory with downloaded packages
     :return: path to downloaded package or None if no package is downloaded
     """
+    if not IMAGE_PACKAGE_MAP.exists():
+        return None
+
     with open(IMAGE_PACKAGE_MAP, 'r') as file:
         content: dict[str, str] = json.load(file)
+
     downloaded_packages = packages_dir.glob('*.tar.gz')
     for downloaded_package in downloaded_packages:
         filename = _get_filename_without_suffix(downloaded_package, suffix=TarGzPlugin.suffix)
@@ -384,23 +421,7 @@ def _get_current_path_using_mapping(package: PackageCLI | PackageCLIImage, packa
     return None
 
 
-def get_client(
-        registry_address: str, *, registry: RegistryInfo
-) -> Registry:
-    """ Identifies registry type and returns appropriate client
-
-    :param registry_address: image registry (eg 'docker.io', 'artifactory.example.com:17001', 'nexus.host.com:16001')
-    :param registry: registry information like credentials for auth, insecure mode, etc.
-    :returns: Instance of Dockerhub, Artifactory, or Nexus client
-
-    :raises UnknownRegistryError: registry could not be identified
-    """
-    # left the function with the suspicion that there would be more specs
-    # that would differ from those that oras could support
-    return Registry(hostname=registry_address, credentials=registry.credentials, insecure=registry.is_insecure)
-
-
-def _save_info_about_downloaded_package(package: PackageCLI, current_package: Path) -> None:
+def _save_info_about_downloaded_package(package: PackageCLIImage, current_package: Path) -> None:
     """ Save name and version mapping information from package.yaml with docker image name and tag
 
     :param package: package to be downloaded (docker image)

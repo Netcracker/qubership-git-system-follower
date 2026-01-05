@@ -55,7 +55,8 @@ def test__get_filename_without_suffix(path: Path, suffix: str, result: str):
     ]
 )
 def test__save_info_about_downloaded_package(loads: dict, package: PackageCLIImage, actual_path: Path, expected: dict):
-    with patch("git_system_follower.download.json.load", return_value=loads), \
+    with patch("builtins.open"), \
+         patch("git_system_follower.download.json.load", return_value=loads), \
          patch("git_system_follower.download.json.dump") as dump:
         _save_info_about_downloaded_package(package, actual_path)
 
@@ -83,8 +84,10 @@ def test__save_info_about_downloaded_package(loads: dict, package: PackageCLIIma
     ]
 )
 def test__get_current_path_using_mapping(loads: dict, packages: tuple[str], package: PackageCLIImage, expected: str | None):
-    with patch("git_system_follower.download.json.load", return_value=loads), \
-         patch("pathlib.Path.glob", return_value=packages):
+    with patch("builtins.open"), \
+         patch("pathlib.Path.exists", return_value=True), \
+         patch("pathlib.Path.glob", return_value=packages), \
+         patch("git_system_follower.download.json.load", return_value=loads):
         package = _get_current_path_using_mapping(package, Path("fake/path/to/dir"))
 
     assert package == expected
@@ -109,7 +112,8 @@ def test__get_current_path_using_mapping(loads: dict, packages: tuple[str], pack
 def test__get_fixed_package_using_mapping(
     loads: dict, package: PackageCLIImage | PackageCLITarGz | PackageCLISource, expected: PackageCLI | Exception
 ):
-    with patch("git_system_follower.download.json.load", return_value=loads):
+    with patch("builtins.open"), \
+         patch("git_system_follower.download.json.load", return_value=loads):
         if isinstance(expected, type) and issubclass(expected, Exception):
             with pytest.raises(DownloadPackageError):
                 package = _get_fixed_package_using_mapping(package)

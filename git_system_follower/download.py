@@ -285,14 +285,14 @@ def _download(
     source = get_source(package, directory, registry=registry)
     if source is None:
         return None
-    
+
     data = get_package_info(source.parent, source.name)
 
     if isinstance(package, PackageCLIImage) and data['version'] != package.tag:
         logger.warning(f"Mismatch found in version of gear ({package.tag}) and package.yaml ({data['version']})")
     if data['dependencies']:
         logger.info(f"Package dependencies: {', '.join([str(dep) for dep in data['dependencies']])}")
-    
+
     data['dependencies'] = tuple(
         _get_fixed_package_using_mapping(dependency)
         for dependency in data['dependencies']

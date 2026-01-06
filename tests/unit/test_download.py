@@ -45,18 +45,24 @@ def test__get_filename_without_suffix(path: Path, suffix: str, result: str):
     "loads,package,actual_path,expected", [
         (  # before not gears
             {}, PackageCLIImage(registry="fake", repository="fake", image="gear", ref="v1"),
-            Path("path/to/.git-system-follower/packages/gear@v1.tar.gz"), 
+            Path("path/to/.git-system-follower/packages/gear@v1.tar.gz"),
             {"gear@v1": "fake/fake/gear:v1"},
         ),
         (  # before exist gears
             {"exist@2.0": "fake-image"}, PackageCLIImage(registry="fake", repository="fake", image="gear", ref="v1"),
-            Path("path/to/.git-system-follower/packages/gear@v1.tar.gz"), 
+            Path("path/to/.git-system-follower/packages/gear@v1.tar.gz"),
             {"exist@2.0": "fake-image", "gear@v1": "fake/fake/gear:v1"},
         ),
         (  # envgene case. Before no gears
-            {}, PackageCLIImage(registry='ghcr.io', repository='netcracker', image='qubership-gsf-discovery', ref='feature_ns-filter-support_20251225-054807'),
-            Path("packages/envgene_discovery_project@1.13.2.tar.gz"), 
-            {"envgene_discovery_project@1.13.2": "ghcr.io/netcracker/qubership-gsf-discovery:feature_ns-filter-support_20251225-054807"},
+            {}, PackageCLIImage(
+                registry='ghcr.io', repository='netcracker', image='qubership-gsf-discovery',
+                ref='feature_ns-filter-support_20251225-054807'
+            ),
+            Path("packages/envgene_discovery_project@1.13.2.tar.gz"),
+            {
+                "envgene_discovery_project@1.13.2":
+                "ghcr.io/netcracker/qubership-gsf-discovery:feature_ns-filter-support_20251225-054807"
+            },
         )
     ]
 )
@@ -84,12 +90,14 @@ def test__save_info_about_downloaded_package(loads: dict, package: PackageCLIIma
         ),
         (  # matching packages in mapper and package_dir
             {"gear@v1": "registry.io/repo/gear:v1"}, (Path("path/to/gear@v1.tar.gz"),),
-            PackageCLIImage(registry="registry.io", repository="repo", image="gear", ref="v1"), 
+            PackageCLIImage(registry="registry.io", repository="repo", image="gear", ref="v1"),
             Path("path/to/gear@v1.tar.gz"),
         ),
     ]
 )
-def test__get_current_path_using_mapping(loads: dict, packages: tuple[str], package: PackageCLIImage, expected: str | None):
+def test__get_current_path_using_mapping(
+    loads: dict, packages: tuple[str], package: PackageCLIImage, expected: str | None
+):
     with patch("builtins.open"), \
          patch("pathlib.Path.exists", return_value=True), \
          patch("pathlib.Path.glob", return_value=packages), \

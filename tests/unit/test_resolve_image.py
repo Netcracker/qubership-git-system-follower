@@ -38,7 +38,10 @@ from git_system_follower.plugins.cli.packages.default import ImagePlugin
         ),
         (
             "ghcr.io/netcracker/qubership-gsf-discovery:feature_ns-filter-support_20251225-054807",
-            PackageCLIImage(registry='ghcr.io', repository='netcracker', image='qubership-gsf-discovery', ref='feature_ns-filter-support_20251225-054807')
+            PackageCLIImage(
+                registry='ghcr.io', repository='netcracker', image='qubership-gsf-discovery',
+                ref='feature_ns-filter-support_20251225-054807'
+            )
         ),
     ]
 )

@@ -213,11 +213,12 @@ def _get_name_and_version_from_description(content: dict, description: str) -> t
         raise DownloadPackageError(f"Section 'version' not found in {description} file")
     return name, version
 
+
 @timer("Download completed", connector="in", output_func=logger.success)
 def download(
         packages: Iterable[PackageCLI | PackageCLIImage | PackageCLITarGz | PackageCLISource],
         directory: Path = PACKAGES_PATH, *,
-        registry: RegistryInfo, is_deps_first: bool
+        registry: RegistryInfo, is_deps_first: bool,
 ) -> list[PackageLocalData]:
     """ Download packages
 
@@ -234,61 +235,70 @@ def download(
         return []
 
     logger.info(':: Downloading packages')
-
-    result: list[PackageLocalData] = []
-    for package in packages:
-        data = _rdownload(package, directory=directory, registry=registry, is_deps_first=is_deps_first)
-        if data is None:
-            continue
-        result.append(data)
-        dependencies_data = _rdownload(
-            data['dependencies'], directory, registry=registry,
-            dependency_tree='', dependency_level=0, is_deps_first=is_deps_first
-        )
-        result = add_dependencies(result, dependencies_data, is_deps_first)
-    return result
+    return _rdownload(packages, directory, registry=registry, is_deps_first=is_deps_first)
 
 def _rdownload(
-        package: PackageCLI | PackageCLIImage | PackageCLITarGz | PackageCLISource,
-        directory: Path = PACKAGES_PATH, *,
-        registry: RegistryInfo, dependency_tree: str = '', dependency_level: int = 0, is_deps_first: bool
-) -> PackageLocalData | None:
-    """ Recursive download packages
+        packages: Iterable[PackageCLI | PackageCLIImage | PackageCLITarGz | PackageCLISource],
+        directory: Path, registry: RegistryInfo, is_deps_first: bool, *,
+        dependency_tree: str = "", dependency_level: int = 0,
+) -> list[PackageLocalData]:
+    """ Recursively download packages
 
-    :param package: package to be downloaded
+    :param packages: packages to be downloaded
     :param directory: directory where need to download package
     :param registry: registry information like credentials for auth, insecure mode, etc.
-    :param dependency_tree: current dependency tree, e.g. `root-package -> root's-dependency`
-    :param dependency_level: current dependency depth level
     :param is_deps_first: whether dependencies should be specified first, and then the main package. This is necessary
                           for the order in which package are handled, e.g. installation starts with dependencies,
                           uninstallation with the main package
-    :return: paths to package (.tar.gz file)
+    :param dependency_tree: current dependency tree, e.g. `root-gear -> sub-gear`
+    :param dependency_level: current dependency depth level
+    :return: paths to packages (.tar.gz files)
     """
-    logger.info(f'-> Downloading {package}')
-    new_dep_tree = f'{dependency_tree} -> {package.name}' if dependency_level != 0 else package.name
-    check_dependency_depth(dependency_level, new_dep_tree)
+    result: list[PackageLocalData] = []
+    for package in packages:
+        tree = f'{dependency_tree} -> {package.name}' if dependency_level != 0 else package.name
+        check_dependency_depth(dependency_level, dependency_tree)
 
+        data = _download(package, directory, registry)
+        if data is None:
+            continue
+        result.append(data)
+
+        dependencies_data = _rdownload(
+            data['dependencies'], directory, registry, is_deps_first=is_deps_first,
+            dependency_tree=tree, dependency_level=dependency_level + 1,
+        )
+        result = add_dependencies(result, dependencies_data, is_deps_first)
+
+        logger.info(
+            f"{data['name']}@{data['version']} package is "
+            f"of {get_gear_info(data['path'])['structure_type']} structure type"
+        )
+    return result
+
+def _download(
+        package: PackageCLI | PackageCLIImage | PackageCLITarGz | PackageCLISource,
+        directory: Path, registry: RegistryInfo,
+) -> PackageLocalData | None:
+    """ Download package """
+    logger.info(f'-> Downloading {package}')
     source = get_source(package, directory, registry=registry)
     if source is None:
         return None
+    
     data = get_package_info(source.parent, source.name)
-    if isinstance(package, PackageCLIImage):
-        if data['version'] != package.ref:
-            logger.warning(f"Gear tag differs from package.yaml version: using {data['version']}")
-    if data['dependencies']:
-        logger.info(f"Gear dependencies: {', '.join([str(dep) for dep in data['dependencies']])}")
 
-    fixed_dependency_names = [
+    if isinstance(package, PackageCLIImage) and data['version'] != package.tag:
+        logger.warning(f"Mismatch found in version of gear ({package.tag}) and package.yaml ({data['version']})")
+    if data['dependencies']:
+        logger.info(f"Package dependencies: {', '.join([str(dep) for dep in data['dependencies']])}")
+    
+    data['dependencies'] = tuple(
         _get_fixed_package_using_mapping(dependency)
         for dependency in data['dependencies']
-    ]
-    data['dependencies'] = tuple(fixed_dependency_names)
-    logger.info(
-        f"{data['name']}@{data['version']} package is "
-        f"of {get_gear_info(data['path'])['structure_type']} structure type"
     )
     return data
+
 
 def get_source(
         package: PackageCLI | PackageCLIImage | PackageCLITarGz | PackageCLISource, directory: Path, *,

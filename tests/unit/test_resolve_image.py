@@ -44,7 +44,6 @@ from git_system_follower.plugins.cli.packages.default import ImagePlugin
 )
 def test_resolve_image(image: str, result: PackageCLIImage):
     actual = ImagePlugin().parse_image(image)
-    print(repr(actual))
     assert actual.registry == result.registry, f"registry mismatch for {image}"
     assert actual.repository == result.repository, f"repository mismatch for {image}"
     assert actual.image == result.image, f"image mismatch for {image}"

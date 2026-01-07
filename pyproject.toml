@@ -16,9 +16,9 @@ python-gitlab = "^4.9.0"
 pyyaml = "6.0.2"
 requests = "2.32.3"
 packaging = "24.1"
-oras = "0.2.24"
+oras = "0.2.37"
 pluggy = "1.5.0"
-outlify = "0.7.0"
+outlify = "0.10.0"
 
 [tool.poetry.scripts]
 git-system-follower = "git_system_follower.cli:cli"

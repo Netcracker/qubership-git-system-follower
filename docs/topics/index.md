@@ -1,8 +1,8 @@
-# Concept Guides
+# Topics
 Here you find intoductions to all key parts of git-system-follower that you wull need for your work
 
 ## Quicklinks
-* [Gear Guide](gears.md)  
+* [Gear Guide](gears/index.md)  
 Explains the Gears format and gives basic guidelines for Gears with git-system-follower
 
 * [.state.yaml Guide](state.md)  

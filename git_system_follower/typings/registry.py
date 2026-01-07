@@ -12,26 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from enum import Enum
 from dataclasses import dataclass
 from typing import Optional
 
 from git_system_follower.typings.cli import Credentials
 
 
-__all__ = ['RegistryTypes', 'RegistryInfo']
-
-
-class RegistryTypes(Enum):
-    auto = 'Autodetect'
-    dockerhub = 'Dockerhub'
-    nexus = 'Nexus'
-    artifactory = 'Artifactory'
-    awsecr = 'AwsEcr'
+__all__ = ['RegistryInfo']
 
 
 @dataclass
 class RegistryInfo:
     credentials: Optional[Credentials]
-    type: RegistryTypes
     is_insecure: bool

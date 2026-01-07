@@ -54,7 +54,7 @@ class PluginManager:
         """
         plugins = self._load_entry_points_plugins()
 
-        system_plugins = [ImagePlugin, TarGzPlugin, SourcePlugin]
+        system_plugins = [SourcePlugin, TarGzPlugin, ImagePlugin]
         for plugin in system_plugins:
             self.register(plugin())
             plugins.append(plugin)
@@ -99,16 +99,15 @@ class PluginManager:
         :param kwargs: plugin's parameters
         :return: processed package
         """
-        for hook in self.pm.hook.match.get_hookimpls():
-            process = hook.plugin.process
-            is_processed = process(value=value, **kwargs)
-            if is_processed:
-                return hook.plugin
+        try:
+            for hook in self.pm.hook.match.get_hookimpls():
+                process = hook.plugin.process
+                is_processed = process(value=value, **kwargs)
+                if is_processed:
+                    return hook.plugin
+        except Exception as exc:
+            # fix to get plugins in the correct order, not self.pm.get_plugins()
+            plugins = [plugin[1].__class__.__name__ for plugin in self.pm.list_name_plugin()]
 
-        # fix to get plugins in the correct order, not self.pm.get_plugins()
-        plugins = [plugin[1].__class__.__name__ for plugin in self.pm.list_name_plugin()]
-        raise ParsePackageNameError(
-            f'Failed to determine package type of "{value}". Available system types: docker image, '
-            f'local .tar.gz archive, local source directory. All plugins: {", ".join(plugins)}. '
-            f'If you specified an .tar.gz archive or directory, please make sure it exist'
-        )
+            err = f"Cannot determine package type for '{value}': {exc}. Available plugins: {', '.join(plugins)}"
+            raise ParsePackageNameError(err)

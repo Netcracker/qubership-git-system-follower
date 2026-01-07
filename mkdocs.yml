@@ -91,18 +91,22 @@ nav:
     - getting_started/index.md
     - Quickstart: getting_started/quickstart.md
     - Installation: getting_started/installation.md
-  - Concepts:
-    - concepts/index.md
-    - Gears Guide: concepts/gears.md
-    - apiVersion list: 
-      - concepts/api_version_list/index.md
-      - apiVersion v1: concepts/api_version_list/v1.md
-    - Version Synchronization: concepts/version.md
-    - .state.yaml Guide: concepts/state.md
-    - Plugins Guide:
-      - concepts/plugins/index.md
-      - CLI Arguments Extension Point: concepts/plugins/cli_arguments.md
-      # - Versioning: concepts/plugins/versioning.md
+  - Topics:
+    - topics/index.md
+    - Gears:
+      - topics/gears/index.md
+      - apiVersions:
+        - topics/gears/api_version_list/index.md
+        - v1: topics/gears/api_version_list/v1.md
+      - Version Synchronization: topics/gears/version.md
+    - .state.yaml: topics/state.md
+    - Plugins:
+      - topics/plugins/index.md
+      - CLI Arguments Extension Point: topics/plugins/cli_arguments.md
+      # - Versioning: topics/plugins/versioning.md
+    - Integration:
+      - Git providers: topics/integrations/git_providers.md
+      - Registires: topics/integrations/registries.md
   - How to:
     - how_to/index.md
     - Build Gear: how_to/build.md

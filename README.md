@@ -38,7 +38,7 @@ By automating installations, updates, and removals, **gsf** reduces manual inter
 prevents errors, and ensures a consistent state across projects.
 
 If you’re managing CI/CD pipelines, infrastructure configurations, or any repository-bound tools,
-**gsf** is here to make your work easier, faster, and more reliable using [Git packages, aka Gears](https://netcracker.github.io/qubership-git-system-follower/latest/concepts/gears/).
+**gsf** is here to make your work easier, faster, and more reliable using [Git packages, aka Gears](https://netcracker.github.io/qubership-git-system-follower/latest/topics/gears/).
 
 ## :wrench: Problems It Solves
 Have you used versioned `.gitlab-ci.yml` that require a specific file structure in the repository?

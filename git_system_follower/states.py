@@ -21,7 +21,7 @@ from datetime import datetime
 from pprint import pformat
 import base64
 import yaml
-
+from git_system_follower.typings.cli import ExtraParam
 from git_system_follower.logger import logger
 from git_system_follower.errors import HashesMismatch
 from git_system_follower.typings.cli import PackageCLI
@@ -46,7 +46,8 @@ class ChangeStatus(Enum):
 class CICDVariablesSection(TypedDict):
     names: list[str]
     hash: str
-
+    managed_by_gsf: list[str]
+    managed_externally: list[str]
 
 class PackageState(TypedDict):
     name: str
@@ -96,7 +97,6 @@ class StateFile:
             raise HashesMismatch(f"Hash specified in state file ({content['hash']}) and "
                                  f"generated hash ({computed_hash}) do not match",
                                  state_file_hash=content['hash'], generated_hash=computed_hash)
-
         for package in content['packages']:
             self.__check_cicd_variables_hash(package, current_cicd_variables)
         self.__content = StateFileContent(hash=computed_hash, packages=content['packages'])
@@ -121,6 +121,14 @@ class StateFile:
         else:
             return state
 
+    def __get_managed_by_gsf(self, variables: list, package: PackageState)-> list:
+        variables_list = managed_by_gsf = []
+        variables_list = (lambda cv: cv.get('managed_by_gsf') or cv['names'])(package['cicd_variables'])
+        for item in variables:
+            if item['name'] in variables_list:
+                managed_by_gsf.append(item)
+        return managed_by_gsf
+
     def __check_cicd_variables_hash(
             self, package: PackageState, current_cicd_variables: dict[str, CICDVariable]
     ) -> None:
@@ -130,7 +138,8 @@ class StateFile:
         :param current_cicd_variables: current CI/CD variables in Gitlab
         """
         variables = filter_cicd_variables_by_state(package, current_cicd_variables)
-        computed_hash = self.__get_hash(variables)
+        managed_by_gsf_variables = self.__get_managed_by_gsf(variables, package)
+        computed_hash = self.__get_hash(managed_by_gsf_variables)
         if computed_hash != package['cicd_variables']['hash']:
             error = f"CI/CD variables hash specified in state file in {package['name']}@{package['version']} package " \
                     f"({package['cicd_variables']['hash']}) and generated hash ({computed_hash}) do not match"
@@ -216,8 +225,9 @@ class StateFile:
                 return state
 
     def add_package(
-            self, package: PackageLocalData, response: ScriptResponse | None, state: PackageState | None,
-            structure_type: str | None = None, source: str | None = None
+        self, package: PackageLocalData, extras: tuple[ExtraParam, ...], 
+        response: ScriptResponse | None, state: PackageState | None,
+        structure_type: str | None = None, source: str | None = None
     ) -> None:
         """ Add package to state file
 
@@ -231,6 +241,13 @@ class StateFile:
 
         self.__change_status = ChangeStatus.changed
         variables_names = [variable['name'] for variable in response['cicd_variables']]
+        managed_externally = []
+        for item in extras:
+            for i, res_item in enumerate(response['cicd_variables']):
+                if item.name == res_item['name'] and item.managed_by == 'external':
+                    response['cicd_variables'].pop(i)
+                    managed_externally.append(res_item['name'])
+        managed_by_gsf = [variable['name'] for variable in response['cicd_variables']]
         new_state = PackageState(
             name=package['name'], version=package['version'],
             used_template=response['template'],
@@ -241,7 +258,9 @@ class StateFile:
             dependencies=[f"{dependency.name}@{dependency.version}" for dependency in package['dependencies']],
             cicd_variables=CICDVariablesSection(
                 names=variables_names,
-                hash=self.__get_hash(response['cicd_variables'])
+                hash=self.__get_hash(response['cicd_variables']),
+                managed_by_gsf=managed_by_gsf,
+                managed_externally=managed_externally
             )
         )
         if state is None:

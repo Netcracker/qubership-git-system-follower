@@ -59,15 +59,17 @@ class ExtraParam(NamedTuple):
     name: str
     value: str
     masked: bool
+    managed_by: str
 ```
 Extra parameter information
 
 #### Fields
-| Name     | Type   | Description                               |
-|----------|--------|-------------------------------------------|
-| `name`   | `str`  | extra parameter name                      |
-| `value`  | `str`  | extra parameter value                     |
-| `masked` | `bool` | whether to mask a extra parameter in logs |
+| Name         | Type   | Description                               |
+|--------------|--------|-------------------------------------------|
+| `name`       | `str`  | extra parameter name                      |
+| `value`      | `str`  | extra parameter value                     |
+| `masked`     | `bool` | whether to mask a extra parameter in logs |
+| `managed_by` | `str`  | managed by gsf or external like CI token  |
 
 ### `ExtraParams` class
 ```python

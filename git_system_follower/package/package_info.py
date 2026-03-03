@@ -180,7 +180,7 @@ def get_scripts_dir_by_complexity(path: str, *, is_force: bool) -> Tuple[Path, b
         return path, is_force
     return path.parent, True
 
-def get_gear_info(path: Path, state: Optional[PackageState] = None) -> dict:
+def get_gear_info(path: Path, state: Optional[PackageState] = None, is_force: bool = False) -> dict:
     """ Checks whether the gear is of simple type with single version or complex with multiple versions
 
     :param path: Path at which the gear is downloaded and extracted
@@ -204,22 +204,30 @@ def get_gear_info(path: Path, state: Optional[PackageState] = None) -> dict:
                 break
         return 'simple'
 
-    def _handle_state_validation(structure_type: str) -> None:
+    def _handle_state_validation(structure_type: str, is_force: bool = False) -> None:
         """ Handle state validation and updates """
         if 'structure_type' in state:
             if state['structure_type'] != structure_type:
-                logger.critical(
-                    f"State and gear structure type mismatch. State structure type found "
-                    f"{state['structure_type']} and gear structure type found {structure_type}"
-                )
-                raise SystemExit
+                if is_force:
+                    logger.warning("Since --force was passed. Please review the affected files in "
+                                   "your repository manually to make sure everything looks as expected "
+                                   "before moving forward.")
+                    state['structure_type'] = structure_type
+                else:
+                    logger.critical(
+                        f"State and gear structure type mismatch detected. State structure type found "
+                        f"{state['structure_type']} and gear structure type found {structure_type}."
+                        f" If intentional then please run with --force")
+                    raise SystemExit
         else:
             state['structure_type'] = structure_type
 
+    gear_info = {}
     structure_type = _determine_structure_type()
-    gear_info = {'structure_type': structure_type}
+    gear_info['structure_type'] = gear_info.get('structure_type', structure_type)
+    gear_info.setdefault('migrate', is_force)
 
     if state is not None:
-        _handle_state_validation(structure_type)
+        _handle_state_validation(structure_type, is_force)
 
     return gear_info

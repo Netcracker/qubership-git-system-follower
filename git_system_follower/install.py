@@ -255,12 +255,12 @@ def install_package(
     if state_version < package_version:
         logger.debug(f"Installation version is higher the version installed in the repository "
                      f"({package['version']} > {state['version']}). Update version")
-        gear_info = get_gear_info(package['path'], state=state)
-        if gear_info['structure_type'] == 'simple':
+        gear_info = get_gear_info(package['path'], state=state, is_force=is_force)
+        if gear_info['structure_type'] == 'simple' or gear_info['migrate']:
             response = init(
                 package, repo, created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force
             )
-        elif gear_info['structure_type'] == 'complex':
+        else:
             response = update(
                 package, repo, state, created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force
             )

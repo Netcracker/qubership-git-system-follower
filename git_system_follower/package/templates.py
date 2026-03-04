@@ -88,7 +88,7 @@ def _copy_files(source: Path, source_current: Path, target: Path, *, script_dir:
         path_hash = _calculate_hash(path)
         current_path_hash = _calculate_hash(current_path)
         target_path_hash = _calculate_hash(target_path)
-        gear_info = get_gear_info(script_dir.parents[2])
+        gear_info = get_gear_info(script_dir.parents[2], is_force=is_force)
         if path_hash == target_path_hash:
             logger.info(f'\t\tContent of {relative_path} file is same. Skip operations')
             continue
@@ -97,9 +97,9 @@ def _copy_files(source: Path, source_current: Path, target: Path, *, script_dir:
             shutil.copy(path, target_path)
             continue
         elif path_hash != target_path_hash and current_path_hash != target_path_hash:
-            if gear_info['structure_type'] == 'simple':
+            if gear_info['structure_type'] == 'simple' or gear_info['migrate']:
                 shutil.copy(path, target_path)
-            elif gear_info['structure_type'] == 'complex':
+            else:
                 logger.warning(f'\t\tUser changes found for file {relative_path}. Cannot copy. Skip operations')
             continue
 

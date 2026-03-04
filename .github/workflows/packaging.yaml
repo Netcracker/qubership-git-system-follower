@@ -16,13 +16,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
       - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+        run: uv python install
 
       - name: Build package
-        run: pip install poetry && poetry build
+        run: uv build
 
       - name: Publish package
         uses: pypa/gh-action-pypi-publish@release/v1
@@ -38,13 +39,14 @@ jobs:
         with:
           fetch-depth: 0  # mike requires full access to history and commits
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
         with:
-          python-version: '3.11'
+          python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: pip install poetry && poetry install --with dev
+        run: |
+          uv sync --extra docs
 
       - name: Configure Git
         run: |
@@ -54,4 +56,4 @@ jobs:
       - name: Deploy versioned docs
         run: |
           VERSION=${GITHUB_REF#refs/tags/}
-          poetry run mike deploy --push --update-aliases "$VERSION" latest
+          uv run mike deploy --push --update-aliases "$VERSION" latest

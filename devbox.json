@@ -1,6 +1,7 @@
 {
   "$schema":  "https://raw.githubusercontent.com/jetify-com/devbox/0.14.0/.schema/devbox.schema.json",
   "packages": [
+    "uv@0.6.10",
     "docker@27.5.1",
     "docker-compose@2.34.0"
   ],
@@ -16,7 +17,18 @@
     "LOCALSTACK_ADMIN_PASSWORD": "admin"
   },
   "shell": {
+    "init_hook": "uv venv $(pwd)/.venv --allow-existing && source $(pwd)/.venv/bin/activate",
     "scripts": {
+      "install": [
+        "uv pip install -e .[dev]"
+      ],
+      "lint": [
+        "ruff check . --output-format full"
+      ],
+      "tests": [
+        "pytest tests/"
+      ],
+
       "up-nexus": [
         "docker-compose -f $DEVBOX_DIR/docker-compose.yml up -d $NEXUS_SERVICE_NAME $NEXUS_NGINX_SERVICE_NAME",
         "echo 'Waiting for Nexus to create admin password...' && PASSWORD=$($DEVBOX_DIR/scripts/nexus/wait.sh) && echo \"Admin password: $PASSWORD\"",

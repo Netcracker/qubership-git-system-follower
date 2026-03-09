@@ -20,7 +20,6 @@ import hashlib
 from datetime import datetime
 from pprint import pformat
 import base64
-
 import yaml
 
 from git_system_follower.logger import logger
@@ -29,6 +28,7 @@ from git_system_follower.typings.cli import PackageCLI
 from git_system_follower.typings.package import PackageLocalData
 from git_system_follower.typings.script import ScriptResponse
 from git_system_follower.package.cicd_variables import CICDVariable
+from git_system_follower.utils.utility import normalized_in_string_match
 
 
 __all__ = [
@@ -67,7 +67,12 @@ class StateFileContent(TypedDict):
 class InstalledPackage(NamedTuple):
     name: str
     version: str
+    source: str
 
+class InstalledPackageSources(NamedTuple):
+    name: str
+    version: str
+    source: str
 
 class StateFile:
     __name = '.state.yaml'
@@ -134,7 +139,10 @@ class StateFile:
     def get_installed_packages(self) -> tuple[InstalledPackage, ...]:
         packages = []
         for package in self.__content['packages']:
-            packages.append(InstalledPackage(name=package['name'], version=package['version']))
+            packages.append(InstalledPackage(
+                name=package['name'],
+                version=package['version'],
+                source=package['source']))
         return tuple(packages)
 
     def get_all_created_cicd_variables(self) -> tuple[str, ...]:
@@ -146,6 +154,32 @@ class StateFile:
         for package in self.__content['packages']:
             variables.extend(package['cicd_variables']['names'])
         return tuple(variables)
+
+    def get_package_sources(self) -> tuple[str, ...]:
+        src = []
+        for state in self.__content['packages']:
+            src.append(state.get('source') or "")
+        return tuple(src)
+
+    def update_package_sources(self, sources: tuple[str, ...]):
+        for state in self.__content['packages']:
+            if 'source' in state:
+                continue
+            source = next((
+                s.value for s in sources
+                if normalized_in_string_match(state['name'], s.value)
+                and normalized_in_string_match(state['version'], s.value)
+            ),None)
+            if source is None:
+                logger.error(
+                    f"Auto rollback failed for '{state.get('name', 'unknown')}': "
+                    f"'source' missing in .state.yaml (package installed before source tracking)."
+                    f" Please rollback manually."
+                )
+                raise SystemExit
+            state['source'] = source
+            self.__change_status = ChangeStatus.changed
+            self.save
 
     def get_package(self, package: PackageLocalData, *, for_delete: bool) -> PackageState | None:
         """ Get state with package from state
@@ -183,7 +217,7 @@ class StateFile:
 
     def add_package(
             self, package: PackageLocalData, response: ScriptResponse | None, state: PackageState | None,
-            structure_type: str | None = None
+            structure_type: str | None = None, source: str | None = None
     ) -> None:
         """ Add package to state file
 
@@ -203,6 +237,7 @@ class StateFile:
             template_variables={name: mask_data(value) for name, value in response['template_variables'].items()},
             last_update=str(datetime.now()),
             structure_type=structure_type,
+            source=source,
             dependencies=[f"{dependency.name}@{dependency.version}" for dependency in package['dependencies']],
             cicd_variables=CICDVariablesSection(
                 names=variables_names,
@@ -273,7 +308,26 @@ def get_installed_packages(states: dict[str, StateFile]) -> set[PackageCLI]:
     installed_packages = set()
     for package_states in states.values():
         for package in package_states.get_installed_packages():
-            installed_packages.add(PackageCLI(name=package.name, version=package.version))
+            installed_packages.add(PackageCLI(
+                name=package.name,
+                version=package.version,
+                source=package.source))
+    return installed_packages
+
+def get_installed_packages_and_sources(states: dict[str, StateFile]) -> set[PackageCLI]:
+    """ Getting information about installed packages
+
+    :param states: current states in GitLab repository branches
+    :return: installed packages set
+    """
+    installed_packages = set()
+    for package_states in states.values():
+        for package, source in zip(package_states.get_installed_packages(), package_states.get_package_sources()):
+            installed_packages.add(InstalledPackageSources(
+                name=package.name,
+                version=package.version,
+                source=source
+            ))
     return installed_packages
 
 

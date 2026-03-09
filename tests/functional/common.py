@@ -13,7 +13,9 @@
 # limitations under the License.
 
 import os
+import yaml
 import shutil
+from pathlib import Path
 from outlify.list import TitledList
 from unittest.mock import PropertyMock
 from git_system_follower.install import (
@@ -58,8 +60,21 @@ def get_git_repo_mock(mock_get_git_clone):
 
 def get_packages_by_action(packages, states, registry, action):
     if action == 'install':
-        return install_get_packages(packages, states, registry=registry)
+        return install_get_packages(packages, states, 'test_repo', BRANCHES, registry=registry)
     return uninstall_get_packages(packages, states, registry=registry)
+
+def update_package_yaml(package_path, name, version):
+    """Update package.yaml name and version"""
+    with open(package_path / 'package.yaml', 'r') as file:
+        data = yaml.safe_load(file)
+    data['name'] = name
+    data['version'] = version
+    with open(package_path / 'package.yaml', 'w') as file:
+        yaml.dump(data, file, default_flow_style=False)
+
+def get_package_path(gear_type):
+    """Get package path for gear type"""
+    return Path(__file__).parent.parent / "gears" / gear_type / 'git-system-follower-package'
 
 def install(gear_dir, registry, extras, states):
     packages = get_packages_by_action(
@@ -72,7 +87,7 @@ def install(gear_dir, registry, extras, states):
         logger.info(f"[{i}/{len(BRANCHES)}] Processing {branch}")
         logger.debug(f"State:\n{states[branch]}")
         states[branch] = install_managing_branch(
-            project, branch, ENV_VARS["GITLAB_TOKEN"], packages, states[branch],
+            project, branch, ENV_VARS["GITLAB_TOKEN"], packages, states[branch], 'test-repo',
             extras=extras, commit_message="Installed gear(s) test",
             username="dummy_user", user_email=USER_EMAIL, is_force=IS_FORCE
         )
@@ -92,7 +107,7 @@ def uninstall(gear_dir, registry, extras, states):
     for i, branch in enumerate(BRANCHES, 1):
         logger.info(f"[{i}/{len(BRANCHES)}] Processing {branch}")
         logger.debug(f"State:\n{states[branch]}")
-        valid_packages = validate_packages_dependencies(packages, states[branch])
+        valid_packages = validate_packages_dependencies(packages, states[branch]),
         if not valid_packages:
             logger.info(f"No packages to delete for {branch}")
             continue

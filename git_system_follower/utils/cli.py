@@ -19,7 +19,7 @@ import binascii
 import os
 
 import click
-
+import copy
 from git_system_follower.logger import logger
 from git_system_follower.typings.cli import PackageCLISource, PackageCLITarGz, PackageCLIImage, ExtraParam, Credentials
 from git_system_follower.plugins.managers import cli_packages_pm as plugin_manager
@@ -41,7 +41,8 @@ class PackageType(click.ParamType):
         super().__init__(*args, **kwargs)
 
     def convert(self, value: str, param, ctx) -> PackageCLIImage | PackageCLITarGz | PackageCLISource:
-        return plugin_manager.process(value, **ctx.params)
+        params = ctx.params if ctx else {}
+        return copy.deepcopy(plugin_manager.process(value, **params))
 
 
 Package = PackageType()

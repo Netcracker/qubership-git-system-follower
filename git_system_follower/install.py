@@ -36,13 +36,15 @@ from git_system_follower.git_api.utils import get_packages_str, get_git_repo
 from git_system_follower.typings.repository import RepositoryInfo
 from git_system_follower.states import (
     ChangeStatus, PackageState, StateFile,
-    get_installed_packages, update_created_cicd_variables,
+    get_installed_packages, update_created_cicd_variables
 )
+from git_system_follower.utils.cli import Package, get_gears
 from git_system_follower.utils.retry import retry
+from git_system_follower.utils.utility import normalized_in_string_match
 from git_system_follower.utils.versions import normalize_version
 from git_system_follower.package.initer import init
 from git_system_follower.package.updater import update
-# from git_system_follower.package.rollbacker import rollback
+from git_system_follower.package.rollbacker import rollback
 from git_system_follower.typings.script import ScriptResponse
 
 
@@ -51,7 +53,7 @@ __all__ = ['install']
 
 def install(
         packages: tuple[PackageCLIImage | PackageCLITarGz | PackageCLISource, ...],
-        repo_url: str, branches: tuple[str, ...], token: str, *,
+        sources: tuple[str, ...], repo_url: str, branches: tuple[str, ...], token: str, *,
         extras: tuple[ExtraParam, ...], commit_message: str,
         username: str, user_email: str,
         registry: RegistryInfo, is_force: bool,
@@ -59,8 +61,7 @@ def install(
     gitlab_instance = get_gitlab(repo_url, token)
     project = get_project(gitlab_instance, repo_url)
     states = get_states(project, branches)
-
-    packages = get_packages(packages, states, registry=registry)
+    packages = get_packages(packages, states, sources, branches, registry=registry)
     logger.info(TitledList(
         [f"{package['name']}@{package['version']}" for package in packages.install],
         title='Packages'
@@ -74,7 +75,7 @@ def install(
         logger.info(f'[{i}/{len(branches)}] Processing {branch} branch')
         logger.debug(f'Current state in {branch} branch:\n{states[branch]}')
         states[branch] = managing_branch(
-            project, branch, token, packages, states[branch], extras=extras,
+            project, branch, token, packages, states[branch], sources=sources, extras=extras,
             commit_message=commit_message, username=username, user_email=user_email, is_force=is_force
         )
     logger.success('Installation complete')
@@ -82,7 +83,7 @@ def install(
 
 def get_packages(
         packages_cli: tuple[PackageCLIImage | PackageCLITarGz | PackageCLISource, ...],
-        states: dict[str, StateFile], *,
+        states: dict[str, StateFile], sources: tuple[str, ...], branches: tuple[str, ...], *,
         registry: RegistryInfo
 ) -> PackagesTo:
     """ Getting information about packages to install and rollback (delete+init)
@@ -93,12 +94,21 @@ def get_packages(
 
     :return: packages info tuples in PackageTo class
     """
+    rollback_sources = [
+        gear
+        for branch in branches
+        for s in states[branch].get_package_sources()
+        for gear in get_gears((Package.convert(s, None, None),))
+    ]
+    for branch in branches:
+        states[branch].update_package_sources(sources)
     packages = PackagesTo(
         install=_get_packages_to_install(packages_cli, registry=registry),
         rollback=()
     )
     installed_packages = get_installed_packages(states)
-    packages.rollback = _get_packages_to_rollback(packages_cli, installed_packages, registry=registry)
+    packages.rollback = _get_packages_to_rollback(
+        packages.install, installed_packages, rollback_sources, registry=registry)
     return packages
 
 
@@ -125,7 +135,8 @@ def _get_packages_to_install(
 
 def _get_packages_to_rollback(
         packages_cli: tuple[PackageCLIImage | PackageCLITarGz | PackageCLISource, ...],
-        installed_packages: set[PackageCLI], *,
+        installed_packages: set[PackageCLI],
+        rollback_sources: tuple[PackageCLIImage | PackageCLITarGz | PackageCLISource, ...], *,
         registry: RegistryInfo
 ) -> tuple[PackageLocalData, ...]:
     """ Getting information about packages to rollback (delete+init)
@@ -138,8 +149,16 @@ def _get_packages_to_rollback(
     packages_to_rollback = []
     for package_cli in packages_cli:
         for installed_package in installed_packages:
-            if _is_necessary_package_to_rollback(package_cli, installed_package):
-                packages_to_rollback.append(installed_package)
+            matched_source = next(
+                (
+                    item for item in rollback_sources
+                    if normalized_in_string_match(str(installed_package.name), str(item))
+                    and installed_package.version in str(item)
+                ),
+                None)
+            if matched_source and _is_necessary_package_to_rollback(
+                package_cli, installed_package):
+                packages_to_rollback.append(matched_source)
     return tuple(download(packages_to_rollback, is_deps_first=False, registry=registry))
 
 
@@ -149,21 +168,19 @@ def _is_necessary_package_to_rollback(package_cli: PackageCLI, installed_package
     :param package_cli: package to install
     :param installed_package: installed package
     """
-    return package_cli.name == installed_package.name and package_cli.version < installed_package.version
-
+    return package_cli['name'] == installed_package.name and package_cli['version'] < installed_package.version
 
 @retry(output_func=logger.info, error_output_func=logger.error)
 def managing_branch(
-        project: Project, branch: str, token: str, packages: PackagesTo, state: StateFile, *,
-        extras: tuple[ExtraParam, ...], commit_message: str, username: str, user_email: str,
-        is_force: bool
+        project: Project, branch: str, token: str, packages: PackagesTo, state: StateFile,
+        sources: tuple[str, ...], *, extras: tuple[ExtraParam, ...], commit_message: str,
+        username: str, user_email: str,is_force: bool
 ) -> StateFile:
     repo = RepositoryInfo(gitlab=project, git=get_git_repo(project, token))
     checkout_to_new_branch(repo.git, branch)
-
     logger.info(':: Installing packages')
     state = processing_branch(
-        packages, repo, state, extras=extras, is_force=is_force,
+        packages, repo, state, sources, extras=extras, is_force=is_force,
         commit_message=commit_message, username=username, user_email=user_email
     )
     if state.status() == ChangeStatus.no_change:
@@ -180,11 +197,11 @@ def managing_branch(
 
 
 def processing_branch(
-        packages: PackagesTo, repo: RepositoryInfo, state: StateFile, *,
+        packages: PackagesTo, repo: RepositoryInfo, state: StateFile, sources: tuple[str, ...], *,
         extras: tuple[ExtraParam, ...], commit_message: str, username: str, user_email: str,
         is_force: bool
 ) -> StateFile:
-    state = install_packages(packages, repo, state, extras=extras, is_force=is_force)
+    state = install_packages(packages, repo, state, sources, extras=extras, is_force=is_force)
 
     if state.status() == ChangeStatus.changed:
         logger.debug(f'Updated state in {repo.git.active_branch.name} branch:\n{state}')
@@ -200,8 +217,8 @@ def processing_branch(
 
 
 def install_packages(
-        packages: PackagesTo, repo: RepositoryInfo, state: StateFile, *,
-        extras: tuple[ExtraParam, ...], is_force: bool
+        packages: PackagesTo, repo: RepositoryInfo, state: StateFile,
+        sources: tuple[str, ...], *, extras: tuple[ExtraParam, ...], is_force: bool
 ) -> StateFile:
     created_cicd_variables = state.get_all_created_cicd_variables()
     for i, package in enumerate(packages.install, 1):
@@ -212,12 +229,17 @@ def install_packages(
                 package, packages.rollback, repo, package_state,
                 created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force
             )
+            source = next((
+                s.value for s in sources
+                if normalized_in_string_match(package['name'], s.value
+                )),None)
             if package_state is not None and 'structure_type' in package_state:
-                state.add_package(package, response, package_state, structure_type=package_state['structure_type'])
+                state.add_package(
+                    package, response, package_state, structure_type=package_state['structure_type'], source=source)
             else:
                 state.add_package(
-                    package, response, package_state, structure_type=get_gear_info(package['path'])['structure_type']
-                )
+                    package, response, package_state, structure_type=get_gear_info(package['path'])['structure_type'],
+                    source=source)
             created_cicd_variables = update_created_cicd_variables(created_cicd_variables, response)
         except Exception:
             logger.critical(f"An error came out at one stage of installation. "
@@ -277,9 +299,8 @@ def install_package(
         raise PackageNotFoundError(f"Package {package['name']}@{package['version']} not found in "
                                    f"Additional rollback package list:\n{pformat(additional_packages)}")
 
-    raise NotImplementedError("Gear's downgrade is in development")
-    # response = rollback(
-    #     package, old_package, repo, state,
-    #     created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force
-    # )
-    # return response
+    response = rollback(
+        package, old_package, repo, state,
+        created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force
+    )
+    return response

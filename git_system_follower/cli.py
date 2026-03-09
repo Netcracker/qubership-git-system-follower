@@ -208,10 +208,10 @@ def install_command(
         raise CLIParamsError('Gears for installation are not specified')
     set_level(is_debug)
 
-    gears = get_gears(gears)
+    sources, gears = gears, get_gears(gears)
     registry = RegistryInfo(credentials=credentials, type=RegistryTypes(registry_type), is_insecure=is_insecure)
     install(
-        gears, repo, branches, token, extras=extras,
+        gears, sources, repo, branches, token, extras=extras,
         commit_message=message, username=username, user_email=email,
         registry=registry, is_force=is_force
     )

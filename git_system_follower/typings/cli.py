@@ -39,6 +39,7 @@ class PackageCLI:
     type: PackageCLITypes = PackageCLITypes.unknown
     name: str | None = None
     version: str | None = None
+    source: str | None = None
 
     def __str__(self):
         return f'{self.name}@{self.version}'

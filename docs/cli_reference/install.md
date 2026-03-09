@@ -144,3 +144,44 @@ Install dependencies first, then root gear.
 The token from `--token` does not have to belong to the user from `--git-username`/`--git-email`. 
 Commit changes can be made under a user who does not have permissions to the repository. 
 But the push of these changes must be done under a user who has access to the repository.
+
+### Rollback
+git-system-follower supports automatic rollback of installed gears.
+
+When a gear is installed, its source (for example `domain:port/gear:1.0.0` or `/tmp/gear@1.0.0`) is recorded in `.state.yaml` under the `source` field.
+
+To perform a rollback, run the `gsf install` command as usual and provide a gear version **older than the currently installed version**.  
+git-system-follower will then:
+
+1. Use the stored `source` value from `.state.yaml`
+2. Uninstall the currently installed version
+3. Install the specified older version
+
+Sample gear structure when rollback would auto-detect using the field source -
+
+```yaml
+hash: Hash of 'packages' section
+packages: # List of installed packages
+- cicd_variables: # Section of created CI/CD variables
+    hash: Hash of 'names' section
+    names: # Name list of created CI/CD variables
+      - Name of CI/CD variable
+  dependencies: # List of dependencies of this package
+    - 'dependency-name@dependency-version'
+  last_update: Date in 'YYYY-MM-DD HH:MM:SS.ffffff' format
+  name: Gear name
+  source: domain:port/gear:1.0.0 # Source tracking of installed gear
+  template_variables: # Section of used variables to create template
+    variable_name: Masked Base64-encoded value
+  used_template: Installation template used
+  version: Gear version
+```
+
+**Important**
+
+If `.state.yaml` does **not contain the `source` field**, rollback cannot be performed automatically.
+
+To enable rollback:
+1. Re-run the `install` command using the **currently installed gear's path or registry link**.
+2. git-system-follower will detect the source and update `.state.yaml`.
+3. After this, rollback to older versions will work normally.

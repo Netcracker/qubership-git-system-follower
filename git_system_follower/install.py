@@ -265,7 +265,8 @@ def install_package(
     :return: script response
     """
     if state is None:
-        response = init(package, repo, created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force)
+        response = init(package, repo, state, created_cicd_variables=created_cicd_variables,
+            extras=extras, is_force=is_force)
         return response
 
     state_version = normalize_version(state['version'])
@@ -280,7 +281,7 @@ def install_package(
         gear_info = get_gear_info(package['path'], state=state, is_force=is_force)
         if gear_info['structure_type'] == 'simple' or gear_info['migrate']:
             response = init(
-                package, repo, created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force
+                package, repo, state, created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force
             )
         else:
             response = update(

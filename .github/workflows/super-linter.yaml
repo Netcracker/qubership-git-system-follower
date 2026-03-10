@@ -33,14 +33,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: "Get the common linters configuration"
-      uses: actions/checkout@v4
+      uses: actions/checkout@v4 # zizmor: ignore[unpinned-uses]
       with:
         ref: main # fix/superlinter-config
         repository: netcracker/.github
         sparse-checkout: |
           config/linters
+        persist-credentials: false 
     - name: "Upload the common linters configsuration"
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v4  # zizmor: ignore[unpinned-uses]
       with:
         name: linter-config
         path: "${{ github.workspace }}/config"
@@ -55,12 +56,13 @@ jobs:
       statuses: write
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v4 # zizmor: ignore[unpinned-uses]
       with:
         # Full git history is needed to get a proper list of changed files within `super-linter`
         fetch-depth: 0
+        persist-credentials: false 
     - name: "Get the common linters configuration"
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v4  # zizmor: ignore[unpinned-uses]
       id: download
       with:
         name: linter-config
@@ -87,7 +89,7 @@ jobs:
         fi
 
     - name: Lint Code Base
-      uses: super-linter/super-linter/slim@v7.3.0
+      uses: super-linter/super-linter/slim@v8.5.0 # zizmor: ignore[unpinned-uses]
       env:
         VALIDATE_ALL_CODEBASE: ${{ inputs.full_scan || false }}
         # To report GitHub Actions status checks

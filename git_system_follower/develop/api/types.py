@@ -18,7 +18,6 @@ from pathlib import Path
 from typing import Optional
 
 from gitlab.v4.objects import Project
-
 from git_system_follower.typings.cli import ExtraParam
 from git_system_follower.package.cicd_variables import CICDVariable
 

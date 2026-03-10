@@ -21,7 +21,7 @@ import sys
 import json
 
 from gitlab.v4.objects import Project
-
+from git_system_follower.package.package_info import get_gear_info
 from git_system_follower.errors import PackageApiError
 from git_system_follower.variables import PACKAGE_API_RESULT
 from git_system_follower.typings.cli import ExtraParam
@@ -31,7 +31,6 @@ from git_system_follower.develop.api.types import Parameters, SystemParameters, 
 from git_system_follower.package.system import get_system_info
 from git_system_follower.typings.script import ScriptResponse
 from git_system_follower.package.default import init_default_main, delete_default_main
-
 
 __all__ = ['run_script']
 
@@ -64,6 +63,8 @@ def run_script(
     cicd_variables = filter_cicd_variables_by_state(state, all_cicd_variables)
     created_cicd_vars_in_other_pkgs = _fetch_cicd_vars_except_package(created_cicd_variables, cicd_variables)
     default_package_api = init_default_main if path.name == 'init.py' else delete_default_main
+    if get_gear_info(path.parents[3])['structure_type'] == 'simple':
+        is_force = True
     response = execute_package_api(
         path, workdir, current_version_dir, project, used_template,
         template_variables=template_variables,

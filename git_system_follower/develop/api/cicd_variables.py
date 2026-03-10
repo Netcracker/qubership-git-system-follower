@@ -14,7 +14,7 @@
 
 """ Module with api to work with CI/CD variables for package developers """
 import json
-
+from git_system_follower.package.package_info import get_gear_info
 from git_system_follower.variables import PACKAGE_API_RESULT as __PACKAGE_API_RESULT
 from git_system_follower.develop.api.types import Parameters
 from git_system_follower.errors import PackageCICDVariablePolicyError
@@ -51,15 +51,18 @@ def create_variable(parameters: Parameters, variable: CICDVariable, *, is_force:
     """
     system_params = parameters._Parameters__system_params
     if variable['name'] in system_params.created_cicd_vars_names:
-        raise PackageCICDVariablePolicyError(f"{variable['name']} CI/CD variable used in another package. According "
-                                             f"to package manager policy, you cannot use the same variables in "
-                                             f"different packages")
+        raise PackageCICDVariablePolicyError(
+            f"{variable['name']} CI/CD variable used in another package. According "
+            f"to package manager policy, you cannot use the same variables in "
+            f"different packages"
+        )
 
+    structure_type = get_gear_info(system_params.script_dir.parents[2])['structure_type']
     is_force = True if is_force or system_params.is_force else False
     response = __create_variable(
         system_params.project, variable, is_force=is_force
     )
-    __add_info_about_variable(response)
+    __add_info_about_variable(response, structure_type=structure_type)
     return response
 
 
@@ -84,9 +87,11 @@ def delete_variable(parameters: Parameters, variable: CICDVariable, *, is_force:
     """
     system_params = parameters._Parameters__system_params
     if variable['name'] in system_params.created_cicd_vars_names:
-        raise PackageCICDVariablePolicyError(f"{variable['name']} CI/CD variable used in another package. According "
-                                             f"to package manager policy, you cannot use the same variables in "
-                                             f"different packages")
+        raise PackageCICDVariablePolicyError(
+            f"{variable['name']} CI/CD variable used in another package. According "
+            f"to package manager policy, you cannot use the same variables in "
+            f"different packages"
+        )
 
     is_force = True if is_force or system_params.is_force else False
     __delete_variable(
@@ -95,14 +100,22 @@ def delete_variable(parameters: Parameters, variable: CICDVariable, *, is_force:
     __delete_info_about_variable(variable)
 
 
-def __add_info_about_variable(variable: CICDVariable) -> None:
+def __add_info_about_variable(variable: CICDVariable, structure_type: str) -> None:
     with open(__PACKAGE_API_RESULT, 'r') as file:
         content = json.load(file)
+    if structure_type == "simple":  # to allow update of simple gear variables
+        try:
+            index = next(i
+                    for i, v in enumerate(content["cicd_variables"])
+                    if v.get("name") == variable['name']
+                )
+            content['cicd_variables'].pop(index)
+        except Exception:
+            pass
     if variable not in content['cicd_variables']:
         content['cicd_variables'].append(variable)
     with open(__PACKAGE_API_RESULT, 'w') as file:
         json.dump(content, file)
-
 
 def __delete_info_about_variable(variable: CICDVariable) -> None:
     with open(__PACKAGE_API_RESULT, 'r') as file:

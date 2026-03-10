@@ -93,6 +93,7 @@ def install_package(states, branch, package, is_force, project, extras):
     response = init(
         package=package,
         repo=get_repo_info(project),
+        state=states[branch].get_package(package, for_delete=False),
         created_cicd_variables=states[branch].get_all_created_cicd_variables(),
         extras=extras,
         is_force=is_force

@@ -99,8 +99,9 @@ def install_package(states, branch, package, is_force, project, extras):
         is_force=is_force
     )
     states[branch].add_package(
-        package, response, None,
-        structure_type=get_gear_info(package['path'])['structure_type']
+        package, extras, response, None,
+        structure_type=get_gear_info(package['path'])['structure_type'],
+        source="test"
     )
 
 def uninstall_package(states, branch, package, is_force, project, extras):

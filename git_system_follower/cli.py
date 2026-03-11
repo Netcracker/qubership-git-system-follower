@@ -21,7 +21,9 @@ from git_system_follower.errors import CLIParamsError
 from git_system_follower.plugins.cli.packages.specs import HookSpec
 from git_system_follower.typings.cli import ExtraParam
 from git_system_follower.typings.registry import RegistryTypes, RegistryInfo
-from git_system_follower.utils.cli import Package, ExtraParamTuple, ExternalExtraParamTuple, resolve_credentials, add_options, get_gears
+from git_system_follower.utils.cli import (
+    Package, ExtraParamTuple, ExternalExtraParamTuple, resolve_credentials,
+    add_options, get_gears)
 from git_system_follower.utils.output import banner, display_params
 from git_system_follower.git_api.utils import get_config
 from git_system_follower.download import download
@@ -127,7 +129,8 @@ def download_command(
     '--extra-external', 'extras_external', type=ExternalExtraParamTuple([
         click.STRING, click.STRING, click.Choice(['masked', 'no-masked'], case_sensitive=False)
     ]),
-    multiple=True, help='External Extra parameters to be passed to the package API: variable name, value, masked/no-masked',
+    multiple=True,
+    help='External Extra parameters to be passed to the package API: variable name, value, masked/no-masked',
     metavar='<NAME VALUE CHOICE>...'
 )
 @click.option(
@@ -250,7 +253,8 @@ def install_command(
     '--extra-external', 'extras_external', type=ExternalExtraParamTuple([
         click.STRING, click.STRING, click.Choice(['masked', 'no-masked'], case_sensitive=False)
     ]),
-    multiple=True, help='External Extra parameters to be passed to the package API: variable name, value, masked/no-masked',
+    multiple=True,
+    help='External Extra parameters to be passed to the package API: variable name, value, masked/no-masked',
     metavar='<NAME VALUE CHOICE>...'
 )
 @click.option(

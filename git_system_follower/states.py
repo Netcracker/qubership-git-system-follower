@@ -122,8 +122,8 @@ class StateFile:
             return state
 
     def __get_managed_by_gsf(self, variables: list, package: PackageState)-> list:
-        variables_list = managed_by_gsf = []
-        variables_list = (lambda cv: cv.get('managed_by_gsf') or cv['names'])(package['cicd_variables'])
+        managed_by_gsf = []
+        variables_list = package['cicd_variables'].get('managed_by_gsf', [])
         for item in variables:
             if item['name'] in variables_list:
                 managed_by_gsf.append(item)
@@ -225,7 +225,7 @@ class StateFile:
                 return state
 
     def add_package(
-        self, package: PackageLocalData, extras: tuple[ExtraParam, ...], 
+        self, package: PackageLocalData, extras: tuple[ExtraParam, ...],
         response: ScriptResponse | None, state: PackageState | None,
         structure_type: str | None = None, source: str | None = None
     ) -> None:

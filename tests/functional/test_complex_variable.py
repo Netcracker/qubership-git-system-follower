@@ -107,8 +107,9 @@ def install_package(states, branch, package, is_force, project, extras,
         is_force=is_force
     )
     states[branch].add_package(
-        package, response, None,
-        structure_type=get_gear_info(package['path'])['structure_type']
+        package, extras , response, None,
+        structure_type=get_gear_info(package['path'])['structure_type'],
+        source="test"
     )
 
 def update_package(states, branch, package, is_force, project, bump_by, extras):
@@ -123,8 +124,9 @@ def update_package(states, branch, package, is_force, project, bump_by, extras):
         is_force=is_force
     )
     states[branch].add_package(
-        package, response, package_state,
-        structure_type=get_gear_info(package['path'])['structure_type']
+        package, extras, response, package_state,
+        structure_type=get_gear_info(package['path'])['structure_type'],
+        source="test"
     )
 
 def uninstall_package(states, branch, package, is_force, project, extras):
@@ -186,7 +188,7 @@ def scaffold(mock_get_git_clone) -> Tuple[ExtraParams, PackageState, Path]:
 @pytest.mark.functional
 @patch("test_complex_variable.get_git_repo")
 @vcr_instance.use_cassette('test_complex_variable_A')
-def test_simple_A(mock_get_git_clone):
+def test_complex_A(mock_get_git_clone):
     """
     Install gear1 with variables: var1, var2 - OK
     Uninstall this gear1 - OK
@@ -199,7 +201,7 @@ def test_simple_A(mock_get_git_clone):
 @pytest.mark.functional
 @patch("test_complex_variable.get_git_repo")
 @vcr_instance.use_cassette('test_complex_variable_B')
-def test_simple_B(mock_get_git_clone):
+def test_complex_B(mock_get_git_clone):
     """
     install gear1 with var1, var2 - OK
     install gear2 with var3, var4 - OK
@@ -227,7 +229,7 @@ def test_simple_B(mock_get_git_clone):
 @pytest.mark.functional
 @patch("test_complex_variable.get_git_repo")
 @vcr_instance.use_cassette('test_complex_variable_C')
-def test_simple_C(mock_get_git_clone):
+def test_complex_C(mock_get_git_clone):
     """
     Install gear1 with var1, var2 - OK
     Install gear2 with var3, var2 - Exception
@@ -253,7 +255,7 @@ def test_simple_C(mock_get_git_clone):
 @pytest.mark.functional
 @patch("test_complex_variable.get_git_repo")
 @vcr_instance.use_cassette('test_complex_variable_D')
-def test_simple_D(mock_get_git_clone):
+def test_complex_D(mock_get_git_clone):
     """
     Install gear1 with var1, var2 - OK
     Update gear1 with update var1 - OK

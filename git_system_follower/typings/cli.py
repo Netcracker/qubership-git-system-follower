@@ -87,6 +87,7 @@ class ExtraParam(NamedTuple):
     name: str
     value: str
     masked: bool
+    managed_by: str = 'gsf'
 
     def __str__(self):
         return f"{self.name}={'*****' if self.masked else self.value}"

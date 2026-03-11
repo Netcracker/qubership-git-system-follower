@@ -235,11 +235,12 @@ def install_packages(
                 )),None)
             if package_state is not None and 'structure_type' in package_state:
                 state.add_package(
-                    package, response, package_state, structure_type=package_state['structure_type'], source=source)
+                    package, extras, response, package_state,
+                    structure_type=package_state['structure_type'], source=source)
             else:
                 state.add_package(
-                    package, response, package_state, structure_type=get_gear_info(package['path'])['structure_type'],
-                    source=source)
+                    package, extras, response, package_state,
+                    structure_type=get_gear_info(package['path'])['structure_type'], source=source)
             created_cicd_variables = update_created_cicd_variables(created_cicd_variables, response)
         except Exception:
             logger.critical(f"An error came out at one stage of installation. "

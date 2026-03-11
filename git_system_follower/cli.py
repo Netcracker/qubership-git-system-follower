@@ -21,7 +21,9 @@ from git_system_follower.errors import CLIParamsError
 from git_system_follower.plugins.cli.packages.specs import HookSpec
 from git_system_follower.typings.cli import ExtraParam
 from git_system_follower.typings.registry import RegistryTypes, RegistryInfo
-from git_system_follower.utils.cli import Package, ExtraParamTuple, resolve_credentials, add_options, get_gears
+from git_system_follower.utils.cli import (
+    Package, ExtraParamTuple, ExternalExtraParamTuple, resolve_credentials,
+    add_options, get_gears)
 from git_system_follower.utils.output import banner, display_params
 from git_system_follower.git_api.utils import get_config
 from git_system_follower.download import download
@@ -124,6 +126,14 @@ def download_command(
     metavar='<NAME VALUE CHOICE>...'
 )
 @click.option(
+    '--extra-external', 'extras_external', type=ExternalExtraParamTuple([
+        click.STRING, click.STRING, click.Choice(['masked', 'no-masked'], case_sensitive=False)
+    ]),
+    multiple=True,
+    help='External Extra parameters to be passed to the package API: variable name, value, masked/no-masked',
+    metavar='<NAME VALUE CHOICE>...'
+)
+@click.option(
     '--message', type=str, default='Installed gear(s)',
     help='Commit message'
 )
@@ -162,7 +172,7 @@ def download_command(
 @click.option('--debug', 'is_debug', is_flag=True, default=False, help='Show debug level messages')
 def install_command(
         gears: tuple[HookSpec, ...], repo: str,
-        branches: tuple[str, ...], token: str, extras: tuple[ExtraParam],
+        branches: tuple[str, ...], token: str, extras: tuple[ExtraParam], extras_external: tuple[ExtraParam],
         message: str, username: str, email: str,
         registry_type: str, registry_username: str | None, registry_password: str | None, is_insecure: bool,
         is_force: bool, is_debug: bool,
@@ -179,6 +189,7 @@ def install_command(
                                   3. source code files: /path/to/gear directory, e.g.
                                   your-gear@1.0.0
     """
+    extras = extras + extras_external
     credentials = resolve_credentials(registry_username, registry_password)
     banner(version=__version__, output_func=logger.info)
 
@@ -239,6 +250,14 @@ def install_command(
     metavar='<NAME VALUE CHOICE>...'
 )
 @click.option(
+    '--extra-external', 'extras_external', type=ExternalExtraParamTuple([
+        click.STRING, click.STRING, click.Choice(['masked', 'no-masked'], case_sensitive=False)
+    ]),
+    multiple=True,
+    help='External Extra parameters to be passed to the package API: variable name, value, masked/no-masked',
+    metavar='<NAME VALUE CHOICE>...'
+)
+@click.option(
     '--message', type=str, default='Uninstalled gear(s)',
     help='Commit message'
 )
@@ -277,7 +296,7 @@ def install_command(
 @click.option('--debug', 'is_debug', is_flag=True, default=False, help='Show debug level messages')
 def uninstall_command(
         gears: tuple[HookSpec, ...], repo: str,
-        branches: tuple[str, ...], token: str, extras: tuple[ExtraParam, ...],
+        branches: tuple[str, ...], token: str, extras: tuple[ExtraParam, ...], extras_external: tuple[ExtraParam],
         message: str, username: str, email: str,
         registry_type: str, registry_username: str | None, registry_password: str | None, is_insecure: bool,
         is_force: bool, is_debug: bool,
@@ -296,6 +315,7 @@ def uninstall_command(
                                   3. source code files: /path/to/gear directory, e.g.
                                   your-gear@1.0.0
     """
+    extras = extras + extras_external
     credentials = resolve_credentials(registry_username, registry_password)
     banner(version=__version__, output_func=logger.info)
 

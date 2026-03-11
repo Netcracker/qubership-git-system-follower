@@ -31,5 +31,5 @@ def rollback(
 ) -> ScriptResponse:
     logger.info('==> Package rollback')
     delete(old_package, repo, state, created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force)
-    response = init(package, repo, created_cicd_variables=tuple([]), extras=extras, is_force=is_force)
+    response = init(package, repo, state, created_cicd_variables=tuple([]), extras=extras, is_force=is_force)
     return response

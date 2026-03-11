@@ -1,7 +1,7 @@
 # types module
 API provided in `types.py` module. This module contains classes for easy interaction. You can also use them as type hints in your code.
 
-## Usage in package api
+## Usage in package API
 
 ```python
 from git_system_follower.develop.api.types import (
@@ -22,19 +22,20 @@ class Parameters:
     all_cicd_variables: CICDVariables
     used_template: str
 ```
-Parameters which git-system-follower passed to package api
+Parameters which git-system-follower passed to package API
 
 !!! warning
     This class is only used to transfer information. Don't create your own instances
 
 #### Fields
-| Name                 | Type                          | Description                                                                                                                 |
-|----------------------|-------------------------------|-----------------------------------------------------------------------------------------------------------------------------|
-| `system`             | `System`                      | system information                                                                                                          |
-| `workdir`            | `Path` from `pathlib` library | current work directory                                                                                                      |
-| `extras`             | `ExtraParams`                 | extra parameters which have been passed in git-system-follower                                                             |
-| `cicd_variables`     | `CICDVariables`               | CI/CD variables that wew created by previous gear version                                                                     |
-| `all_cicd_variables` | `CICDVariables`               | all CI/CD variables that exist in repository                                                                                |
+
+| Name                 | Type                          | Description                                                                                                                  |
+| -------------------- | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `system`             | `System`                      | system information                                                                                                           |
+| `workdir`            | `Path` from `pathlib` library | current work directory                                                                                                       |
+| `extras`             | `ExtraParams`                 | extra parameters which have been passed in git-system-follower                                                               |
+| `cicd_variables`     | `CICDVariables`               | CI/CD variables that were created by previous gear version                                                                   |
+| `all_cicd_variables` | `CICDVariables`               | all CI/CD variables that exist in repository                                                                                 |
 | `used_template`      | `str`                         | last used template. If `used_template=None` then no template has been used. If template has been deleted, it will be `None` |
 
 ### `System` class
@@ -49,6 +50,7 @@ System information about instance in which gear installed/uninstalled
     This class is only used to transfer information. Don't create your own instances
 
 #### Fields
+
 | Name          | Type  | Description                          |
 |---------------|-------|--------------------------------------|
 | `host_domain` | `str` | host domain, e.g. `your.company.com` |
@@ -59,15 +61,18 @@ class ExtraParam(NamedTuple):
     name: str
     value: str
     masked: bool
+    managed_by: str
 ```
 Extra parameter information
 
 #### Fields
-| Name     | Type   | Description                               |
-|----------|--------|-------------------------------------------|
-| `name`   | `str`  | extra parameter name                      |
-| `value`  | `str`  | extra parameter value                     |
-| `masked` | `bool` | whether to mask a extra parameter in logs |
+
+| Name         | Type   | Description                               |
+|--------------|--------|-------------------------------------------|
+| `name`       | `str`  | extra parameter name                      |
+| `value`      | `str`  | extra parameter value                     |
+| `masked`     | `bool` | whether to mask a extra parameter in logs |
+| `managed_by` | `str`  | managed by gsf or external like CI token  |
 
 ### `ExtraParams` class
 ```python
@@ -75,6 +80,7 @@ ExtraParamName = str
 ExtraParams = dict[ExtraParamName, ExtraParam]
 ```
 Extra parameters which have been passed in git-system-follower as `--extra <name> <value> <masked/no-masked>`
+Extra external parameters which have been passed in git-system-follower as `--extra-external <name> <value> <masked/no-masked>`
 
 This is `dict` where key is parameter name, value is `ExtraParam`
 
@@ -90,12 +96,13 @@ class CICDVariable(TypedDict):
 CI/CD variable information 
 
 #### Fields
+
 | Name     | Type   | Description                                                                                               |
 |----------|--------|-----------------------------------------------------------------------------------------------------------|
 | `name`   | `str`  | CI/CD variable name                                                                                       |
 | `value`  | `str`  | CI/CD variable value                                                                                      |
-| `env`    | `str`  | Gitlab environment (see [Gitlab Environments documentation](https://docs.gitlab.com/ee/ci/environments/)) |
-| `masked` | `bool` | whether to mask a CI/CD variable in logs and in Gitlab                                                    |
+| `env`    | `str`  | GitLab environment (see [GitLab Environments documentation](https://docs.gitlab.com/ee/ci/environments/)) |
+| `masked` | `bool` | whether to mask a CI/CD variable in logs and in GitLab                                                    |
 
 ### `CICDVariables` class
 
@@ -105,4 +112,4 @@ CICDVariables = dict[CICDVariableName, CICDVariable]
 ```
 CI/CD variables information
 
-This is `dict` where key is CI/CD variable name, value is `CICDVariable` 
+This is `dict` where key is CI/CD variable name, value is `CICDVariable`

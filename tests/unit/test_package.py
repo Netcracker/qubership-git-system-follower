@@ -20,7 +20,7 @@ from pathlib import Path
 from unittest.mock import patch, PropertyMock
 
 import pytest
-
+from git_system_follower.package import cicd_variables
 from git_system_follower.typings.repository import RepositoryInfo
 from git_system_follower.git_api.utils import get_git_repo
 from git_system_follower.package.initer import init
@@ -28,8 +28,8 @@ from git_system_follower.package.updater import update
 from git_system_follower.package.deleter import delete
 from git_system_follower.package.package_info import get_gear_info
 from tests.config import (
-    clone_vcr, project, build_extras, get_package_details,
-    path_matcher, filter_domain_group, process_headers,
+    clone_vcr, project, build_extras, build_extras_external,
+    get_package_details, path_matcher, filter_domain_group, process_headers,
     redact_variable_value, get_states_cfg, ENV_VARS, BRANCHES
 )
 
@@ -96,7 +96,7 @@ def install_package(states, branch, package, is_force, project, extras):
         is_force=is_force
     )
     states[branch].add_package(
-        package, response, None,
+        package, extras, response, None,
         structure_type=get_gear_info(package['path'])['structure_type']
     )
     assert states[branch]._StateFile__get_hash(
@@ -117,7 +117,7 @@ def update_package(states, branch, package, is_force, project, bump_by, extras):
         is_force=is_force
     )
     states[branch].add_package(
-        package, response, package_state,
+        package, extras, response, package_state,
         structure_type=get_gear_info(package['path'])['structure_type']
     )
     package_state_updated = states[branch].get_package(package, for_delete=False)
@@ -224,3 +224,34 @@ def test_templates_copy_files(
     out += "\r\n"
     with open(custom_file_path, "w", encoding="utf-8", newline="") as f:
         f.write(out)
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("gear_type, is_force, states", [
+    ('complex', False, get_states_cfg()),
+])
+@patch("test_package.get_git_repo")
+@vcr_instance.use_cassette('test_package')
+def test_external_extras(
+    mock_get_git_clone,
+    gear_type, is_force, states):
+    mock_git_clone = _get_git_clone_mock(mock_get_git_clone.return_value)
+    mock_get_git_clone.return_value = mock_git_clone
+    GEARS_DIR = Path(__file__).parent.parent / "gears"
+    package_path = GEARS_DIR / gear_type / 'git-system-follower-package'
+    package = get_package_details(path=package_path)
+    package['dependencies'] = []
+    extras_gsf = build_extras('test1', '1', False)
+    extras_external = build_extras_external('TEST_E', 'external', False)
+    extras = extras_gsf + extras_external
+    for branch in BRANCHES:
+        install_package(states, branch, package, is_force, project, extras)
+        cicd_vars = states[branch].get_packages()[0]['cicd_variables']
+        assert "managed_externally" in cicd_vars, "Expected managed_externally in cicd_variables"
+        assert "managed_by_gsf" in cicd_vars, "Expected managed_by_gsf in cicd_variables"
+        assert "TEST_E" in cicd_vars['managed_externally'], "Expected TEST_E in managed_externally list"
+        assert "test1" in cicd_vars['managed_by_gsf'], "Expected test1 in managed_by_gsf"
+        assert cicd_vars['hash'] == states[branch]._StateFile__get_hash(
+            [cicd_variables.CICDVariable(name='test1', value='1', env='*', masked=False)]
+            ) , "CICD Variables Hash Mismatch Found"
+        uninstall_package(states, branch, package, is_force, project, extras)

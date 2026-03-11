@@ -58,6 +58,21 @@ class ExtraParamTuple(click.Tuple):
         values = super().convert(value, param, ctx)
         return ExtraParam(name=values[0], value=values[1], masked=True if values[2] == 'masked' else False)
 
+class ExternalExtraParamTuple(click.Tuple):
+    name = 'external_extra_param'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def convert(self, value, param, ctx):
+        values = super().convert(value, param, ctx)
+        return ExtraParam(
+            name=values[0],
+            value=values[1],
+            masked=True if values[2] == 'masked' else False,
+            managed_by='external'
+        )
+
 
 def resolve_credentials(cli_username: str | None, cli_password: str | None) -> Credentials | None:
     """ Resolve credentials obtained in different ways

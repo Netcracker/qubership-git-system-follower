@@ -123,7 +123,12 @@ class StateFile:
 
     def __get_managed_by_gsf(self, variables: list, package: PackageState)-> list:
         managed_by_gsf = []
-        variables_list = package['cicd_variables'].get('managed_by_gsf', [])
+        cicd_vars = package.get('cicd_variables')
+        if 'managed_by_gsf' in cicd_vars:
+            variables_list = cicd_vars['managed_by_gsf']
+        else:
+            variables_list = cicd_vars.get('names', [])
+        variables_list = variables_list or []
         for item in variables:
             if item['name'] in variables_list:
                 managed_by_gsf.append(item)

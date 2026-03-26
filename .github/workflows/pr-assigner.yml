@@ -19,10 +19,13 @@ jobs:
     steps:
       - name: "Check if PR is from a fork"
         run: |
-          if [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.event.pull_request.base.repo.full_name }}" ]; then
+          if [ "$HEAD_REPO" != "$BASE_REPO" ]; then
             echo "⚠️ Pull request is from a fork — skipping assignee assignment (no write permissions)."
             exit 0
           fi
+        env:
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          BASE_REPO: ${{ github.event.pull_request.base.repo.full_name }}
 
       - name: "Checkout Repository"
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 #v6.0.1

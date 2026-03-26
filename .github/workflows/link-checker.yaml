@@ -1,31 +1,49 @@
 ---
-name: Link Checker
+name: "Link Checker"
 
 on:
   push: null
   repository_dispatch: null
   workflow_dispatch: null
+  pull_request:
+    branches: [main]
 permissions:
   contents: read
 jobs:
   linkChecker:
+    name: "Run Link Checker"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: "Checkout code"
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
 
-      - name: Link Checker
+      - name: "Restore lychee cache"
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        id: restore-cache
+        with:
+          path: .lycheecache
+          key: cache-lychee-${{ github.sha }}
+          restore-keys: cache-lychee-
+
+      - name: "Link Checker"
         id: lychee
-        uses: lycheeverse/lychee-action@v2
+        uses: lycheeverse/lychee-action@8646ba30535128ac92d33dfc9133794bfdd9b411 #v2.8.0
         with:
           args: >-
             './**/*.md'
             --verbose
             --no-progress
             --user-agent 'Mozilla/5.0 (X11; Linux x86_64) Chrome/134.0.0.0'
-            --retry-wait-time 30
-            --max-retries 5
+            --retry-wait-time 60
+            --max-retries 8
             --accept 100..=103,200..=299,429
             --cookie-jar cookies.json
             --exclude-all-private
+            --max-concurrency 4
+            --cache
+            --cache-exclude-status '429, 500..502'
+            --max-cache-age 1d
           format: markdown
           fail: true

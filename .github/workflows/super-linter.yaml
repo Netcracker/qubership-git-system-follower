@@ -29,49 +29,38 @@ permissions:
   contents: read
 
 jobs:
-  prepare-configs:
-    runs-on: ubuntu-latest
-    steps:
-    - name: "Get the common linters configuration"
-      uses: actions/checkout@v4 # zizmor: ignore[unpinned-uses]
-      with:
-        ref: main # fix/superlinter-config
-        repository: netcracker/.github
-        sparse-checkout: |
-          config/linters
-        persist-credentials: false 
-    - name: "Upload the common linters configsuration"
-      uses: actions/upload-artifact@v4  # zizmor: ignore[unpinned-uses]
-      with:
-        name: linter-config
-        path: "${{ github.workspace }}/config"
-        include-hidden-files: true
-  run-lint:
-    needs: [prepare-configs]
+  super-linter:
+    name: "Lint Code Base"
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: read
-      # To report GitHub Actions status checks
       statuses: write
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4 # zizmor: ignore[unpinned-uses]
+    - name: "Get the common linters configuration"
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      with:
+        ref: main # fix/superlinter-config
+        repository: netcracker/.github
+        persist-credentials: false
+        path: common-configs
+        sparse-checkout: |
+          config/linters
+    - name: "Move configs"
+      run: |
+        cp --update=none -vRT ./common-configs/config/linters /tmp/linters
+        rm -rf ./common-configs
+      # To report GitHub Actions status checks
+    - name: "Checkout code"
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         # Full git history is needed to get a proper list of changed files within `super-linter`
         fetch-depth: 0
-        persist-credentials: false 
-    - name: "Get the common linters configuration"
-      uses: actions/download-artifact@v4  # zizmor: ignore[unpinned-uses]
-      id: download
-      with:
-        name: linter-config
-        path: /tmp/linter-config
+        persist-credentials: false
     - name: "Apply the common linters configuration"
-      if: ${{ steps.download.outputs.download-path != '' }}
       run: |
         mkdir -p ./.github/linters
-        cp --update=none -vR /tmp/linter-config/linters/* ./.github/linters
+        cp --update=none -vRT /tmp/linters ./.github/linters
 
     - name: "Load super-linter environment file"
       shell: bash
@@ -81,16 +70,17 @@ jobs:
           echo "Applying local linter environment:"
           grep "\S" ${GITHUB_WORKSPACE}/.github/super-linter.env | grep -v "^#"
           grep "\S" ${GITHUB_WORKSPACE}/.github/super-linter.env | grep -v "^#" >> $GITHUB_ENV
-        elif [ -f "/tmp/linter-config/linters/super-linter.env" ]; then
+        elif [ -f "/tmp/linters/super-linter.env" ]; then
           echo "::warning:: Local linter environment file .github/super-linter.env is not found"
           echo "Applying common linter environment:"
-          grep "\S" /tmp/linter-config/linters/super-linter.env | grep -v "^#"
-          grep "\S" /tmp/linter-config/linters/super-linter.env | grep -v "^#" >> $GITHUB_ENV
+          grep "\S" /tmp/linters/super-linter.env | grep -v "^#"
+          grep "\S" /tmp/linters/super-linter.env | grep -v "^#" >> $GITHUB_ENV
         fi
 
-    - name: Lint Code Base
-      uses: super-linter/super-linter/slim@v8.5.0 # zizmor: ignore[unpinned-uses]
+    - name: "Lint Code Base"
+      uses: super-linter/super-linter/slim@61abc07d755095a68f4987d1c2c3d1d64408f1f9 # v8.5.0
       env:
         VALIDATE_ALL_CODEBASE: ${{ inputs.full_scan || false }}
         # To report GitHub Actions status checks
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        DEFAULT_BRANCH: ${{ github.event.pull_request.base.ref || github.event.push.ref }}

@@ -27,9 +27,16 @@ __all__ = ['rollback']
 
 def rollback(
         package: PackageLocalData, old_package: PackageLocalData, repo: RepositoryInfo, state: PackageState, *,
-        created_cicd_variables: tuple[str, ...], extras: tuple[ExtraParam, ...], is_force: bool
+        created_cicd_variables: tuple[str, ...], extras: tuple[ExtraParam, ...],
+        is_skip_force_rollback: bool, is_force: bool
 ) -> ScriptResponse:
     logger.info('==> Package rollback')
-    delete(old_package, repo, state, created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force)
-    response = init(package, repo, state, created_cicd_variables=tuple([]), extras=extras, is_force=is_force)
+    if is_skip_force_rollback:
+        # rollback with validation does a delete and init
+        delete(old_package, repo, state, created_cicd_variables=created_cicd_variables, extras=extras,
+               is_force=is_force)
+        response = init(package, repo, state, created_cicd_variables=tuple([]), extras=extras, is_force=is_force)
+    else:
+        # rollback by default without validation does a force reinstall
+        response = init(package, repo, state, created_cicd_variables=tuple([]), extras=extras, is_force=True)
     return response

@@ -6,7 +6,7 @@ After it git-system-follower create/update `.states.yaml` file in root of direct
 
 You can pass a gear to installation as:
 
-1. docker image: it will be downloaded (see [CLI reference/download](download.md))
+1. Docker image: it will be downloaded (see [CLI reference/download](download.md))
 2. `.tar.gz` file
 3. directory with gear (source code)
 
@@ -26,9 +26,9 @@ gsf install --help
 
 | Name                  | Description                                                                                         | Mandatory |                                     Default value                                      |  Environment variable   | Example                                                          |
 |-----------------------|-----------------------------------------------------------------------------------------------------|:---------:|:--------------------------------------------------------------------------------------:|:-----------------------:|------------------------------------------------------------------|
-| `-r`, `--repo`        | Gitlab repository URL                                                                               |     +     |                                           -                                            |            -            | `https://git.company.com/test`, `http://localhost/test.git`      |
+| `-r`, `--repo`        | GitLab repository URL                                                                               |     +     |                                           -                                            |            -            | `https://git.company.com/test`, `http://localhost/test.git`      |
 | `-b`, `--branch`      | Branches in which to install the gears                                                              |     +     |                                           -                                            |            -            | `main`, `features/FAKE-0000`                                     |
-| `-t`, `--token`       | Gitlab access token                                                                                 |     +     |                                           -                                            |     `GSF_GIT_TOKEN`     | `<GITLAB_TOKEN>`                                     |
+| `-t`, `--token`       | GitLab access token                                                                                 |     +     |                                           -                                            |     `GSF_GIT_TOKEN`     | `<GITLAB_TOKEN>`                                     |
 | `--extra`             | Extra parameters to be passed to the package API: `name`, `value`, `masked`/`no-masked` of variable |     -     |                                           -                                            |            -            | `add_functionality true no-masked`, `password MyPa$$word masked` |
 | `--message`           | Commit message                                                                                      |     -     |                                  `Installed gear(s)`                                   |            -            | `FAKE-0000 update our tools`                                     |
 | `--git-username`      | Username under which the commit will be made to the repository                                      |     -     |        The username in the `~/.gitconfig` file, if it does not exist, `unknown`        |   `GSF_GIT_USERNAME`    | `Name LastName`, `MyName`                                        |
@@ -37,11 +37,12 @@ gsf install --help
 | `--registry-username` | Username for basic authentication in the registry when downloading Gears                            |     -     |                                           -                                            | `GSF_REGISTRY_USERNAME` | `myusername`, `k1shk1n`                                          |
 | `--registry-password` | Password for basic authentication in the registry when downloading Gears                            |     -     |                                           -                                            | `GSF_REGISTRY_PASSWORD` | `MyPa$$w0rd`                                                     |
 | `--insecure-registry` | Allow insecure connections to the registry (use HTTP instead of HTTPS)                              |     -     |                                        `False`                                         |            -            |                                                                  |
+| `--skip-force-rollback` | Skip or allow validation if rollback is supported by installed gear                               |     -     |                                        `False`                                         |            -            |                                                                  |
 | `--force`             | Forced installation: change of files, CI/CD variables as specified in gear                          |     -     |                                        `False`                                         |            -            |                                                                  |
 | `--debug`             | Show debug level messages                                                                           |     -     |                                        `False`                                         |            -            |                                                                  |
 
 ## Examples
-Installing the gear (docker image) to main branch
+Installing the gear (Docker image) to main branch
 ```plaintext
 gsf install -r https://git.company.com/test.git \
             -b main -t <GITLAB_TOKEN> \
@@ -63,7 +64,7 @@ gsf install -r https://git.company.com/test.git \
 ```
 
 Specify multiple gears for installation:
-```plantext
+```plaintext
 gsf install -r https://git.company.com/test.git \
             -b main -t <GITLAB_TOKEN> \
             artifactory.company.com/my-image:1.0.0 \
@@ -72,7 +73,7 @@ gsf install -r https://git.company.com/test.git \
 ```
 
 Specify multiple branches for installing:
-```plantext
+```plaintext
 gsf install -r https://git.company.com/test.git \
             -b main -b develop -b feature\DTWO-0000 \
             -t <GITLAB_TOKEN> \
@@ -80,7 +81,7 @@ gsf install -r https://git.company.com/test.git \
 ```
 
 Passing extra parameters to API package during installation:
-```plantext
+```plaintext
 gsf install -r https://git.company.com/test.git \
             -b main -t <GITLAB_TOKEN> \
             --extra FIRST_VAR_NAME FIRST_VAR_VALUE no-masked \

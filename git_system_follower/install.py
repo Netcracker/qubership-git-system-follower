@@ -54,14 +54,14 @@ __all__ = ['install']
 def install(
         packages: tuple[PackageCLIImage | PackageCLITarGz | PackageCLISource, ...],
         sources: tuple[str, ...], repo_url: str, branches: tuple[str, ...], token: str, *,
-        extras: tuple[ExtraParam, ...], commit_message: str,
-        username: str, user_email: str,
-        registry: RegistryInfo, is_force: bool,
+        extras: tuple[ExtraParam, ...], commit_message: str, username: str, user_email: str,
+        registry: RegistryInfo, is_skip_force_rollback: bool, is_force: bool
 ) -> None:
     gitlab_instance = get_gitlab(repo_url, token)
     project = get_project(gitlab_instance, repo_url)
     states = get_states(project, branches)
-    packages = get_packages(packages, states, sources, branches, registry=registry)
+    packages = get_packages(packages, states, sources, branches,
+        registry=registry, is_skip_force_rollback=is_skip_force_rollback)
     logger.info(TitledList(
         [f"{package['name']}@{package['version']}" for package in packages.install],
         title='Packages'
@@ -76,7 +76,8 @@ def install(
         logger.debug(f'Current state in {branch} branch:\n{states[branch]}')
         states[branch] = managing_branch(
             project, branch, token, packages, states[branch], sources=sources, extras=extras,
-            commit_message=commit_message, username=username, user_email=user_email, is_force=is_force
+            commit_message=commit_message, username=username, user_email=user_email,
+            is_skip_force_rollback=is_skip_force_rollback, is_force=is_force
         )
     logger.success('Installation complete')
 
@@ -84,7 +85,7 @@ def install(
 def get_packages(
         packages_cli: tuple[PackageCLIImage | PackageCLITarGz | PackageCLISource, ...],
         states: dict[str, StateFile], sources: tuple[str, ...], branches: tuple[str, ...], *,
-        registry: RegistryInfo
+        registry: RegistryInfo, is_skip_force_rollback: bool
 ) -> PackagesTo:
     """ Getting information about packages to install and rollback (delete+init)
 
@@ -97,18 +98,20 @@ def get_packages(
     rollback_sources = [
         gear
         for branch in branches
-        for s in states[branch].get_package_sources()
+        for s in states[branch].get_package_sources(
+            sources, is_skip_force_rollback=is_skip_force_rollback)
         for gear in get_gears((Package.convert(s, None, None),))
     ]
     for branch in branches:
-        states[branch].update_package_sources(sources)
+        states[branch].update_package_sources(sources, is_skip_force_rollback=is_skip_force_rollback)
     packages = PackagesTo(
         install=_get_packages_to_install(packages_cli, registry=registry),
         rollback=()
     )
     installed_packages = get_installed_packages(states)
     packages.rollback = _get_packages_to_rollback(
-        packages.install, installed_packages, rollback_sources, registry=registry)
+        packages.install, installed_packages, rollback_sources, registry=registry,
+        is_skip_force_rollback=is_skip_force_rollback)
     return packages
 
 
@@ -126,6 +129,8 @@ def _get_packages_to_install(
     for i, package in enumerate(packages):
         for j, comparison_package in enumerate(packages):
             if i != j and package['name'] == comparison_package['name']:
+                logger.info(package['name'])
+                logger.info(comparison_package['name'])
                 package_str = f"{package['name']}@{package['version']}"
                 comparison_package_str = f"{comparison_package['name']}@{comparison_package['version']}"
                 raise PackageNamePolicyError(f'Package names match ({package_str} and {comparison_package_str}). '
@@ -137,7 +142,7 @@ def _get_packages_to_rollback(
         packages_cli: tuple[PackageCLIImage | PackageCLITarGz | PackageCLISource, ...],
         installed_packages: set[PackageCLI],
         rollback_sources: tuple[PackageCLIImage | PackageCLITarGz | PackageCLISource, ...], *,
-        registry: RegistryInfo
+        registry: RegistryInfo, is_skip_force_rollback: bool
 ) -> tuple[PackageLocalData, ...]:
     """ Getting information about packages to rollback (delete+init)
 
@@ -154,8 +159,7 @@ def _get_packages_to_rollback(
                     item for item in rollback_sources
                     if normalized_in_string_match(str(installed_package.name), str(item))
                     and installed_package.version in str(item)
-                ),
-                None)
+                ), None)
             if matched_source and _is_necessary_package_to_rollback(
                 package_cli, installed_package):
                 packages_to_rollback.append(matched_source)
@@ -174,14 +178,14 @@ def _is_necessary_package_to_rollback(package_cli: PackageCLI, installed_package
 def managing_branch(
         project: Project, branch: str, token: str, packages: PackagesTo, state: StateFile,
         sources: tuple[str, ...], *, extras: tuple[ExtraParam, ...], commit_message: str,
-        username: str, user_email: str,is_force: bool
+        username: str, user_email: str, is_skip_force_rollback: bool, is_force: bool
 ) -> StateFile:
     repo = RepositoryInfo(gitlab=project, git=get_git_repo(project, token))
     checkout_to_new_branch(repo.git, branch)
     logger.info(':: Installing packages')
     state = processing_branch(
-        packages, repo, state, sources, extras=extras, is_force=is_force,
-        commit_message=commit_message, username=username, user_email=user_email
+        packages, repo, state, sources, extras=extras, is_skip_force_rollback=is_skip_force_rollback,
+        is_force=is_force, commit_message=commit_message, username=username, user_email=user_email
     )
     if state.status() == ChangeStatus.no_change:
         logger.info(f'No changes in {repo.git.active_branch.name} branch. Skip create/merge merge request')
@@ -199,9 +203,10 @@ def managing_branch(
 def processing_branch(
         packages: PackagesTo, repo: RepositoryInfo, state: StateFile, sources: tuple[str, ...], *,
         extras: tuple[ExtraParam, ...], commit_message: str, username: str, user_email: str,
-        is_force: bool
+        is_skip_force_rollback: bool, is_force: bool
 ) -> StateFile:
-    state = install_packages(packages, repo, state, sources, extras=extras, is_force=is_force)
+    state = install_packages(packages, repo, state, sources, extras=extras,
+        is_skip_force_rollback=is_skip_force_rollback, is_force=is_force)
 
     if state.status() == ChangeStatus.changed:
         logger.debug(f'Updated state in {repo.git.active_branch.name} branch:\n{state}')
@@ -218,7 +223,8 @@ def processing_branch(
 
 def install_packages(
         packages: PackagesTo, repo: RepositoryInfo, state: StateFile,
-        sources: tuple[str, ...], *, extras: tuple[ExtraParam, ...], is_force: bool
+        sources: tuple[str, ...], *, extras: tuple[ExtraParam, ...],
+        is_skip_force_rollback: bool, is_force: bool
 ) -> StateFile:
     created_cicd_variables = state.get_all_created_cicd_variables()
     for i, package in enumerate(packages.install, 1):
@@ -227,7 +233,8 @@ def install_packages(
         try:
             response = install_package(
                 package, packages.rollback, repo, package_state,
-                created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force
+                created_cicd_variables=created_cicd_variables, extras=extras,
+                is_skip_force_rollback=is_skip_force_rollback, is_force=is_force
             )
             source = next((
                 s.value for s in sources
@@ -252,7 +259,8 @@ def install_packages(
 def install_package(
         package: PackageLocalData, additional_packages: tuple[PackageLocalData, ...],
         repo: RepositoryInfo, state: PackageState | None, *,
-        created_cicd_variables: tuple[str, ...], extras: tuple[ExtraParam, ...], is_force: bool
+        created_cicd_variables: tuple[str, ...], extras: tuple[ExtraParam, ...],
+        is_skip_force_rollback: bool, is_force: bool
 ) -> ScriptResponse | None:
     """ Install package in repository
 
@@ -303,6 +311,7 @@ def install_package(
 
     response = rollback(
         package, old_package, repo, state,
-        created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force
+        created_cicd_variables=created_cicd_variables, extras=extras,
+        is_skip_force_rollback=is_skip_force_rollback, is_force=is_force
     )
     return response

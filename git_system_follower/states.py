@@ -19,6 +19,7 @@ from pathlib import Path
 import hashlib
 from datetime import datetime
 from pprint import pformat
+import sys
 import base64
 import yaml
 from git_system_follower.typings.cli import ExtraParam
@@ -169,13 +170,27 @@ class StateFile:
             variables.extend(package['cicd_variables']['names'])
         return tuple(variables)
 
-    def get_package_sources(self) -> tuple[str, ...]:
+    def get_package_sources(self, sources: tuple[str, ...],
+        is_skip_force_rollback: bool) -> tuple[str, ...]:
         src = []
         for state in self.__content['packages']:
-            src.append(state.get('source') or "")
+            source = next((
+                s.value for s in sources
+                if normalized_in_string_match(state['name'], s.value)
+            ),None)
+            if is_skip_force_rollback:
+                src.append(state.get('source') or "")
+            else:
+                if ":" not in source:
+                    logger.error(
+                        f"Rollback with source validation skipped is supported for Docker image sources only. "
+                        f"'{source}' appears to be a local .tar.gz archive or local source directory."
+                    )
+                    sys.exit(1)
+                src.append(state.get("source") or f"{source.rsplit(':', 1)[0]}:{state['version']}")
         return tuple(src)
 
-    def update_package_sources(self, sources: tuple[str, ...]):
+    def update_package_sources(self, sources: tuple[str, ...], is_skip_force_rollback: bool):
         for state in self.__content['packages']:
             if 'source' in state:
                 continue
@@ -184,13 +199,27 @@ class StateFile:
                 if normalized_in_string_match(state['name'], s.value)
                 and normalized_in_string_match(state['version'], s.value)
             ),None)
-            if source is None:
+            if is_skip_force_rollback and source is None:
                 logger.error(
                     f"Auto rollback failed for '{state.get('name', 'unknown')}': "
                     f"'source' missing in .state.yaml (package installed before source tracking)."
                     f" Please rollback manually."
                 )
-                raise SystemExit
+                logger.error(
+                    f"To enable source tracking and rollback "
+                    f"manually reinstall {state['name']}@{state['version']}"
+                )
+                sys.exit(1)
+            elif not is_skip_force_rollback and source is None:
+                logger.error(
+                    "Rollback validation skipped : 'source' missing in .state.yaml and "
+                    "--skip-force-rollback was NOT passed. "
+                )
+                logger.error(
+                    "Falling back to force reinstall : delete scripts were not executed. "
+                    "Final state of files after reinstall is not controlled by the system "
+                    "and may be inconsistent. Please verify adequacy of the installed files."
+                )
             state['source'] = source
             self.__change_status = ChangeStatus.changed
             self.save

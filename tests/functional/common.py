@@ -60,7 +60,8 @@ def get_git_repo_mock(mock_get_git_clone):
 
 def get_packages_by_action(packages, states, registry, action):
     if action == 'install':
-        return install_get_packages(packages, states, 'test_repo', BRANCHES, registry=registry)
+        return install_get_packages(packages, states, 'test_repo', BRANCHES,
+            registry=registry, is_skip_force_rollback=False)
     return uninstall_get_packages(packages, states, registry=registry)
 
 def update_package_yaml(package_path, name, version):
@@ -89,7 +90,7 @@ def install(gear_dir, registry, extras, states):
         states[branch] = install_managing_branch(
             project, branch, ENV_VARS["GITLAB_TOKEN"], packages, states[branch], 'test-repo',
             extras=extras, commit_message="Installed gear(s) test",
-            username="dummy_user", user_email=USER_EMAIL, is_force=IS_FORCE
+            username="dummy_user", user_email=USER_EMAIL, is_skip_force_rollback=False, is_force=IS_FORCE
         )
     logger.success("Installation complete")
 

@@ -86,6 +86,7 @@ def install_package_non_empty_state(states, branch, package, is_force, project, 
         state=states[branch].get_package(package, for_delete=False),
         created_cicd_variables=states[branch].get_all_created_cicd_variables(),
         extras=extras,
+        is_skip_force_rollback=False,
         is_force=is_force
     )
 

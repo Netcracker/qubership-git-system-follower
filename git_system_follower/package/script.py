@@ -44,7 +44,8 @@ def run_script(
         used_template: str | None, *,
         extras: tuple[ExtraParam, ...], is_force: bool, state: PackageState | None = None,
         created_cicd_variables: tuple[str, ...],
-        current_version_dir: Path | None = None
+        current_version_dir: Path | None = None,
+        is_autoheal: bool = False
 ) -> ScriptResponse:
     """ Run script (package api): init/update/delete
 
@@ -70,7 +71,7 @@ def run_script(
         template_variables=template_variables,
         cicd_variables={variable['name']: variable for variable in cicd_variables},
         all_cicd_variables=all_cicd_variables, created_cicd_vars_in_other_pkgs=created_cicd_vars_in_other_pkgs,
-        extras=extras, is_force=is_force,
+        extras=extras, is_force=is_force, is_autoheal=is_autoheal,
         default=default_package_api
     )
     return response
@@ -158,7 +159,7 @@ def execute_package_api(
         path: Path, workdir: Path, current_version_dir: Path | None,
         project: Project, used_template: str | None, *,
         module,
-        template_variables: dict[str, str],
+        template_variables: dict[str, str], is_autoheal: bool,
         cicd_variables: dict[str, CICDVariable], all_cicd_variables: dict[str, CICDVariable],
         created_cicd_vars_in_other_pkgs: list[str], extras: tuple[ExtraParam, ...], is_force: bool
 ) -> ScriptResponse:
@@ -173,7 +174,7 @@ def execute_package_api(
 
     system_params = SystemParameters(
         project=project, created_cicd_vars_names=created_cicd_vars_in_other_pkgs,
-        script_dir=path.parent.absolute(), is_force=is_force
+        script_dir=path.parent.absolute(), is_force=is_force, is_autoheal=is_autoheal
     )
     extras = get_remodeled_extras(extras)
     params = Parameters(

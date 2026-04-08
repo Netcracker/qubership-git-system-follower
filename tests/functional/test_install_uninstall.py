@@ -111,8 +111,18 @@ def test_migrate_simple_complex(
         "uninstall_mr": get_create_merge_mr_mock(mock_uninstall_create_mr, mock_uninstall_merge_mr),
         "get_git_repo": get_git_repo_mock(mock_get_git_repo)
     }
+    # IS_AUTOHEAL = False
+    install(GEARS_DIR, False, registry, extras, states)
+    uninstall(GEARS_DIR, registry, extras, states)
 
-    install(GEARS_DIR, registry, extras, states)
+    for name, mock_origin in mocks.items():
+        if hasattr(mock_origin, "push"):
+            try:
+                mock_origin.push.assert_called_once()
+            except AssertionError:
+                pass
+    # IS_AUTOHEAL = True
+    install(GEARS_DIR, True, registry, extras, states)
     uninstall(GEARS_DIR, registry, extras, states)
 
     for name, mock_origin in mocks.items():

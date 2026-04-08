@@ -33,7 +33,8 @@ __all__ = ['update']
 
 def update(
         package: PackageLocalData, repo: RepositoryInfo, state: PackageState, *,
-        created_cicd_variables: tuple[str, ...], extras: tuple[ExtraParam, ...], is_force: bool
+        created_cicd_variables: tuple[str, ...], extras: tuple[ExtraParam, ...], is_autoheal: bool,
+        is_force: bool
 ) -> ScriptResponse:
     logger.info('==> Package update')
     workdir = Path(repo.git.working_dir)
@@ -43,7 +44,7 @@ def update(
         current_cicd_variables = get_cicd_variables(repo.gitlab)
         response = run_update_script(
             version_dir, workdir, repo.gitlab, current_cicd_variables, state, current_version_dir=current_version,
-            created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force
+            created_cicd_variables=created_cicd_variables, extras=extras, is_autoheal=is_autoheal, is_force=is_force
         )
         logger.info(f"Updated to {package['name']}@{version_dir.name} version")
         current_version = version_dir
@@ -75,12 +76,14 @@ def get_version_dirs(package: PackageLocalData, start_version: str) -> tuple[tup
 def run_update_script(
         script_dir: Path, workdir: Path, project: Project, current_cicd_variables: dict[str, CICDVariable],
         state: PackageState, *, current_version_dir: Path,
-        created_cicd_variables: tuple[str, ...], extras: tuple[ExtraParam, ...], is_force: bool
+        created_cicd_variables: tuple[str, ...], extras: tuple[ExtraParam, ...], is_autoheal: bool,
+        is_force: bool
 ) -> ScriptResponse:
     logger.info('\tRunning update package api')
     path = script_dir / 'update.py'
     response = run_script(
         path, workdir, project, current_cicd_variables, state['used_template'], current_version_dir=current_version_dir,
-        created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force, state=state
+        created_cicd_variables=created_cicd_variables, extras=extras, is_autoheal=is_autoheal, is_force=is_force,
+        state=state
     )
     return response

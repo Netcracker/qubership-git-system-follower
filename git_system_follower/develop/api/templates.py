@@ -41,7 +41,7 @@ def get_template_names(parameters: Parameters) -> tuple[str, ...]:
 
 def create_template(
         parameters: Parameters, name: str, variables: Optional[ExtraParams | dict[str, str]] = None, *,
-        is_force: bool = False
+        is_force: bool = False, skip_files: tuple[str, ...] = ()
 ) -> None:
     """ Create files using cookiecutter template
 
@@ -67,14 +67,14 @@ def create_template(
     variables = __get_variables(variables)
     __add_info_about_template(name, variables)
     __create_template(
-        system_params.script_dir, name, parameters.workdir,
-        variables=variables, is_force=is_force
+        system_params.script_dir, name, parameters.workdir, variables=variables,
+        is_autoheal=system_params.is_autoheal, skip_files=skip_files, is_force=is_force
     )
 
 
 def update_template(
         parameters: Parameters, variables: Optional[ExtraParams | dict[str, str]] = None, *,
-        is_force: bool = False
+        is_force: bool = False, skip_files: tuple[str, ...] = ()
 ) -> None:
     """ Update files using cookiecutter template
 
@@ -98,12 +98,13 @@ def update_template(
     is_force = True if is_force or system_params.is_force else False
     variables = __update_template_variables(variables)
     __create_template(
-        system_params.script_dir, parameters.used_template, parameters.workdir,
-        variables=variables, is_force=is_force, current_version_dir=parameters.current_version_dir
+        system_params.script_dir, parameters.used_template, parameters.workdir, variables=variables,
+        is_autoheal=system_params.is_autoheal, skip_files=skip_files, is_force=is_force,
+        current_version_dir=parameters.current_version_dir
     )
 
 
-def delete_template(parameters: Parameters, *, is_force: bool = False) -> None:
+def delete_template(parameters: Parameters, *, is_force: bool = False, skip_files: tuple[str, ...] = ()) -> None:
     """ Delete files using cookiecutter template
 
     If <is_force> parameter is False, then it will necessarily be safe to delete files using template:
@@ -126,7 +127,7 @@ def delete_template(parameters: Parameters, *, is_force: bool = False) -> None:
     __delete_info_about_template()
     __delete_template(
         system_params.script_dir, parameters.used_template, parameters.workdir,
-        variables=parameters.template_variables, is_force=is_force
+        variables=parameters.template_variables, skip_files=skip_files, is_force=is_force
     )
 
 

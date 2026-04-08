@@ -38,6 +38,7 @@ gsf install --help
 | `--registry-password` | Password for basic authentication in the registry when downloading Gears                            |     -     |                                           -                                            | `GSF_REGISTRY_PASSWORD` | `MyPa$$w0rd`                                                     |
 | `--insecure-registry` | Allow insecure connections to the registry (use HTTP instead of HTTPS)                              |     -     |                                        `False`                                         |            -            |                                                                  |
 | `--skip-force-rollback` | Skip or allow validation if rollback is supported by installed gear                               |     -     |                                        `False`                                         |            -            |                                                                  |
+| `--autoheal` | Autoheal: overwrites user changes with gear files                                                            |     -     |                                        `False`                                         |            -            |                                                                  |
 | `--force`             | Forced installation: change of files, CI/CD variables as specified in gear                          |     -     |                                        `False`                                         |            -            |                                                                  |
 | `--debug`             | Show debug level messages                                                                           |     -     |                                        `False`                                         |            -            |                                                                  |
 
@@ -86,6 +87,14 @@ gsf install -r https://git.company.com/test.git \
             -b main -t <GITLAB_TOKEN> \
             --extra FIRST_VAR_NAME FIRST_VAR_VALUE no-masked \
             --extra PASSWORD Pa$$w0rd masked \
+            packages/my-gear@1.0.0
+```
+
+Installing the gear with autoheal:
+```plaintext
+gsf install -r https://git.company.com/test.git \
+            -b main -t <GITLAB_TOKEN> \
+            --autoheal \
             packages/my-gear@1.0.0
 ```
 
@@ -188,3 +197,13 @@ To enable rollback:
 1. Re-run the `install` command using the **currently installed gear's path or registry link**.
 2. git-system-follower will detect the source and update `.state.yaml`.
 3. After this, rollback to older versions will work normally.
+
+
+### Autoheal
+The `--autoheal` flag allows GSF to automatically heal a repository when an existing version of an installed gear contains user-modified files.
+
+Consider a gear with version `0.0.1` that was installed in a repository. Later, the user manually modifies some files for specific reasons.
+
+- **Without autoheal (default behavior)**: When the user wants to update to gear version `0.0.2` that also contains changes to the same file, GSF will **exit with code 1**.
+
+- **With autoheal (`--autoheal`)**: If the user wants to proceed with installing gear `0.0.2` and automatically heal the repository (overwriting the user-modified file with the gear's version), the `--autoheal` flag can be used.

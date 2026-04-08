@@ -78,7 +78,7 @@ def get_repo_info(project) -> RepositoryInfo:
         git=get_git_repo(project, ENV_VARS["GITLAB_TOKEN"])
     )
 
-def install_package_non_empty_state(states, branch, package, is_force, project, extras):
+def install_package_non_empty_state(states, branch, package, is_autoheal, is_force, project, extras):
     ins_install_package(
         package=package,
         additional_packages=[],
@@ -87,16 +87,18 @@ def install_package_non_empty_state(states, branch, package, is_force, project, 
         created_cicd_variables=states[branch].get_all_created_cicd_variables(),
         extras=extras,
         is_skip_force_rollback=False,
+        is_autoheal=is_autoheal,
         is_force=is_force
     )
 
-def install_package(states, branch, package, is_force, project, extras):
+def install_package(states, branch, package, is_autoheal, is_force, project, extras):
     response = init(
         package=package,
         repo=get_repo_info(project),
         state=states[branch].get_package(package, for_delete=False),
         created_cicd_variables=states[branch].get_all_created_cicd_variables(),
         extras=extras,
+        is_autoheal=is_autoheal,
         is_force=is_force
     )
     states[branch].add_package(
@@ -130,32 +132,33 @@ def get_package_path(gear_type):
     """Get package path for gear type"""
     return Path(__file__).parent.parent / "gears" / gear_type / 'git-system-follower-package'
 
-def install_gear_and_assert(states, gear_type, migrate_version, package_path, is_force, caplog, extras):
+def install_gear_and_assert(states, gear_type, migrate_version, package_path, is_autoheal,
+    is_force, caplog, extras):
     update_package_yaml(package_path, 'migrate', migrate_version)
     package = get_package_details(path=package_path)
     package['dependencies'] = []
     if not is_force:
         try:
             for branch in BRANCHES:
-                install_package_non_empty_state(states, branch, package, is_force, project, extras)
+                install_package_non_empty_state(states, branch, package, is_autoheal, is_force, project, extras)
         except (SystemExit, Exception):
             assert "State and gear structure type mismatch detected." in caplog.text
     else:
         for branch in BRANCHES:
-            install_package_non_empty_state(states, branch, package, is_force, project, extras)
+            install_package_non_empty_state(states, branch, package, is_autoheal, is_force, project, extras)
         message_parts = [
                 "Since --force was passed",
                 "Please review the affected files",
                 "before moving forward"]
         assert all(part in caplog.text for part in message_parts)
 
-def install_gear(states, gear_type, migrate_version, reset_version, is_force, project, extras):
+def install_gear(states, gear_type, migrate_version, reset_version, is_autoheal, is_force, project, extras):
     package_path = get_package_path(gear_type)
     update_package_yaml(package_path, 'migrate', migrate_version)
     package = get_package_details(path=package_path)
     package['dependencies'] = []
     for branch in BRANCHES:
-        install_package(states, branch, package, is_force, project, extras)
+        install_package(states, branch, package, is_autoheal, is_force, project, extras)
     update_package_yaml(package_path, gear_type, reset_version)
 
 def _get_git_clone_mock(mock_get_git_clone):
@@ -182,12 +185,13 @@ def test_migrate_simple_complex(mock_get_git_clone, caplog):
     mock_git_clone = _get_git_clone_mock(mock_get_git_clone.return_value)
     mock_get_git_clone.return_value = mock_git_clone
     extras = build_extras('test1', '1', False)
-    for is_force in [False, True]:
-        states = get_states_cfg()
-        install_gear(states, 'simple', '0.0.1', '1.0.0', is_force, project, extras)
-        package_path = get_package_path('complex')
-        install_gear_and_assert(states, 'complex', '0.0.2', package_path, is_force, caplog, extras)
-        update_package_yaml(package_path, 'complex', '0.0.1')
+    for is_autoheal in [False, True]:
+        for is_force in [False, True]:
+            states = get_states_cfg()
+            install_gear(states, 'simple', '0.0.1', '1.0.0', is_autoheal, is_force, project, extras)
+            package_path = get_package_path('complex')
+            install_gear_and_assert(states, 'complex', '0.0.2', package_path, is_autoheal, is_force, caplog, extras)
+            update_package_yaml(package_path, 'complex', '0.0.1')
 
 
 @pytest.mark.functional
@@ -197,9 +201,10 @@ def test_migrate_complex_simple(mock_get_git_clone, caplog):
     mock_git_clone = _get_git_clone_mock(mock_get_git_clone.return_value)
     mock_get_git_clone.return_value = mock_git_clone
     extras = build_extras('test1', '1', False)
-    for is_force in [False, True]:
-        states = get_states_cfg()
-        install_gear(states, 'complex', '0.0.1', '0.0.1', is_force, project, extras)
-        package_path = get_package_path('simple')
-        install_gear_and_assert(states, 'simple', '0.0.2', package_path, is_force, caplog, extras)
-        update_package_yaml(package_path, 'simple', '1.0.0')
+    for is_autoheal in [False, True]:
+        for is_force in [False, True]:
+            states = get_states_cfg()
+            install_gear(states, 'complex', '0.0.1', '0.0.1', is_autoheal, is_force, project, extras)
+            package_path = get_package_path('simple')
+            install_gear_and_assert(states, 'simple', '0.0.2', package_path, is_autoheal, is_force, caplog, extras)
+            update_package_yaml(package_path, 'simple', '1.0.0')

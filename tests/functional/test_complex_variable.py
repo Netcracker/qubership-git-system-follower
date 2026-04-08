@@ -47,7 +47,6 @@ REDACT_KEYS = [
 
 gear_type = "complex"
 is_force = False
-states = get_states_cfg()
 
 def redact_commit_fields(commit: dict):
     for key in REDACT_KEYS:
@@ -95,7 +94,7 @@ def get_repo_info(project) -> RepositoryInfo:
         git=get_git_repo(project, ENV_VARS["GITLAB_TOKEN"])
     )
 
-def install_package(states, branch, package, is_force, project, extras,
+def install_package(states, branch, package, is_autoheal, is_force, project, extras,
     state_cond=None):
     state = states[branch].get_packages()[0] if state_cond else None
     response = init(
@@ -104,6 +103,7 @@ def install_package(states, branch, package, is_force, project, extras,
         repo=get_repo_info(project),
         created_cicd_variables=states[branch].get_all_created_cicd_variables(),
         extras=extras,
+        is_autoheal=is_autoheal,
         is_force=is_force
     )
     states[branch].add_package(
@@ -112,7 +112,7 @@ def install_package(states, branch, package, is_force, project, extras,
         source="test"
     )
 
-def update_package(states, branch, package, is_force, project, bump_by, extras):
+def update_package(states, branch, package, is_autoheal , is_force, project, bump_by, extras):
     package['version'] = bump_patch_version(package['version'], bump_by)
     package_state = states[branch].get_package(package, for_delete=False)
     response = update(
@@ -121,6 +121,7 @@ def update_package(states, branch, package, is_force, project, bump_by, extras):
         state=package_state,
         created_cicd_variables=states[branch].get_all_created_cicd_variables(),
         extras=extras,
+        is_autoheal=is_autoheal,
         is_force=is_force
     )
     states[branch].add_package(
@@ -186,22 +187,30 @@ def scaffold(mock_get_git_clone) -> Tuple[ExtraParams, PackageState, Path]:
     return extras, package, package_path
 
 @pytest.mark.functional
+@pytest.mark.parametrize("is_autoheal, states", [
+    (False, get_states_cfg()),
+    (True, get_states_cfg())
+])
 @patch("test_complex_variable.get_git_repo")
 @vcr_instance.use_cassette('test_complex_variable_A')
-def test_complex_A(mock_get_git_clone):
+def test_complex_A(mock_get_git_clone, is_autoheal, states):
     """
     Install gear1 with variables: var1, var2 - OK
     Uninstall this gear1 - OK
     """
     extras, package, package_path = scaffold(mock_get_git_clone)
     for branch in BRANCHES:
-        install_package(states, branch, package, is_force, project, extras)
+        install_package(states, branch, package, is_autoheal, is_force, project, extras)
         uninstall_package(states, branch, package, is_force, project, extras)
 
 @pytest.mark.functional
+@pytest.mark.parametrize("is_autoheal, states", [
+    (False, get_states_cfg()),
+    (True, get_states_cfg())
+])
 @patch("test_complex_variable.get_git_repo")
 @vcr_instance.use_cassette('test_complex_variable_B')
-def test_complex_B(mock_get_git_clone):
+def test_complex_B(mock_get_git_clone, is_autoheal, states):
     """
     install gear1 with var1, var2 - OK
     install gear2 with var3, var4 - OK
@@ -211,13 +220,13 @@ def test_complex_B(mock_get_git_clone):
     extras2 = build_extras('test3', '3', False) + build_extras(
         'test4', '4', False)
     for branch in BRANCHES:
-        install_package(states, branch, package, is_force, project, extras)
+        install_package(states, branch, package, is_autoheal, is_force, project, extras)
 
         create_gear2(package_path=package_path)
         package = get_package_details(path=package_path)
         package['dependencies'] = []
 
-        install_package(states, branch, package, is_force, project, extras2)
+        install_package(states, branch, package, is_autoheal, is_force, project, extras2)
         uninstall_package(states, branch, package, is_force, project, extras2)
 
         delete_gear2(package_path=package_path)
@@ -227,9 +236,13 @@ def test_complex_B(mock_get_git_clone):
         uninstall_package(states, branch, package, is_force, project, extras)
 
 @pytest.mark.functional
+@pytest.mark.parametrize("is_autoheal, states", [
+    (False, get_states_cfg()),
+    (True, get_states_cfg())
+])
 @patch("test_complex_variable.get_git_repo")
 @vcr_instance.use_cassette('test_complex_variable_C')
-def test_complex_C(mock_get_git_clone):
+def test_complex_C(mock_get_git_clone, is_autoheal, states):
     """
     Install gear1 with var1, var2 - OK
     Install gear2 with var3, var2 - Exception
@@ -238,14 +251,14 @@ def test_complex_C(mock_get_git_clone):
     extras2 = build_extras('test2', '2', False) + build_extras(
         'test3', '3', False)
     for branch in BRANCHES:
-        install_package(states, branch, package, is_force, project, extras)
+        install_package(states, branch, package, is_autoheal, is_force, project, extras)
 
         create_gear2(package_path=package_path)
         package = get_package_details(path=package_path)
         package['dependencies'] = []
         with pytest.raises(PackageCICDVariablePolicyError):
             print("Exception tested for PackageCICDVariablePolicyError")
-            install_package(states, branch, package, is_force, project, extras2)
+            install_package(states, branch, package, is_autoheal, is_force, project, extras2)
 
         delete_gear2(package_path=package_path)
         package = get_package_details(path=package_path)
@@ -253,9 +266,13 @@ def test_complex_C(mock_get_git_clone):
         uninstall_package(states, branch, package, is_force, project, extras)
 
 @pytest.mark.functional
+@pytest.mark.parametrize("is_autoheal, states", [
+    (False, get_states_cfg()),
+    (True, get_states_cfg())
+])
 @patch("test_complex_variable.get_git_repo")
 @vcr_instance.use_cassette('test_complex_variable_D')
-def test_complex_D(mock_get_git_clone):
+def test_complex_D(mock_get_git_clone, is_autoheal, states):
     """
     Install gear1 with var1, var2 - OK
     Update gear1 with update var1 - OK
@@ -266,7 +283,6 @@ def test_complex_D(mock_get_git_clone):
     extras2 = build_extras('test1', '1', False) + build_extras(
         'test2', '3', False)
     for branch in BRANCHES:
-        install_package(states, branch, package, is_force, project, extras)
-        update_package(states, branch, package, is_force, project, 1, extras2)
+        install_package(states, branch, package, is_autoheal, is_force, project, extras)
+        update_package(states, branch, package, is_autoheal, is_force, project, 1, extras2)
         uninstall_package(states, branch, package, is_force, project, extras2)
-

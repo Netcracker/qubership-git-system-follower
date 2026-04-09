@@ -17,6 +17,7 @@ from pathlib import Path
 import hashlib
 import shutil
 import os
+import sys
 from cookiecutter.main import cookiecutter
 
 from git_system_follower.logger import logger
@@ -39,9 +40,9 @@ def get_template_names(script_dir: Path) -> tuple[str, ...]:
 
 @multi_tempdirs(2)
 def create_template(
-        script_dir: Path, template: str | None, target: Path, *,
-        tmpdir: list[Path], variables: dict[str, str], is_force: bool,
-        current_version_dir: Path | None = None
+        script_dir: Path, template: str | None, target: Path, *, tmpdir: list[Path],
+        variables: dict[str, str], skip_files: tuple[str, ...], is_force: bool,
+        is_autoheal: bool, current_version_dir: Path | None = None
 ) -> None:
     logger.info(f'\t-> Creating project using {template} template')
     if template is None:
@@ -66,13 +67,15 @@ def create_template(
         )
     _copy_files(
         new_version_path / target.name, current_version_path / target.name, target,
-        script_dir=script_dir, is_force=is_force
+        script_dir=script_dir, skip_files=skip_files, is_autoheal=is_autoheal, is_force=is_force
     )
     logger.info(f'\t\tSuccessful use template ({path})')
 
 
-def _copy_files(source: Path, source_current: Path, target: Path, *, script_dir: Path, is_force: bool) -> None:
+def _copy_files(source: Path, source_current: Path, target: Path, *, script_dir: Path,
+    skip_files: tuple[str, ...], is_autoheal: bool, is_force: bool) -> None:
     paths = source.glob('**/*')
+    gear_info = get_gear_info(script_dir.parents[2], is_force=is_force)
     for path in paths:
         if path.is_dir():
             continue
@@ -88,7 +91,9 @@ def _copy_files(source: Path, source_current: Path, target: Path, *, script_dir:
         path_hash = _calculate_hash(path)
         current_path_hash = _calculate_hash(current_path)
         target_path_hash = _calculate_hash(target_path)
-        gear_info = get_gear_info(script_dir.parents[2], is_force=is_force)
+        if any(skip_file in str(relative_path) for skip_file in skip_files):
+            logger.info(f'\t\tFile {relative_path} is in skip files. Skip operations')
+            continue
         if path_hash == target_path_hash:
             logger.info(f'\t\tContent of {relative_path} file is same. Skip operations')
             continue
@@ -100,7 +105,12 @@ def _copy_files(source: Path, source_current: Path, target: Path, *, script_dir:
             if gear_info['structure_type'] == 'simple' or gear_info['migrate']:
                 shutil.copy(path, target_path)
             else:
-                logger.warning(f'\t\tUser changes found for file {relative_path}. Cannot copy. Skip operations')
+                if is_autoheal:
+                    shutil.copy(path, target_path)
+                    logger.info(f'\t\tFile {relative_path} copied from template by Autoheal')
+                else:
+                    logger.warning(f'\t\tUser changes found for file {relative_path}. Cannot copy. Skip operations')
+                    sys.exit(1)
             continue
 
         if is_force:
@@ -129,8 +139,8 @@ def _calculate_hash(path: Path) -> str:
 
 @tempdir
 def delete_template(
-        script_dir: Path, template: str | None, target: Path, *,
-        variables: dict[str, str], tmpdir: Path, is_force: bool
+        script_dir: Path, template: str | None, target: Path, *, variables: dict[str, str],
+        tmpdir: Path, skip_files: tuple[str, ...], is_force: bool
 ) -> None:
     logger.info(f'\t-> Deleting project files using {template} template')
     if template is None:
@@ -144,7 +154,7 @@ def delete_template(
         template=str(path), output_dir=tmpdir, no_input=True,
         extra_context=_get_extra_content(target, variables=variables)
     )
-    _delete_files(tmpdir / target.name, target, is_force=is_force)
+    _delete_files(tmpdir / target.name, target, skip_files=skip_files, is_force=is_force)
     logger.info(f'\t\tSuccessful delete files using template ({path})')
 
 
@@ -154,13 +164,17 @@ def _get_extra_content(target: Path, *, variables: dict[str, str]) -> dict[str, 
     return content
 
 
-def _delete_files(source: Path, target: Path, *, is_force: bool) -> None:
+def _delete_files(source: Path, target: Path, *, skip_files: tuple[str, ...],
+    is_force: bool) -> None:
     paths = source.glob('**/*')
     for path in paths:
         if path.is_dir():
             continue
         relative_path = path.relative_to(source)
         target_path = target / relative_path
+        if any(skip_file in str(relative_path) for skip_file in skip_files):
+            logger.info(f'\t\tFile {relative_path} is in skip files from deletion. Skip operations')
+            continue
         if not target_path.exists():
             logger.info(f'\t\tFile {relative_path} does not exist. Skip operations')
             continue

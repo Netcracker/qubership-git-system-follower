@@ -77,7 +77,7 @@ def get_package_path(gear_type):
     """Get package path for gear type"""
     return Path(__file__).parent.parent / "gears" / gear_type / 'git-system-follower-package'
 
-def install(gear_dir, registry, extras, states):
+def install(gear_dir, is_autoheal, registry, extras, states):
     packages = get_packages_by_action(
         [PackageCLISource(path=gear_dir)], states, registry, action="install"
     )
@@ -90,7 +90,8 @@ def install(gear_dir, registry, extras, states):
         states[branch] = install_managing_branch(
             project, branch, ENV_VARS["GITLAB_TOKEN"], packages, states[branch], 'test-repo',
             extras=extras, commit_message="Installed gear(s) test",
-            username="dummy_user", user_email=USER_EMAIL, is_skip_force_rollback=False, is_force=IS_FORCE
+            username="dummy_user", user_email=USER_EMAIL, is_skip_force_rollback=False,
+            is_autoheal=is_autoheal, is_force=IS_FORCE
         )
     logger.success("Installation complete")
 

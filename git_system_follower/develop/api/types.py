@@ -35,6 +35,7 @@ class SystemParameters:
     created_cicd_vars_names: list[str]
     script_dir: Path
     is_force: bool
+    is_autoheal: bool = False
 
 
 @dataclass(frozen=True)

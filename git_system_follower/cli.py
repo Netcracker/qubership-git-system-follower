@@ -170,6 +170,10 @@ def download_command(
     help='Skip validation if rollback is supported by installed gear'
 )
 @click.option(
+    '--autoheal', 'is_autoheal', is_flag=True, default=False,
+    help='Autoheal: overwrites user changes with gear files'
+)
+@click.option(
     '-f', '--force', 'is_force', is_flag=True, default=False,
     help='Forced installation: change of files, CI/CD variables as specified in gear'
 )
@@ -179,7 +183,7 @@ def install_command(
         branches: tuple[str, ...], token: str, extras: tuple[ExtraParam], extras_external: tuple[ExtraParam],
         message: str, username: str, email: str,
         registry_type: str, registry_username: str | None, registry_password: str | None, is_insecure: bool,
-        is_skip_force_rollback: bool, is_force: bool, is_debug: bool,
+        is_skip_force_rollback: bool, is_autoheal: bool, is_force: bool, is_debug: bool,
         *args, **kwargs  # dont delete, these parameters for plugin manager
 ):
     """ Install gears to branches in repository
@@ -228,7 +232,8 @@ def install_command(
     install(
         gears, sources, repo, branches, token, extras=extras,
         commit_message=message, username=username, user_email=email,
-        registry=registry, is_skip_force_rollback=is_skip_force_rollback, is_force=is_force
+        registry=registry, is_skip_force_rollback=is_skip_force_rollback,
+        is_autoheal=is_autoheal, is_force=is_force
     )
 
 

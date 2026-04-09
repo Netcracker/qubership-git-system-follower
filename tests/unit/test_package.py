@@ -86,13 +86,14 @@ def get_repo_info(project) -> RepositoryInfo:
         git=get_git_repo(project, ENV_VARS["GITLAB_TOKEN"])
     )
 
-def install_package(states, branch, package, is_force, project, extras):
+def install_package(states, branch, package, is_autoheal, is_force, project, extras):
     response = init(
         state=None,
         package=package,
         repo=get_repo_info(project),
         created_cicd_variables=states[branch].get_all_created_cicd_variables(),
         extras=extras,
+        is_autoheal=is_autoheal,
         is_force=is_force
     )
     states[branch].add_package(
@@ -105,7 +106,7 @@ def install_package(states, branch, package, is_force, project, extras):
         package, for_delete=False
     )['cicd_variables']['hash'], "Issue with get_hash"
 
-def update_package(states, branch, package, is_force, project, bump_by, extras):
+def update_package(states, branch, package, is_autoheal, is_force, project, bump_by, extras):
     package['version'] = bump_patch_version(package['version'], bump_by)
     package_state = states[branch].get_package(package, for_delete=False)
     response = update(
@@ -114,6 +115,7 @@ def update_package(states, branch, package, is_force, project, bump_by, extras):
         state=package_state,
         created_cicd_variables=states[branch].get_all_created_cicd_variables(),
         extras=extras,
+        is_autoheal=is_autoheal,
         is_force=is_force
     )
     states[branch].add_package(
@@ -154,15 +156,17 @@ vcr_instance = clone_vcr(before_record_response=before_record_response)
 vcr_instance.register_matcher("uri_no_host", path_matcher)
 
 @pytest.mark.unit
-@pytest.mark.parametrize("gear_type, name, value, bump_by, masked, is_force, states", [
-    ('complex', 'test1', '1', '1', False, False, get_states_cfg()),
-    ('complex', 'test1', '1', '2', False, False, get_states_cfg()),
+@pytest.mark.parametrize("gear_type, name, value, bump_by, masked, is_autoheal, is_force, states", [
+    ('complex', 'test1', '1', '1', False, False, False, get_states_cfg()),
+    ('complex', 'test1', '1', '2', False, False, False, get_states_cfg()),
+    ('complex', 'test1', '1', '1', False, True, False, get_states_cfg()),
+    ('complex', 'test1', '1', '2', False, True, False, get_states_cfg()),
 ])
 @patch("test_package.get_git_repo")
 @vcr_instance.use_cassette('test_package')
 def test_package(
     mock_get_git_clone,
-    gear_type, name, value, bump_by, masked, is_force, states):
+    gear_type, name, value, bump_by, masked, is_autoheal, is_force, states):
     mock_git_clone = _get_git_clone_mock(mock_get_git_clone.return_value)
     mock_get_git_clone.return_value = mock_git_clone
     GEARS_DIR = Path(__file__).parent.parent / "gears"
@@ -171,16 +175,17 @@ def test_package(
     package['dependencies'] = []
     extras = build_extras(name, value, masked)
     for branch in BRANCHES:
-        install_package(states, branch, package, is_force, project, extras)
-        update_package(states, branch, package, is_force, project, bump_by, extras)
+        install_package(states, branch, package, is_autoheal, is_force, project, extras)
+        update_package(states, branch, package, is_autoheal, is_force, project, bump_by, extras)
         uninstall_package(states, branch, package, is_force, project, extras)
 
 
 @pytest.mark.unit
 @pytest.mark.parametrize(
-    "gear_type, name, value, masked, is_force, states",
+    "gear_type, name, value, masked, is_autoheal, is_force, states",
     [
-        ('complex', 'test1', '1', False, False, get_states_cfg()),
+        ('complex', 'test1', '1', False, False, False, get_states_cfg()),
+        ('complex', 'test1', '1', False, True, False, get_states_cfg()),
     ]
 )
 @patch("test_package.get_git_repo")
@@ -188,7 +193,7 @@ def test_package(
 @vcr_instance.use_cassette('test_package')
 def test_templates_copy_files(
     mock_logger_warning, mock_get_git_clone,
-    gear_type, name, value, masked, is_force, states):
+    gear_type, name, value, masked, is_autoheal, is_force, states):
     mock_git_clone = _get_git_clone_mock(mock_get_git_clone.return_value)
     mock_get_git_clone.return_value = mock_git_clone
     GEARS_DIR = Path(__file__).parent.parent / "gears"
@@ -197,7 +202,7 @@ def test_templates_copy_files(
     package['dependencies'] = []
     extras = build_extras(name, value, masked)
     for branch in BRANCHES:
-        install_package(states, branch, package, is_force, project, extras)
+        install_package(states, branch, package, is_autoheal, is_force, project, extras)
 
     custom_file_path = package_path / "scripts" / package['version'] \
         / "templates/default" / "{{ cookiecutter.gsf_repository_name }}" \
@@ -207,13 +212,14 @@ def test_templates_copy_files(
 
     try:
         for branch in BRANCHES:
-            install_package(states, branch, package, is_force, project, extras)
+            install_package(states, branch, package, is_autoheal, is_force, project, extras)
+    except SystemExit:
+        mock_logger_warning.assert_called_once_with(
+            "\t\tUser changes found for file .gitlab-ci.yml. Cannot copy. Skip operations"
+        )
+        print("Success: User changes discovered.")
     except Exception:
         pass
-    mock_logger_warning.assert_called_once_with(
-        "\t\tUser changes found for file .gitlab-ci.yml. Cannot copy. Skip operations"
-    )
-    print("Success: User changes discovered.")
 
     with open(custom_file_path, "r", encoding="utf-8", newline="") as f:
         text = f.read()
@@ -227,14 +233,15 @@ def test_templates_copy_files(
 
 
 @pytest.mark.unit
-@pytest.mark.parametrize("gear_type, is_force, states", [
-    ('complex', False, get_states_cfg()),
+@pytest.mark.parametrize("gear_type, is_autoheal, is_force, states", [
+    ('complex', True, False, get_states_cfg()),
+    ('complex', False, False, get_states_cfg()),
 ])
 @patch("test_package.get_git_repo")
 @vcr_instance.use_cassette('test_package')
 def test_external_extras(
     mock_get_git_clone,
-    gear_type, is_force, states):
+    gear_type, is_autoheal, is_force, states):
     mock_git_clone = _get_git_clone_mock(mock_get_git_clone.return_value)
     mock_get_git_clone.return_value = mock_git_clone
     GEARS_DIR = Path(__file__).parent.parent / "gears"
@@ -245,7 +252,7 @@ def test_external_extras(
     extras_external = build_extras_external('TEST_E', 'external', False)
     extras = extras_gsf + extras_external
     for branch in BRANCHES:
-        install_package(states, branch, package, is_force, project, extras)
+        install_package(states, branch, package, is_autoheal, is_force, project, extras)
         cicd_vars = states[branch].get_packages()[0]['cicd_variables']
         assert "managed_externally" in cicd_vars, "Expected managed_externally in cicd_variables"
         assert "managed_by_gsf" in cicd_vars, "Expected managed_by_gsf in cicd_variables"

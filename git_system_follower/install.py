@@ -55,7 +55,7 @@ def install(
         packages: tuple[PackageCLIImage | PackageCLITarGz | PackageCLISource, ...],
         sources: tuple[str, ...], repo_url: str, branches: tuple[str, ...], token: str, *,
         extras: tuple[ExtraParam, ...], commit_message: str, username: str, user_email: str,
-        registry: RegistryInfo, is_skip_force_rollback: bool, is_force: bool
+        registry: RegistryInfo, is_skip_force_rollback: bool, is_autoheal: bool, is_force: bool
 ) -> None:
     gitlab_instance = get_gitlab(repo_url, token)
     project = get_project(gitlab_instance, repo_url)
@@ -77,7 +77,7 @@ def install(
         states[branch] = managing_branch(
             project, branch, token, packages, states[branch], sources=sources, extras=extras,
             commit_message=commit_message, username=username, user_email=user_email,
-            is_skip_force_rollback=is_skip_force_rollback, is_force=is_force
+            is_skip_force_rollback=is_skip_force_rollback, is_autoheal=is_autoheal, is_force=is_force
         )
     logger.success('Installation complete')
 
@@ -178,14 +178,16 @@ def _is_necessary_package_to_rollback(package_cli: PackageCLI, installed_package
 def managing_branch(
         project: Project, branch: str, token: str, packages: PackagesTo, state: StateFile,
         sources: tuple[str, ...], *, extras: tuple[ExtraParam, ...], commit_message: str,
-        username: str, user_email: str, is_skip_force_rollback: bool, is_force: bool
+        username: str, user_email: str, is_skip_force_rollback: bool, is_autoheal: bool,
+        is_force: bool
 ) -> StateFile:
     repo = RepositoryInfo(gitlab=project, git=get_git_repo(project, token))
     checkout_to_new_branch(repo.git, branch)
     logger.info(':: Installing packages')
     state = processing_branch(
         packages, repo, state, sources, extras=extras, is_skip_force_rollback=is_skip_force_rollback,
-        is_force=is_force, commit_message=commit_message, username=username, user_email=user_email
+        is_autoheal=is_autoheal, is_force=is_force, commit_message=commit_message,
+        username=username, user_email=user_email
     )
     if state.status() == ChangeStatus.no_change:
         logger.info(f'No changes in {repo.git.active_branch.name} branch. Skip create/merge merge request')
@@ -203,10 +205,10 @@ def managing_branch(
 def processing_branch(
         packages: PackagesTo, repo: RepositoryInfo, state: StateFile, sources: tuple[str, ...], *,
         extras: tuple[ExtraParam, ...], commit_message: str, username: str, user_email: str,
-        is_skip_force_rollback: bool, is_force: bool
+        is_skip_force_rollback: bool, is_autoheal: bool, is_force: bool
 ) -> StateFile:
     state = install_packages(packages, repo, state, sources, extras=extras,
-        is_skip_force_rollback=is_skip_force_rollback, is_force=is_force)
+        is_skip_force_rollback=is_skip_force_rollback, is_autoheal=is_autoheal, is_force=is_force)
 
     if state.status() == ChangeStatus.changed:
         logger.debug(f'Updated state in {repo.git.active_branch.name} branch:\n{state}')
@@ -224,7 +226,7 @@ def processing_branch(
 def install_packages(
         packages: PackagesTo, repo: RepositoryInfo, state: StateFile,
         sources: tuple[str, ...], *, extras: tuple[ExtraParam, ...],
-        is_skip_force_rollback: bool, is_force: bool
+        is_skip_force_rollback: bool, is_autoheal: bool, is_force: bool
 ) -> StateFile:
     created_cicd_variables = state.get_all_created_cicd_variables()
     for i, package in enumerate(packages.install, 1):
@@ -234,7 +236,8 @@ def install_packages(
             response = install_package(
                 package, packages.rollback, repo, package_state,
                 created_cicd_variables=created_cicd_variables, extras=extras,
-                is_skip_force_rollback=is_skip_force_rollback, is_force=is_force
+                is_skip_force_rollback=is_skip_force_rollback, is_autoheal=is_autoheal,
+                is_force=is_force
             )
             source = next((
                 s.value for s in sources
@@ -260,7 +263,7 @@ def install_package(
         package: PackageLocalData, additional_packages: tuple[PackageLocalData, ...],
         repo: RepositoryInfo, state: PackageState | None, *,
         created_cicd_variables: tuple[str, ...], extras: tuple[ExtraParam, ...],
-        is_skip_force_rollback: bool, is_force: bool
+        is_skip_force_rollback: bool, is_autoheal: bool, is_force: bool
 ) -> ScriptResponse | None:
     """ Install package in repository
 
@@ -275,7 +278,7 @@ def install_package(
     """
     if state is None:
         response = init(package, repo, state, created_cicd_variables=created_cicd_variables,
-            extras=extras, is_force=is_force)
+            extras=extras, is_autoheal=is_autoheal, is_force=is_force)
         return response
 
     state_version = normalize_version(state['version'])
@@ -290,11 +293,13 @@ def install_package(
         gear_info = get_gear_info(package['path'], state=state, is_force=is_force)
         if gear_info['structure_type'] == 'simple' or gear_info['migrate']:
             response = init(
-                package, repo, state, created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force
+                package, repo, state, created_cicd_variables=created_cicd_variables, extras=extras,
+                is_autoheal=is_autoheal, is_force=is_force
             )
         else:
             response = update(
-                package, repo, state, created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force
+                package, repo, state, created_cicd_variables=created_cicd_variables, extras=extras,
+                is_autoheal=is_autoheal, is_force=is_force
             )
         return response
 
@@ -312,6 +317,7 @@ def install_package(
     response = rollback(
         package, old_package, repo, state,
         created_cicd_variables=created_cicd_variables, extras=extras,
-        is_skip_force_rollback=is_skip_force_rollback, is_force=is_force
+        is_skip_force_rollback=is_skip_force_rollback, is_autoheal=is_autoheal,
+        is_force=is_force
     )
     return response

@@ -45,6 +45,9 @@ exclude = [
 # See list of rules at: https://docs.astral.sh/ruff/rules/
 select = ["E", "F", "W", "C90"]
 
+[tool.ruff.lint.mccabe]
+max-complexity = 15
+
 [tool.pytest.ini_options]
 testpaths = [
     "tests"

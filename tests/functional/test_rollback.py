@@ -106,28 +106,29 @@ def test_rollback(
         "get_git_repo": get_git_repo_mock(mock_get_git_repo)
     }
 
-    for gear_type in scenarios:
-        states = get_states_cfg()
-        gears_dir = Path(__file__).parent.parent / "gears" / gear_type
-        package_path = get_package_path(gear_type)
+    for is_autoheal in [False, True]:
+        for gear_type in scenarios:
+            states = get_states_cfg()
+            gears_dir = Path(__file__).parent.parent / "gears" / gear_type
+            package_path = get_package_path(gear_type)
 
-        if gear_type == "simple":
-            install(gears_dir, registry, extras, states)
-            update_package_yaml(package_path, "simple-gear", "0.1.0")
-            install(gears_dir, registry, extras, states)
-            uninstall(gears_dir, registry, extras, states)
-            update_package_yaml(package_path, "simple-gear", "1.0.0")
+            if gear_type == "simple":
+                install(gears_dir, is_autoheal, registry, extras, states)
+                update_package_yaml(package_path, "simple-gear", "0.1.0")
+                install(gears_dir, is_autoheal, registry, extras, states)
+                uninstall(gears_dir, registry, extras, states)
+                update_package_yaml(package_path, "simple-gear", "1.0.0")
 
-        else:
-            update_package_yaml(package_path, "complex-gear", "0.1.0")
-            install(gears_dir, registry, extras, states)
-            update_package_yaml(package_path, "complex-gear", "0.0.1")
-            install(gears_dir, registry, extras, states)
-            uninstall(gears_dir, registry, extras, states)
+            else:
+                update_package_yaml(package_path, "complex-gear", "0.1.0")
+                install(gears_dir, is_autoheal, registry, extras, states)
+                update_package_yaml(package_path, "complex-gear", "0.0.1")
+                install(gears_dir, is_autoheal, registry, extras, states)
+                uninstall(gears_dir, registry, extras, states)
 
-    for m in mocks.values():
-        if hasattr(m, "push"):
-            try:
-                m.push.assert_called_once()
-            except AssertionError:
-                pass
+        for m in mocks.values():
+            if hasattr(m, "push"):
+                try:
+                    m.push.assert_called_once()
+                except AssertionError:
+                    pass

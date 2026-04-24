@@ -23,6 +23,7 @@ import pytest
 from git_system_follower.package import cicd_variables
 from git_system_follower.typings.repository import RepositoryInfo
 from git_system_follower.git_api.utils import get_git_repo
+from git_system_follower.utils.cli import Package
 from git_system_follower.package.initer import init
 from git_system_follower.package.updater import update
 from git_system_follower.package.deleter import delete
@@ -231,6 +232,9 @@ def test_templates_copy_files(
     with open(custom_file_path, "w", encoding="utf-8", newline="") as f:
         f.write(out)
 
+def get_package_path(gear_type):
+    """Get package path for gear type"""
+    return Path(__file__).parent.parent / "gears" / gear_type / 'git-system-follower-package'
 
 @pytest.mark.unit
 @pytest.mark.parametrize("gear_type, is_autoheal, is_force, states", [
@@ -262,3 +266,27 @@ def test_external_extras(
             [cicd_variables.CICDVariable(name='test1', value='1', env='*', masked=False)]
             ) , "CICD Variables Hash Mismatch Found"
         uninstall_package(states, branch, package, is_force, project, extras)
+
+@pytest.mark.unit
+@patch("test_package.get_git_repo")
+@vcr_instance.use_cassette('test_get_package_sources')
+def test_get_package_sources(mock_get_git_clone, caplog):
+    mock_git_clone = _get_git_clone_mock(mock_get_git_clone.return_value)
+    mock_get_git_clone.return_value = mock_git_clone
+    gear_type = 'complex'
+    GEARS_DIR = Path(__file__).parent.parent / "gears"
+    package_path = GEARS_DIR / gear_type / 'git-system-follower-package'
+    package = get_package_details(path=package_path)
+    package['dependencies'] = []
+    extras = build_extras('testvar1', '1', False)
+    states = get_states_cfg()
+    for branch in BRANCHES:
+        install_package(states, branch, package, True, False, project, extras)
+    package_path_sources = [Package.convert(str("dummy_domain/image:tag"), None, None)]
+    try:
+        for branch in BRANCHES:
+            for s in states[branch].get_package_sources(
+                package_path_sources, is_skip_force_rollback=False):
+                pass
+    except (SystemExit, Exception):
+        assert 'if ":" not in source:' in caplog.text, "Source not found in state or is None"

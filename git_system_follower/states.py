@@ -181,7 +181,9 @@ class StateFile:
             if is_skip_force_rollback:
                 src.append(state.get('source') or "")
             else:
-                if ":" not in source:
+                if source is None:
+                    continue
+                elif ":" not in source:
                     logger.error(
                         f"Rollback with source validation skipped is supported for Docker image sources only. "
                         f"'{source}' appears to be a local .tar.gz archive or local source directory."

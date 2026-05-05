@@ -160,7 +160,7 @@ class Registry(ABC, oras.client.OrasClient):
 
     @staticmethod
     def _get_package_filename(path: Path) -> str:
-        """ Get current filename for package (.tar.gz file) using parsing pacakge.yaml inside this package
+        """ Get current filename for package (.tar.gz file) using parsing package.yaml inside this package
 
         :param path: path to package (.tar.gz)
         :return: current filename for package
@@ -249,6 +249,9 @@ class Nexus(RegistryV2):
     pass
 
 
+class GcpGar(RegistryV2):
+    pass
+
 class AwsEcr(RegistryV2):
 
     def download(self, target: str, outdir: Path, *, registry: RegistryInfo) -> Path | None:
@@ -264,7 +267,6 @@ class AwsEcr(RegistryV2):
             return None
 
         return self._download_layer(container, manifest, outdir)
-
 
 def get_name_and_version_version_from_targz(path: Path) -> tuple[str, str]:
     """ Get name and version of package for .tar.gz archive
@@ -496,6 +498,10 @@ def get_client(
         logger.info(f'{registry_address} is of type DockerHub')
         return Dockerhub(hostname=registry_address)
 
+    if is_gcpgar(scheme, registry_address, registry_type=registry.type, is_insecure=registry.is_insecure):
+        logger.info(f'{registry_address} is of type GCP GAR')
+        return GcpGar(hostname=registry_address)
+
     if is_artifactory(scheme, registry_address, registry_type=registry.type, is_insecure=registry.is_insecure):
         logger.info(f'{registry_address} is of type Artifactory')
         return Artifactory(hostname=registry_address)
@@ -582,6 +588,21 @@ def is_awsecr(scheme: str, registry: str, *, registry_type: RegistryTypes, is_in
     headers = dict(regex.findall(auth_header))
     return headers.get('service', '') == 'ecr.amazonaws.com'
 
+def is_gcpgar(scheme: str, registry: str, *, registry_type: RegistryTypes, is_insecure: bool) -> bool:
+    """ Check if the given registry is Gcp GAR """
+    if registry_type == RegistryTypes.gcpgar:
+        return True
+    if registry_type != RegistryTypes.auto:
+        return False
+
+    url = f'{scheme}://{registry}/v2'
+    try:
+        response = requests.get(url, timeout=3, verify=not is_insecure)
+    except requests.exceptions.RequestException as error:
+        logger.debug(f'GCP API call error: {error}')
+        return False
+
+    return 'realm=com.google' in response.headers.get('x-auto-login', '')
 
 def _save_info_about_downloaded_package(package: PackageCLI, current_package: Path) -> None:
     """ Save name and version mapping information from package.yaml with docker image name and tag

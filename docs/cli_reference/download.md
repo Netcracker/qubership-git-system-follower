@@ -1,6 +1,6 @@
 # download
 
-Downloading all listed gears (docker images) and then finding the package layer in that image
+Downloading all listed gears (Docker images) and then finding the package layer in that image
 and saving it as `.tar.gz` file
 
 ## Display help text
@@ -119,7 +119,7 @@ If multiple methods are used, command-line parameters take precedence over stdin
 
     If `:` is not in the string again, git-system-follower recognizes the entire string as a passed password
 
-#### Specific registry authentication
+#### AWS registry authentication
 Some registries, such as **AWS ECR**, introduce their own custom "enhancements" on top of the classic
 Docker authentication mechanisms like **Basic** and **Bearer**. In this case, git-system-follower follows
 the standard [Docker Registry HTTP API v2](https://docker-docs.uclv.cu/registry/spec/api/) specification,
@@ -135,14 +135,43 @@ aws ecr get-authorization-token --output text --query 'authorizationData[].autho
     where the **username** is literally `AWS`, and the **password** is a temporary token (which lasts for 12 hours) obtained 
     via `aws ecr get-authorization-token`.
 
-### Why docker is not a required
-When the git-system-follower downloads the docker image it doesn't need `docker` because we use the `oras` library
-(it doesn't use the docker socket)
+#### GCP registry authentication
+GCP Google Artifact Registry (GAR) authentication uses Basic authentication with:
+
+- **Username:** `oauth2accesstoken` (fixed)
+- **Password:** A GCP access token (e.g., `ya29.a0AQ....`)
+
+The token can be pre-generated and passed via `--registry-password`, or generated inline.
+
+**Pre-generated token:**
+```bash
+gsf install --repo https://git.domain.com/repo.git --branch tmp --token glpat-xxxxxxxx \
+--registry-username oauth2accesstoken --registry-password "ya29.a0AQ...."  asia-south1-docker.pkg.dev/project/repo/gear:v1.0.0
+```
+
+**Inline-generated token:**
+```bash
+gsf install --repo https://git.domain.com/repo.git --branch tmp --token glpat-xxxxxxxx \
+--registry-username oauth2accesstoken --registry-password "$(gcloud auth print-access-token)"  asia-south1-docker.pkg.dev/project/repo/gear:v1.0.0
+```
+
+!!! note "Prerequisites"
+    For GSF to work with GCP GAR-based gears:
+    
+    1. Install gcloud CLI: https://docs.cloud.google.com/sdk/docs/install-sdk
+    2. Authenticate: `gcloud auth login --no-launch-browser`
+    3. Set the correct project: `gcloud config set project PROJECT_ID`
+    4. Generate an access token for authentication
+
+
+### Why Docker is not required
+When the git-system-follower downloads the Docker image it doesn't need `docker` because we use the `oras` library
+(it doesn't use the Docker socket)
 
 ### Downloading process
 git-system-follower downloads the image using the `oras` library, finds the layer that contains the gear source code.
 It saves this layer (`.tar.gz`) to the passed directory, extracts it to the `.git-system-follower/packages` directory
-to figure out what file name to assign to this `.tar.gz` archive like `<name>@<version>.tar.gz` and for next following
+to figure out what filename to assign to this `.tar.gz` archive like `<name>@<version>.tar.gz` and for next following
 use: installation, uninstallation
 
 ### Image-to-package mapping

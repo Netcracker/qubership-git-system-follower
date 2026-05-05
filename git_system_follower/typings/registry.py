@@ -28,6 +28,7 @@ class RegistryTypes(Enum):
     nexus = 'Nexus'
     artifactory = 'Artifactory'
     awsecr = 'AwsEcr'
+    gcpgar = 'GcpGar'
 
 
 @dataclass

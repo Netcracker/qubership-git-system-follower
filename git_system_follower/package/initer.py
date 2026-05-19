@@ -27,7 +27,7 @@ from git_system_follower.package.script import run_script
 from git_system_follower.package.package_info import get_scripts_dir_by_complexity
 from git_system_follower.package.cicd_variables import CICDVariable, get_cicd_variables
 from git_system_follower.package.webhooks import Webhook, get_webhooks
-
+from git_system_follower.utils.utility import get_package_dependency
 
 __all__ = ['init']
 
@@ -65,6 +65,7 @@ def run_init_script(
 ) -> ScriptResponse:
     logger.info('\tRunning init package api')
     path = script_dir / 'init.py'
+    get_package_dependency(script_dir)
     response = run_script(
         path, workdir, project, current_cicd_variables, current_webhooks,
         used_template=None, created_cicd_variables=created_cicd_variables,

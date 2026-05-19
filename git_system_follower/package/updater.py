@@ -27,7 +27,7 @@ from git_system_follower.package.script import run_script
 from git_system_follower.package.cicd_variables import CICDVariable, get_cicd_variables
 from git_system_follower.package.webhooks import Webhook, get_webhooks
 from git_system_follower.utils.versions import normalize_version
-
+from git_system_follower.utils.utility import get_package_dependency
 
 __all__ = ['update']
 
@@ -84,6 +84,7 @@ def run_update_script(
 ) -> ScriptResponse:
     logger.info('\tRunning update package api')
     path = script_dir / 'update.py'
+    get_package_dependency(script_dir)
     response = run_script(
         path, workdir, project, current_cicd_variables, current_webhooks, state['used_template'],
         current_version_dir=current_version_dir, created_cicd_variables=created_cicd_variables,

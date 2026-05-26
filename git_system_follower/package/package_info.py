@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import TypedDict, Tuple, Optional, Any
 
 import yaml
-
+import sys
 from git_system_follower.logger import logger
 from git_system_follower.errors import (
     PackageNotFoundError, PackageDescriptionFileError, DescriptionSectionError, MaxDependencyDepthError
@@ -94,7 +94,7 @@ def get_package_info(directory: Path, name: str) -> PackageLocalData:
         data = _validate_package_info(data)
     except PackageDescriptionFileError:
         logger.critical(f'Error during validation of {DESCRIPTION_FILENAME} file ({path.absolute()})')
-        raise SystemExit
+        sys.exit(1)
 
     return PackageLocalData(
         **data,
@@ -218,7 +218,7 @@ def get_gear_info(path: Path, state: Optional[PackageState] = None, is_force: bo
                         f"State and gear structure type mismatch detected. State structure type found "
                         f"{state['structure_type']} and gear structure type found {structure_type}."
                         f" If intentional then please run with --force")
-                    raise SystemExit
+                    sys.exit(1)
         else:
             state['structure_type'] = structure_type
 

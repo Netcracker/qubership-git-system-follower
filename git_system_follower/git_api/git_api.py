@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from enum import IntFlag
-
+import sys
 import gitlab
 from git import Repo
 
@@ -73,7 +73,7 @@ def push_installed_packages(repo: RepositoryInfo, msg: str, *, name: str, email:
     result = interpret_push_info(repo.git.remotes.origin.push(repo.git.active_branch.name)[0])
     if not result['flags']:
         logger.critical(f"[{result['reason']}] Push to remote repository failed with reason: {result['summary']}")
-        raise SystemExit
+        sys.exit(1)
 
 def interpret_push_info(push_info) -> dict:
     """ Interpret GitPython push_info flags and return structured result.

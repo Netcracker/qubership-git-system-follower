@@ -60,7 +60,16 @@ def get_git_repo(project: Project, token: str) -> Repo:
 
 def get_repo_directory_path(repo_url: str) -> Path:
     name = repo_url.split('/')[-1].replace('.git', '')
+    if REPOS_PATH.exists():
+        for item in REPOS_PATH.iterdir():
+            _remove_directory(item) if item.is_dir() else item.unlink()
     return REPOS_PATH / name
+
+
+def _remove_directory(path: Path):
+    for child in path.iterdir():
+        _remove_directory(child) if child.is_dir() else child.unlink()
+    path.rmdir()
 
 
 def get_url_with_token(url: str, token: str) -> str:

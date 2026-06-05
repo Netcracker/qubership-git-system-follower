@@ -15,10 +15,12 @@
 """ Module with api to work with templates for package developers """
 import json
 from typing import Optional
-
+from cookiecutter.exceptions import RepositoryNotFound
+from git_system_follower.logger import logger
 from git_system_follower.develop.api.types import Parameters, ExtraParams, ExtraParam
+from git_system_follower.develop.api.cicd_variables import CICDVariable, create_variable, delete_variable
 from git_system_follower.variables import PACKAGE_API_RESULT as __PACKAGE_API_RESULT
-from git_system_follower.errors import PackageAPIDevelopmentError, PackageTemplatePolicyError
+from git_system_follower.errors import PackageAPIDevelopmentError, PackageTemplatePolicyError, PackageApiError
 from git_system_follower.package.templates import (
     get_template_names as __get_template_names,
     create_template as __create_template,
@@ -96,12 +98,20 @@ def update_template(
     """
     system_params = parameters._Parameters__system_params
     is_force = True if is_force or system_params.is_force else False
-    variables = __update_template_variables(variables)
-    __create_template(
-        system_params.script_dir, parameters.used_template, parameters.workdir, variables=variables,
-        is_autoheal=system_params.is_autoheal, skip_files=skip_files, is_force=is_force,
-        current_version_dir=parameters.current_version_dir
-    )
+    template_param = parameters.extras.get("TEMPLATE")
+    used_template = template_param.value if template_param is not None else parameters.used_template
+    updated_variables = {}
+    try:
+        updated_variables = __execute_template_update(parameters, used_template, variables, is_force, skip_files)
+    except (PackageApiError, RepositoryNotFound) as e:
+        if 'Template is missing' in str(e) or isinstance(e, RepositoryNotFound):
+            logger.warning(f"Template '{used_template}' not found, retrying with {parameters.used_template}")
+            updated_variables = __execute_template_update(parameters, parameters.used_template, variables,
+                is_force, skip_files)
+        else:
+            raise
+    finally:
+        update_cicd_variables(parameters, list(updated_variables.keys()))
 
 
 def delete_template(parameters: Parameters, *, is_force: bool = False, skip_files: tuple[str, ...] = ()) -> None:
@@ -142,9 +152,10 @@ def __add_info_about_template(template: str, variables: dict[str, str]) -> None:
         json.dump(content, file)
 
 
-def __update_template_variables(variables: dict[str, str] | None) -> dict[str, str]:
+def __update_template_variables(template: str, variables: dict[str, str] | None) -> dict[str, str]:
     with open(__PACKAGE_API_RESULT, 'r') as file:
         content = json.load(file)
+    content['template'] = template
     content['template_variables'] = __get_variables(variables)
     with open(__PACKAGE_API_RESULT, 'w') as file:
         json.dump(content, file)
@@ -160,6 +171,19 @@ def __delete_info_about_template() -> None:
     content['template_variables'] = []
     with open(__PACKAGE_API_RESULT, 'w') as file:
         json.dump(content, file)
+
+def __execute_template_update(
+        parameters: Parameters, used_template: str, variables: Optional[ExtraParams | dict[str, str]],
+        is_force: bool, skip_files: tuple[str, ...]
+) -> dict[str, str]:
+    system_params = parameters._Parameters__system_params
+    updated_variables = __update_template_variables(used_template, variables)
+    __create_template(
+        system_params.script_dir, used_template, parameters.workdir, variables=updated_variables,
+        is_autoheal=system_params.is_autoheal, skip_files=skip_files, is_force=is_force,
+        current_version_dir=parameters.current_version_dir
+    )
+    return updated_variables
 
 
 def __get_variables(variables: Optional[ExtraParams | dict[str, str]] = None) -> dict[str, str]:
@@ -181,3 +205,18 @@ def __get_variables(variables: Optional[ExtraParams | dict[str, str]] = None) ->
     elif all(isinstance(k, str) and isinstance(v, ExtraParam) for k, v in variables.items()):
         return {variable.name: variable.value for variable in variables.values()}
     raise PackageAPIDevelopmentError('Invalid variables value type')
+
+
+def update_cicd_variables(parameters: Parameters, template_variables_names: list[str]) -> None:
+    for name, extra in parameters.extras.items():
+        if name in template_variables_names:
+            continue
+
+        if name in parameters.cicd_variables:
+            delete_variable(parameters, parameters.cicd_variables[name])
+        create_variable(parameters, CICDVariable(
+            name=extra.name,
+            value=extra.value,
+            env='*',
+            masked=extra.masked
+        ))

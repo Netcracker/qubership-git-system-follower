@@ -15,6 +15,7 @@
 from typing import TypedDict
 
 from git_system_follower.package.cicd_variables import CICDVariable
+from git_system_follower.package.webhooks import Webhook
 
 
 __all__ = ['ScriptResponse']
@@ -24,3 +25,4 @@ class ScriptResponse(TypedDict):
     template: str
     template_variables: dict[str, str]
     cicd_variables: list[CICDVariable]
+    webhooks: list[Webhook]

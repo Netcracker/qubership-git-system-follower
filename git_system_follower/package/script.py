@@ -26,6 +26,7 @@ from git_system_follower.errors import PackageApiError
 from git_system_follower.variables import PACKAGE_API_RESULT
 from git_system_follower.typings.cli import ExtraParam
 from git_system_follower.package.cicd_variables import CICDVariable
+from git_system_follower.package.webhooks import Webhook
 from git_system_follower.states import PackageState, filter_cicd_variables_by_state, unmask_data
 from git_system_follower.develop.api.types import Parameters, SystemParameters, ExtraParams
 from git_system_follower.package.system import get_system_info
@@ -41,9 +42,9 @@ class SubprocessStatus(Enum):
 
 def run_script(
         path: Path, workdir: Path, project: Project, all_cicd_variables: dict[str, CICDVariable],
-        used_template: str | None, *,
+        all_webhooks: dict[str, Webhook], used_template: str | None, *,
         extras: tuple[ExtraParam, ...], is_force: bool, state: PackageState | None = None,
-        created_cicd_variables: tuple[str, ...],
+        created_cicd_variables: tuple[str, ...], created_webhooks: tuple[str, ...],
         current_version_dir: Path | None = None,
         is_autoheal: bool = False
 ) -> ScriptResponse:
@@ -53,16 +54,21 @@ def run_script(
     :param workdir: workdir for package api
     :param project: gitlab project
     :param all_cicd_variables: all CI/CD variables in Gitlab repository
+    :param all_webhooks: all webhooks in Gitlab repository
     :param used_template: last used template
     :param created_cicd_variables: list of created CI/CD variables in previous package installations
+    :param created_webhooks: list of created webhook URLs in previous package installations
     :param extras: extra parameters to be passed to package api
     :param is_force: forced working: create/delete CI/CI variables, create/delete template, etc.
     :param state: current state for this package with another version
-    :return: script response with information: CI/CD variables, last used template, etc. after running package api
+    :return: script response with information: CI/CD variables, webhooks, last used template, etc.
+        after running package api
     """
     template_variables = get_template_variables(state)
     cicd_variables = filter_cicd_variables_by_state(state, all_cicd_variables)
+    webhooks = filter_webhooks_by_state(state, all_webhooks)
     created_cicd_vars_in_other_pkgs = _fetch_cicd_vars_except_package(created_cicd_variables, cicd_variables)
+    created_webhooks_in_other_pkgs = _fetch_webhooks_except_package(created_webhooks, webhooks)
     default_package_api = init_default_main if path.name == 'init.py' else delete_default_main
     if get_gear_info(path.parents[3])['structure_type'] == 'simple':
         is_force = True
@@ -71,6 +77,8 @@ def run_script(
         template_variables=template_variables,
         cicd_variables={variable['name']: variable for variable in cicd_variables},
         all_cicd_variables=all_cicd_variables, created_cicd_vars_in_other_pkgs=created_cicd_vars_in_other_pkgs,
+        webhooks={webhook['url']: webhook for webhook in webhooks},
+        all_webhooks=all_webhooks, created_webhooks_in_other_pkgs=created_webhooks_in_other_pkgs,
         extras=extras, is_force=is_force, is_autoheal=is_autoheal,
         default=default_package_api
     )
@@ -97,6 +105,41 @@ def _fetch_cicd_vars_except_package(all_vars_names: tuple[str, ...], pkg_variabl
         if variable not in pkg_vars_names:
             result.append(variable)
     return result
+
+
+def _fetch_webhooks_except_package(all_webhook_urls: tuple[str, ...], pkg_webhooks: list[Webhook]) -> list[str]:
+    """ Get created webhooks except current package
+
+    :param all_webhook_urls: all webhook URLs created in repository
+    :param pkg_webhooks: webhooks created in current package of another version
+    :return: webhook URLs except package webhooks
+    """
+    result = []
+    pkg_webhook_urls = [webhook['url'] for webhook in pkg_webhooks]
+    for url in all_webhook_urls:
+        if url not in pkg_webhook_urls:
+            result.append(url)
+    return result
+
+
+def filter_webhooks_by_state(state: PackageState | None, all_webhooks: dict[str, Webhook]) -> list[Webhook]:
+    """ Filter webhooks by state
+
+    Note: only webhook URLs are stored in state file, actual configurations are fetched from GitLab
+
+    :param state: current state for this package with another version
+    :param all_webhooks: all webhooks in Gitlab repository
+    :return: webhooks for this package
+    """
+    if state is None:
+        return []
+
+    urls = state.get('webhooks', {}).get('urls', [])
+    webhooks = []
+    for url in urls:
+        if url in all_webhooks:
+            webhooks.append(all_webhooks[url])
+    return webhooks
 
 
 def execute_module(func):
@@ -161,19 +204,24 @@ def execute_package_api(
         module,
         template_variables: dict[str, str], is_autoheal: bool,
         cicd_variables: dict[str, CICDVariable], all_cicd_variables: dict[str, CICDVariable],
-        created_cicd_vars_in_other_pkgs: list[str], extras: tuple[ExtraParam, ...], is_force: bool
+        created_cicd_vars_in_other_pkgs: list[str],
+        webhooks: dict[str, Webhook], all_webhooks: dict[str, Webhook],
+        created_webhooks_in_other_pkgs: list[str],
+        extras: tuple[ExtraParam, ...], is_force: bool
 ) -> ScriptResponse:
     with open(PACKAGE_API_RESULT, 'w') as file:
         json.dump({
                 'template': used_template,
                 'template_variables': template_variables,
-                'cicd_variables': [value for key, value in cicd_variables.items()]
+                'cicd_variables': [value for key, value in cicd_variables.items()],
+                'webhooks': [value for key, value in webhooks.items()]
             },
             file
         )
 
     system_params = SystemParameters(
         project=project, created_cicd_vars_names=created_cicd_vars_in_other_pkgs,
+        created_webhooks_urls=created_webhooks_in_other_pkgs,
         script_dir=path.parent.absolute(), is_force=is_force, is_autoheal=is_autoheal
     )
     extras = get_remodeled_extras(extras)
@@ -184,6 +232,8 @@ def execute_package_api(
         extras=extras,
         cicd_variables=cicd_variables,
         all_cicd_variables=all_cicd_variables,
+        webhooks=webhooks,
+        all_webhooks=all_webhooks,
         used_template=used_template,
         template_variables=template_variables,
         current_version_dir=current_version_dir

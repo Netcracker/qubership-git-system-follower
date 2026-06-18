@@ -229,14 +229,16 @@ def install_packages(
         is_skip_force_rollback: bool, is_autoheal: bool, is_force: bool
 ) -> StateFile:
     created_cicd_variables = state.get_all_created_cicd_variables()
+    from git_system_follower.states import get_all_created_webhooks
+    created_webhooks = get_all_created_webhooks(state)
     for i, package in enumerate(packages.install, 1):
         logger.info(f"({i}/{len(packages.install)}) Installing {package['name']}@{package['version']} package")
         package_state = state.get_package(package, for_delete=False)
         try:
             response = install_package(
                 package, packages.rollback, repo, package_state,
-                created_cicd_variables=created_cicd_variables, extras=extras,
-                is_skip_force_rollback=is_skip_force_rollback, is_autoheal=is_autoheal,
+                created_cicd_variables=created_cicd_variables, created_webhooks=created_webhooks,
+                extras=extras, is_skip_force_rollback=is_skip_force_rollback, is_autoheal=is_autoheal,
                 is_force=is_force
             )
             source = next((
@@ -252,6 +254,8 @@ def install_packages(
                     package, extras, response, package_state,
                     structure_type=get_gear_info(package['path'])['structure_type'], source=source)
             created_cicd_variables = update_created_cicd_variables(created_cicd_variables, response)
+            from git_system_follower.states import update_created_webhooks
+            created_webhooks = update_created_webhooks(created_webhooks, response)
         except Exception:
             logger.critical(f"An error came out at one stage of installation. "
                             f"Installation {package['name']}@{package['version']} aborted.")
@@ -262,7 +266,8 @@ def install_packages(
 def install_package(
         package: PackageLocalData, additional_packages: tuple[PackageLocalData, ...],
         repo: RepositoryInfo, state: PackageState | None, *,
-        created_cicd_variables: tuple[str, ...], extras: tuple[ExtraParam, ...],
+        created_cicd_variables: tuple[str, ...], created_webhooks: tuple[str, ...],
+        extras: tuple[ExtraParam, ...],
         is_skip_force_rollback: bool, is_autoheal: bool, is_force: bool
 ) -> ScriptResponse | None:
     """ Install package in repository
@@ -272,13 +277,14 @@ def install_package(
     :param repo: repository information
     :param state: current state for this package
     :param created_cicd_variables: list of created CI/CD variables in previous package installations
+    :param created_webhooks: list of created webhook URLs in previous package installations
     :param extras: extra parameters to be passed to package api
     :param is_force: forced installation
     :return: script response
     """
     if state is None:
         response = init(package, repo, state, created_cicd_variables=created_cicd_variables,
-            extras=extras, is_autoheal=is_autoheal, is_force=is_force)
+            created_webhooks=created_webhooks, extras=extras, is_autoheal=is_autoheal, is_force=is_force)
         return response
 
     state_version = normalize_version(state['version'])
@@ -293,12 +299,14 @@ def install_package(
         gear_info = get_gear_info(package['path'], state=state, is_force=is_force)
         if gear_info['structure_type'] == 'simple' or gear_info['migrate']:
             response = init(
-                package, repo, state, created_cicd_variables=created_cicd_variables, extras=extras,
+                package, repo, state, created_cicd_variables=created_cicd_variables,
+                created_webhooks=created_webhooks, extras=extras,
                 is_autoheal=is_autoheal, is_force=is_force
             )
         else:
             response = update(
-                package, repo, state, created_cicd_variables=created_cicd_variables, extras=extras,
+                package, repo, state, created_cicd_variables=created_cicd_variables,
+                created_webhooks=created_webhooks, extras=extras,
                 is_autoheal=is_autoheal, is_force=is_force
             )
         return response

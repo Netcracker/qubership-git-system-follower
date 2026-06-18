@@ -29,13 +29,14 @@ from git_system_follower.typings.cli import PackageCLI
 from git_system_follower.typings.package import PackageLocalData
 from git_system_follower.typings.script import ScriptResponse
 from git_system_follower.package.cicd_variables import CICDVariable
+from git_system_follower.package.webhooks import Webhook
 from git_system_follower.utils.utility import normalized_in_string_match
 
 
 __all__ = [
     'ChangeStatus', 'PackageState', 'StateFile',
     'get_installed_packages', 'filter_cicd_variables_by_state', 'update_created_cicd_variables',
-    'mask_data', 'unmask_data'
+    'update_created_webhooks', 'get_all_created_webhooks', 'mask_data', 'unmask_data'
 ]
 
 
@@ -50,6 +51,10 @@ class CICDVariablesSection(TypedDict):
     managed_by_gsf: list[str]
     managed_externally: list[str]
 
+class WebhooksSection(TypedDict):
+    urls: list[str]
+    hash: str
+
 class PackageState(TypedDict):
     name: str
     version: str
@@ -59,6 +64,7 @@ class PackageState(TypedDict):
     dependencies: list[str]
     structure_type: str
     cicd_variables: CICDVariablesSection
+    webhooks: WebhooksSection
 
 
 class StateFileContent(TypedDict):
@@ -79,11 +85,16 @@ class InstalledPackageSources(NamedTuple):
 class StateFile:
     __name = '.state.yaml'
 
-    def __init__(self, *, raw: bytes | None = None, current_cicd_variables: dict[str, CICDVariable] | None = None):
+    def __init__(
+            self, *, raw: bytes | None = None,
+            current_cicd_variables: dict[str, CICDVariable] | None = None,
+            current_webhooks: dict[str, Webhook] | None = None
+    ):
         """ Read raw state file (e.g. from GitLab REST API) or init state file with empty packages section
 
         :param raw: state file
         :param current_cicd_variables: current CI/CD variables in Gitlab
+        :param current_webhooks: current webhooks in Gitlab
         """
         self.__change_status = ChangeStatus.no_change
         if raw is None:
@@ -100,6 +111,7 @@ class StateFile:
                                  state_file_hash=content['hash'], generated_hash=computed_hash)
         for package in content['packages']:
             self.__check_cicd_variables_hash(package, current_cicd_variables)
+            self.__check_webhook_hash(package, current_webhooks)
         self.__content = StateFileContent(hash=computed_hash, packages=content['packages'])
 
     def __get_hash(self, state: Any) -> str:
@@ -151,6 +163,33 @@ class StateFile:
                     f"({package['cicd_variables']['hash']}) and generated hash ({computed_hash}) do not match"
             raise HashesMismatch(error, state_file_hash=package['cicd_variables']['hash'], generated_hash=computed_hash)
 
+    def __check_webhook_hash(
+            self, package: PackageState, current_webhooks: dict[str, Webhook] | None
+    ) -> None:
+        """ Check hash for webhooks of <package> - only warns, does not raise exception
+
+        :param package: package with information about webhook URLs
+        :param current_webhooks: current webhooks in Gitlab
+        """
+        if current_webhooks is None:
+            return
+
+        # Backward compatibility: skip if package doesn't have webhooks section
+        if 'webhooks' not in package:
+            return
+
+        from git_system_follower.package.script import filter_webhooks_by_state
+        webhooks = filter_webhooks_by_state(package, current_webhooks)
+        computed_hash = self.__get_hash(webhooks)
+
+        if computed_hash != package['webhooks']['hash']:
+            logger.warning(
+                f"Webhook configuration for {package['name']}@{package['version']} "
+                f"may have been modified externally. "
+                f"State hash: {package['webhooks']['hash']}, "
+                f"Current hash: {computed_hash}"
+            )
+
     def get_installed_packages(self) -> tuple[InstalledPackage, ...]:
         packages = []
         for package in self.__content['packages']:
@@ -169,6 +208,17 @@ class StateFile:
         for package in self.__content['packages']:
             variables.extend(package['cicd_variables']['names'])
         return tuple(variables)
+
+    def get_all_created_webhooks(self) -> tuple[str, ...]:
+        """ Get created webhook URLs from state file from all packages
+
+        :return: list of webhook URLs in all installed packages
+        """
+        webhooks = []
+        for package in self.__content['packages']:
+            if 'webhooks' in package:
+                webhooks.extend(package['webhooks']['urls'])
+        return tuple(webhooks)
 
     def get_package_sources(self, sources: tuple[str, ...],
         is_skip_force_rollback: bool) -> tuple[str, ...]:
@@ -282,6 +332,9 @@ class StateFile:
                     response['cicd_variables'].pop(i)
                     managed_externally.append(res_item['name'])
         managed_by_gsf = [variable['name'] for variable in response['cicd_variables']]
+
+        webhook_urls = [webhook['url'] for webhook in response['webhooks']]
+
         new_state = PackageState(
             name=package['name'], version=package['version'],
             used_template=response['template'],
@@ -295,6 +348,10 @@ class StateFile:
                 hash=self.__get_hash(response['cicd_variables']),
                 managed_by_gsf=managed_by_gsf,
                 managed_externally=managed_externally
+            ),
+            webhooks=WebhooksSection(
+                urls=webhook_urls,
+                hash=self.__get_hash(response['webhooks'])
             )
         )
         if state is None:
@@ -390,6 +447,23 @@ def update_created_cicd_variables(
     if response is None:
         return created_cicd_variables
     return created_cicd_variables + tuple(variable['name'] for variable in response['cicd_variables'])
+
+
+def get_all_created_webhooks(state_file: StateFile) -> tuple[str, ...]:
+    """ Get all created webhook URLs from state file
+
+    :param state_file: state file instance
+    :return: tuple of all webhook URLs across all packages
+    """
+    return state_file.get_all_created_webhooks()
+
+
+def update_created_webhooks(
+        created_webhooks: tuple[str, ...], response: ScriptResponse | None
+) -> tuple[str, ...]:
+    if response is None:
+        return created_webhooks
+    return created_webhooks + tuple(webhook['url'] for webhook in response['webhooks'])
 
 
 def mask_data(data: str) -> str:

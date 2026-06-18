@@ -255,6 +255,8 @@ def uninstall_packages(
         logger.info('No packages installed')
         return state
     created_cicd_variables = state.get_all_created_cicd_variables()
+    from git_system_follower.states import get_all_created_webhooks
+    created_webhooks = get_all_created_webhooks(state)
     for i, package in enumerate(packages, 1):
         logger.info(f"({i}/{len(packages)}) Uninstalling {package['name']}@{package['version']} package")
         package_state = state.get_package(package, for_delete=True)
@@ -264,7 +266,8 @@ def uninstall_packages(
         try:
             delete(
                 package, repo, package_state,
-                created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force
+                created_cicd_variables=created_cicd_variables, created_webhooks=created_webhooks,
+                extras=extras, is_force=is_force
             )
             state.delete_package(package_state)
         except Exception:

@@ -20,12 +20,14 @@ from typing import Optional
 from gitlab.v4.objects import Project
 from git_system_follower.typings.cli import ExtraParam
 from git_system_follower.package.cicd_variables import CICDVariable
+from git_system_follower.package.webhooks import Webhook
 
 
 __all__ = [
     'Parameters', 'SystemParameters', 'System',
     'CICDVariable', 'CICDVariables',
-    'ExtraParam', 'ExtraParams'
+    'ExtraParam', 'ExtraParams',
+    'Webhook', 'Webhooks'
 ]
 
 
@@ -33,6 +35,7 @@ __all__ = [
 class SystemParameters:
     project: Project
     created_cicd_vars_names: list[str]
+    created_webhooks_urls: list[str]
     script_dir: Path
     is_force: bool
     is_autoheal: bool = False
@@ -49,6 +52,9 @@ ExtraParams = dict[ExtraParamName, ExtraParam]
 CICDVariableName = str
 CICDVariables = dict[CICDVariableName, CICDVariable]
 
+WebhookURL = str
+Webhooks = dict[WebhookURL, Webhook]
+
 
 @dataclass(frozen=True)
 class Parameters:
@@ -58,6 +64,8 @@ class Parameters:
     extras: ExtraParams
     cicd_variables: CICDVariables
     all_cicd_variables: CICDVariables
+    webhooks: Webhooks
+    all_webhooks: Webhooks
     used_template: str
     template_variables: dict[str, str]
     current_version_dir: Optional[Path]

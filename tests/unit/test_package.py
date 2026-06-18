@@ -92,6 +92,7 @@ def install_package(states, branch, package, is_autoheal, is_force, project, ext
         package=package,
         repo=get_repo_info(project),
         created_cicd_variables=states[branch].get_all_created_cicd_variables(),
+        created_webhooks=states[branch].get_all_created_webhooks(),
         extras=extras,
         is_autoheal=is_autoheal,
         is_force=is_force
@@ -114,6 +115,7 @@ def update_package(states, branch, package, is_autoheal, is_force, project, bump
         repo=get_repo_info(project),
         state=package_state,
         created_cicd_variables=states[branch].get_all_created_cicd_variables(),
+        created_webhooks=states[branch].get_all_created_webhooks(),
         extras=extras,
         is_autoheal=is_autoheal,
         is_force=is_force
@@ -132,6 +134,7 @@ def uninstall_package(states, branch, package, is_force, project, extras):
         repo=get_repo_info(project),
         state=states[branch].get_package(package, for_delete=True),
         created_cicd_variables=states[branch].get_all_created_cicd_variables(),
+        created_webhooks=states[branch].get_all_created_webhooks(),
         extras=extras,
         is_force=is_force
     )

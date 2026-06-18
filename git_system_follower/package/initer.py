@@ -26,6 +26,7 @@ from git_system_follower.typings.script import ScriptResponse
 from git_system_follower.package.script import run_script
 from git_system_follower.package.package_info import get_scripts_dir_by_complexity
 from git_system_follower.package.cicd_variables import CICDVariable, get_cicd_variables
+from git_system_follower.package.webhooks import Webhook, get_webhooks
 
 
 __all__ = ['init']
@@ -33,8 +34,8 @@ __all__ = ['init']
 
 def init(
         package: PackageLocalData, repo: RepositoryInfo, state: PackageState, *,
-        created_cicd_variables: tuple[str, ...], extras: tuple[ExtraParam, ...], is_autoheal: bool,
-        is_force: bool
+        created_cicd_variables: tuple[str, ...], created_webhooks: tuple[str, ...],
+        extras: tuple[ExtraParam, ...], is_autoheal: bool, is_force: bool
 ) -> ScriptResponse:
     logger.info('==> Package initialization')
     workdir = Path(repo.git.working_dir)
@@ -46,10 +47,11 @@ def init(
         raise FileNotFoundError(f'Scripts directory is missing ({scripts_dir.absolute()})')
 
     current_cicd_variables = get_cicd_variables(repo.gitlab)
+    current_webhooks = get_webhooks(repo.gitlab)
     response = run_init_script(
-        scripts_dir, workdir, repo.gitlab, current_cicd_variables, state,
-        created_cicd_variables=created_cicd_variables, extras=extras, is_autoheal=is_autoheal,
-        is_force=is_force
+        scripts_dir, workdir, repo.gitlab, current_cicd_variables, current_webhooks, state,
+        created_cicd_variables=created_cicd_variables, created_webhooks=created_webhooks,
+        extras=extras, is_autoheal=is_autoheal, is_force=is_force
     )
     logger.success(f"Installed {package['name']}@{package['version']} package")
     return response
@@ -57,14 +59,16 @@ def init(
 
 def run_init_script(
         script_dir: Path, workdir: Path, project: Project, current_cicd_variables: dict[str, CICDVariable],
-        state: PackageState, *, created_cicd_variables: tuple[str, ...],
+        current_webhooks: dict[str, Webhook], state: PackageState, *,
+        created_cicd_variables: tuple[str, ...], created_webhooks: tuple[str, ...],
         extras: tuple[ExtraParam, ...], is_autoheal: bool, is_force: bool
 ) -> ScriptResponse:
     logger.info('\tRunning init package api')
     path = script_dir / 'init.py'
     response = run_script(
-        path, workdir, project, current_cicd_variables,
-        used_template=None, created_cicd_variables=created_cicd_variables, extras=extras,
+        path, workdir, project, current_cicd_variables, current_webhooks,
+        used_template=None, created_cicd_variables=created_cicd_variables,
+        created_webhooks=created_webhooks, extras=extras,
         is_autoheal=is_autoheal, is_force=is_force, state=state
     )
     return response

@@ -1,7 +1,7 @@
 # templates module
 API provided in `templates.py` module. This module contains functions for easy interaction with `cookiecutter` templates.
 
-## Usage in package api
+## Usage in package API
 ```python
 from git_system_follower.develop.api.templates import create_template, update_template, delete_template
 ```
@@ -27,13 +27,16 @@ Return tuple of template names
 #### Arguments
 | Name            | Type         | Description                                    |
 |-----------------|--------------|------------------------------------------------|
-| `parameters`    | `Parameters` | parameters that were passed to the package api |
+| `parameters`    | `Parameters` | parameters that were passed to the package API |
 
 ### `create_template` function
 ```python
 def create_template(
-    parameters: Parameters, template_name: str, *,
-    is_force: bool = False
+    parameters: Parameters,
+    name: str,
+    variables: Optional[ExtraParams | dict[str, str]] = None, *,
+    is_force: bool = False,
+    skip_files: tuple[str, ...] = ()
 ) -> None:
 ```
 Create files using `cookiecutter` template
@@ -53,21 +56,25 @@ If `is_force` parameter is `True`, then it will necessarily be force to create f
       2. Files content matches: notification of this (info)
 
 #### Arguments
-| Name            | Type         | Description                                    |
-|-----------------|--------------|------------------------------------------------|
-| `parameters`    | `Parameters` | parameters that were passed to the package api |
-| `template_name` | `str`        | name of template to be created                 |
+| Name            | Type                                      | Description                                                          |
+|-----------------|-------------------------------------------|----------------------------------------------------------------------|
+| `parameters`    | `Parameters`                              | parameters that were passed to the package API                       |
+| `name`          | `str`                                     | name of template to be created                                       |
+| `variables`     | `Optional[ExtraParams \| dict[str, str]]` | A dict of parameters used to generate the template (saved to state)  |
 
 #### Keyword arguments
-| Name       | Type   | Description                           |
-|------------|--------|---------------------------------------|
-| `is_force` | `bool` | forced creation (ignore file content) |
+| Name         | Type              | Description                                              |
+|--------------|-------------------|----------------------------------------------------------|
+| `is_force`   | `bool`            | forced creation (ignore file content)                    |
+| `skip_files` | `tuple[str, ...]` | tuple of file patterns to skip during template creation  |
 
 ### `update_template` function
 ```python
 def update_template(
-    parameters: Parameters, *, 
-    is_force: bool = False
+    parameters: Parameters,
+    variables: Optional[ExtraParams | dict[str, str]] = None, *,
+    is_force: bool = False,
+    skip_files: tuple[str, ...] = ()
 ) -> None:
 ```
 Update files using `cookiecutter` template
@@ -87,20 +94,31 @@ If `is_force` parameter is `True`, then it will necessarily be force to update f
       2. Files content matches: notification of this (info)
 
 #### Arguments
-| Name            | Type         | Description                                    |
-|-----------------|--------------|------------------------------------------------|
-| `parameters`    | `Parameters` | parameters that were passed to the package api |
+| Name            | Type                                      | Description                                                          |
+|-----------------|-------------------------------------------|----------------------------------------------------------------------|
+| `parameters`    | `Parameters`                              | parameters that were passed to the package API                       |
+| `variables`     | `Optional[ExtraParams \| dict[str, str]]` | A dict of parameters used to generate the template (saved to state)  |
 
 #### Keyword arguments
-| Name       | Type   | Description                           |
-|------------|--------|---------------------------------------|
-| `is_force` | `bool` | forced creation (ignore file content) |
+| Name         | Type              | Description                                              |
+|--------------|-------------------|----------------------------------------------------------|
+| `is_force`   | `bool`            | forced creation (ignore file content)                    |
+| `skip_files` | `tuple[str, ...]` | tuple of file patterns to skip during template update    |
+
+#### Additional Capabilities
+- **CI/CD Variable Synchronization**: Automatically updates CI/CD variables, template variables
+- **Template Switching with Fallback**: Supports switching to a different template during gear updates via `parameters.extras.get("TEMPLATE")`.
+  
+  GSF automatically falls back to `parameters.used_template` when:
+    - The specified template is not found or invalid
+    - The `cookiecutter.json` file is missing for the specified template
 
 ### `delete_template` function
 ```python
 def delete_template(
-    parameters: Parameters, *, 
-    is_force: bool = False
+    parameters: Parameters, *,
+    is_force: bool = False,
+    skip_files: tuple[str, ...] = ()
 ) -> None:
 ```
 Delete files using `cookiecutter` template
@@ -122,10 +140,10 @@ If `is_force` parameter is `True`, then it will necessarily be force to delete f
 #### Arguments
 | Name            | Type         | Description                                    |
 |-----------------|--------------|------------------------------------------------|
-| `parameters`    | `Parameters` | parameters that were passed to the package api |
-
+| `parameters`    | `Parameters` | parameters that were passed to the package API |
 
 #### Keyword arguments
-| Name       | Type   | Description                           |
-|------------|--------|---------------------------------------|
-| `is_force` | `bool` | forced deletion (ignore file content) |
+| Name         | Type              | Description                                              |
+|--------------|-------------------|----------------------------------------------------------|
+| `is_force`   | `bool`            | forced deletion (ignore file content)                    |
+| `skip_files` | `tuple[str, ...]` | tuple of file patterns to skip during template deletion  |

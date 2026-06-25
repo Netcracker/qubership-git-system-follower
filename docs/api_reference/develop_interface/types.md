@@ -38,6 +38,8 @@ Parameters which git-system-follower passed to package API
 | `all_cicd_variables` | `CICDVariables`               | all CI/CD variables that exist in repository                                                                                 |
 | `used_template`      | `str`                         | last used template. If `used_template=None` then no template has been used. If template has been deleted, it will be `None` |
 
+The `workdir` path can be used to maintain file integrity by allowing preemptive cleanup of existing files before new versions are installed. This is critical for scenarios where gear install/updates must guarantee that only the latest files are present in the system.
+
 ### `System` class
 ```python
 @dataclass(frozen=True)

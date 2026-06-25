@@ -26,6 +26,7 @@ from git_system_follower.typings.script import ScriptResponse
 from git_system_follower.package.script import run_script
 from git_system_follower.package.package_info import get_scripts_dir_by_complexity
 from git_system_follower.package.cicd_variables import CICDVariable, get_cicd_variables
+from git_system_follower.package.webhooks import Webhook, get_webhooks
 
 
 __all__ = ['delete']
@@ -33,7 +34,8 @@ __all__ = ['delete']
 
 def delete(
         package: PackageLocalData, repo: RepositoryInfo, state: PackageState, *,
-        created_cicd_variables: tuple[str, ...], extras: tuple[ExtraParam, ...], is_force: bool
+        created_cicd_variables: tuple[str, ...], created_webhooks: tuple[str, ...],
+        extras: tuple[ExtraParam, ...], is_force: bool
 ) -> ScriptResponse:
     logger.info('==> Package deletion')
     workdir = Path(repo.git.working_dir)
@@ -45,9 +47,11 @@ def delete(
         raise FileNotFoundError(f'Scripts directory is missing ({scripts_dir.absolute()})')
 
     current_cicd_variables = get_cicd_variables(repo.gitlab)
+    current_webhooks = get_webhooks(repo.gitlab)
     response = run_delete_script(
-        scripts_dir, workdir, repo.gitlab, current_cicd_variables, state,
-        created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force
+        scripts_dir, workdir, repo.gitlab, current_cicd_variables, current_webhooks, state,
+        created_cicd_variables=created_cicd_variables, created_webhooks=created_webhooks,
+        extras=extras, is_force=is_force
     )
     logger.success(f"Uninstalled {package['name']}@{package['version']} package")
     return response
@@ -55,13 +59,15 @@ def delete(
 
 def run_delete_script(
         script_dir: Path, workdir: Path, project: Project, current_cicd_variables: dict[str, CICDVariable],
-        state: PackageState, *,
-        created_cicd_variables: tuple[str, ...], extras: tuple[ExtraParam, ...], is_force: bool
+        current_webhooks: dict[str, Webhook], state: PackageState, *,
+        created_cicd_variables: tuple[str, ...], created_webhooks: tuple[str, ...],
+        extras: tuple[ExtraParam, ...], is_force: bool
 ) -> ScriptResponse:
     logger.info('\tRunning delete package api')
     path = script_dir / 'delete.py'
     response = run_script(
-        path, workdir, project, current_cicd_variables, state['used_template'],
-        created_cicd_variables=created_cicd_variables, extras=extras, is_force=is_force, state=state
+        path, workdir, project, current_cicd_variables, current_webhooks, state['used_template'],
+        created_cicd_variables=created_cicd_variables, created_webhooks=created_webhooks,
+        extras=extras, is_force=is_force, state=state
     )
     return response

@@ -33,12 +33,12 @@ def rollback(
     logger.info('==> Package rollback')
     if is_skip_force_rollback:
         # rollback with validation does a delete and init
-        delete(old_package, repo, state, created_cicd_variables=created_cicd_variables, extras=extras,
-               is_force=is_force)
-        response = init(package, repo, state, created_cicd_variables=tuple([]), extras=extras,
-            is_autoheal=is_autoheal, is_force=is_force)
+        delete(old_package, repo, state, created_cicd_variables=created_cicd_variables, created_webhooks=tuple([]),
+               extras=extras, is_force=is_force)
+        response = init(package, repo, state, created_cicd_variables=tuple([]), created_webhooks=tuple([]),
+                       extras=extras, is_autoheal=is_autoheal, is_force=is_force)
     else:
         # rollback by default without validation does a force reinstall
-        response = init(package, repo, state, created_cicd_variables=tuple([]), extras=extras,
-            is_autoheal=is_autoheal, is_force=True)
+        response = init(package, repo, state, created_cicd_variables=tuple([]), created_webhooks=tuple([]),
+                       extras=extras, is_autoheal=is_autoheal, is_force=True)
     return response

@@ -25,6 +25,7 @@ from git_system_follower.typings.cli import ExtraParam
 from git_system_follower.typings.script import ScriptResponse
 from git_system_follower.package.script import run_script
 from git_system_follower.package.cicd_variables import CICDVariable, get_cicd_variables
+from git_system_follower.package.webhooks import Webhook, get_webhooks
 from git_system_follower.utils.versions import normalize_version
 
 
@@ -33,8 +34,8 @@ __all__ = ['update']
 
 def update(
         package: PackageLocalData, repo: RepositoryInfo, state: PackageState, *,
-        created_cicd_variables: tuple[str, ...], extras: tuple[ExtraParam, ...], is_autoheal: bool,
-        is_force: bool
+        created_cicd_variables: tuple[str, ...], created_webhooks: tuple[str, ...],
+        extras: tuple[ExtraParam, ...], is_autoheal: bool, is_force: bool
 ) -> ScriptResponse:
     logger.info('==> Package update')
     workdir = Path(repo.git.working_dir)
@@ -42,9 +43,11 @@ def update(
     response = None
     for version_dir in versions:
         current_cicd_variables = get_cicd_variables(repo.gitlab)
+        current_webhooks = get_webhooks(repo.gitlab)
         response = run_update_script(
-            version_dir, workdir, repo.gitlab, current_cicd_variables, state, current_version_dir=current_version,
-            created_cicd_variables=created_cicd_variables, extras=extras, is_autoheal=is_autoheal, is_force=is_force
+            version_dir, workdir, repo.gitlab, current_cicd_variables, current_webhooks, state,
+            current_version_dir=current_version, created_cicd_variables=created_cicd_variables,
+            created_webhooks=created_webhooks, extras=extras, is_autoheal=is_autoheal, is_force=is_force
         )
         logger.info(f"Updated to {package['name']}@{version_dir.name} version")
         current_version = version_dir
@@ -75,15 +78,16 @@ def get_version_dirs(package: PackageLocalData, start_version: str) -> tuple[tup
 
 def run_update_script(
         script_dir: Path, workdir: Path, project: Project, current_cicd_variables: dict[str, CICDVariable],
-        state: PackageState, *, current_version_dir: Path,
-        created_cicd_variables: tuple[str, ...], extras: tuple[ExtraParam, ...], is_autoheal: bool,
-        is_force: bool
+        current_webhooks: dict[str, Webhook], state: PackageState, *, current_version_dir: Path,
+        created_cicd_variables: tuple[str, ...], created_webhooks: tuple[str, ...],
+        extras: tuple[ExtraParam, ...], is_autoheal: bool, is_force: bool
 ) -> ScriptResponse:
     logger.info('\tRunning update package api')
     path = script_dir / 'update.py'
     response = run_script(
-        path, workdir, project, current_cicd_variables, state['used_template'], current_version_dir=current_version_dir,
-        created_cicd_variables=created_cicd_variables, extras=extras, is_autoheal=is_autoheal, is_force=is_force,
+        path, workdir, project, current_cicd_variables, current_webhooks, state['used_template'],
+        current_version_dir=current_version_dir, created_cicd_variables=created_cicd_variables,
+        created_webhooks=created_webhooks, extras=extras, is_autoheal=is_autoheal, is_force=is_force,
         state=state
     )
     return response

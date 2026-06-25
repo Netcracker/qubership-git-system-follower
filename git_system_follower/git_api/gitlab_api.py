@@ -25,6 +25,7 @@ from git_system_follower.logger import logger
 from git_system_follower.errors import RemoteRepositoryError, HashesMismatch
 from git_system_follower.states import StateFile
 from git_system_follower.package.cicd_variables import get_cicd_variables
+from git_system_follower.package.webhooks import get_webhooks
 from git_system_follower.utils.retry import NeedRetry
 
 
@@ -74,13 +75,14 @@ def get_states(project: Project, branches: tuple[str, ...]) -> dict[str, StateFi
     states = {}
     remote_branches = [branch.name for branch in project.branches.list(get_all=True)]
     cicd_variables = get_cicd_variables(project)
+    webhooks = get_webhooks(project)
     for branch in branches:
         if branch not in remote_branches:
             raise RemoteRepositoryError(f'Branch {branch} not found')
 
         try:
             raw = project.files.raw(file_path='.state.yaml', ref=branch)
-            states[branch] = StateFile(raw=raw, current_cicd_variables=cicd_variables)
+            states[branch] = StateFile(raw=raw, current_cicd_variables=cicd_variables, current_webhooks=webhooks)
         except gitlab.exceptions.GitlabGetError:
             states[branch] = StateFile()
         except HashesMismatch as error:

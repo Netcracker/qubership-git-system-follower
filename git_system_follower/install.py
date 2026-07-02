@@ -41,7 +41,7 @@ from git_system_follower.states import (
 from git_system_follower.utils.cli import Package, get_gears
 from git_system_follower.utils.retry import retry
 from git_system_follower.utils.utility import normalized_in_string_match
-from git_system_follower.utils.versions import normalize_version
+from git_system_follower.utils.version_comparer import VersionComparer
 from git_system_follower.package.initer import init
 from git_system_follower.package.updater import update
 from git_system_follower.package.rollbacker import rollback
@@ -172,7 +172,9 @@ def _is_necessary_package_to_rollback(package_cli: PackageCLI, installed_package
     :param package_cli: package to install
     :param installed_package: installed package
     """
-    return package_cli['name'] == installed_package.name and package_cli['version'] < installed_package.version
+    comparer = VersionComparer()
+    return (package_cli['name'] == installed_package.name and
+            comparer.compare(str(installed_package.version), str(package_cli['version'])) > 0)
 
 @retry(output_func=logger.info, error_output_func=logger.error)
 def managing_branch(
@@ -287,13 +289,15 @@ def install_package(
             created_webhooks=created_webhooks, extras=extras, is_autoheal=is_autoheal, is_force=is_force)
         return response
 
-    state_version = normalize_version(state['version'])
-    package_version = normalize_version(package['version'])
-    if state_version == package_version:
+    # Use VersionComparer with raw versions to properly handle quarterly vs semver
+    comparer = VersionComparer()
+    comparison = comparer.compare(state['version'], package['version'])
+
+    if comparison == 0:
         logger.info(f"{package['name']}@{package['version']} package is already installed")
         return None
 
-    if state_version < package_version:
+    if comparison < 0:  # state_version < package_version: upgrade
         logger.debug(f"Installation version is higher the version installed in the repository "
                      f"({package['version']} > {state['version']}). Update version")
         gear_info = get_gear_info(package['path'], state=state, is_force=is_force)
@@ -311,6 +315,7 @@ def install_package(
             )
         return response
 
+    # comparison > 0: state_version > package_version: rollback
     logger.debug(f"Installation version is lower the version installed in the repository "
                  f"({package['version']} < {state['version']}). Rollback version")
     old_package = None

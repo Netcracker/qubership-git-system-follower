@@ -26,8 +26,9 @@ from git_system_follower.typings.script import ScriptResponse
 from git_system_follower.package.script import run_script
 from git_system_follower.package.cicd_variables import CICDVariable, get_cicd_variables
 from git_system_follower.package.webhooks import Webhook, get_webhooks
-from git_system_follower.utils.versions import normalize_version
 from git_system_follower.utils.utility import get_package_dependency
+from git_system_follower.utils.version_comparer import VersionComparer
+
 
 __all__ = ['update']
 
@@ -59,20 +60,43 @@ def get_version_dirs(package: PackageLocalData, start_version: str) -> tuple[tup
     if not path.exists():
         raise FileNotFoundError(f'Scripts directory is missing ({path.absolute()})')
 
-    start_version = normalize_version(start_version)
-    end_version = normalize_version(package['version'])
+    comparer = VersionComparer()
     versions = []
     current_version = Path()
+
+    # Check if upgrading from quarterly to semver
+    is_quarterly_to_semver = (comparer.is_quarterly(start_version) and
+                               not comparer.is_quarterly(package['version']))
+
     files = path.glob('*')
     for file in files:
         if file.is_file():
             continue
-        file_version = normalize_version(file.name)
-        if start_version < file_version <= end_version:
-            versions.append(file)
-        if start_version == file_version:
+
+        # Check for current version match
+        if comparer.compare(start_version, file.name) == 0:
             current_version = file
-    versions = sorted(versions, key=lambda v: normalize_version(v.name))
+
+        # Determine if this version should be included in update path
+        if is_quarterly_to_semver:
+            # For quarterly -> semver: include all quarterly > start, plus the target semver
+            if comparer.is_quarterly(file.name):
+                # Include quarterly versions > start
+                if comparer.compare(start_version, file.name) < 0:
+                    versions.append(file)
+            else:
+                # Include only the exact target semver version
+                if comparer.compare(file.name, package['version']) == 0:
+                    versions.append(file)
+        else:
+            # Normal case: start_version < file_version <= end_version
+            is_greater_than_start = comparer.compare(start_version, file.name) < 0
+            is_less_equal_end = comparer.compare(file.name, package['version']) <= 0
+            if is_greater_than_start and is_less_equal_end:
+                versions.append(file)
+
+    # Sort versions using VersionComparer
+    versions = sorted(versions, key=lambda v: (comparer.compare('0.0.0', v.name), v.name))
     return tuple(versions), current_version
 
 

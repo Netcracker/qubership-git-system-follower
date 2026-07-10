@@ -169,7 +169,11 @@ def execute_module(func):
     return wrapper
 
 
+_last_module_dir = None
+
 def _load_module(path: Path, *, default: str | None):
+    global _last_module_dir
+
     if not path.exists():
         if path.name == 'update.py':
             raise PackageApiError(f'No script file. Path: {path}')
@@ -181,8 +185,16 @@ def _load_module(path: Path, *, default: str | None):
 
     # add the path with the api package so that relative import can work
     module_dir = str(path.parent)
+
+    # Clear cached modules from the previous module directory to prevent cross-version imports
+    if _last_module_dir and _last_module_dir != module_dir:
+        for name, mod in list(sys.modules.items()):
+            if mod and getattr(mod, '__file__', None) and _last_module_dir in mod.__file__:
+                del sys.modules[name]
+    _last_module_dir = module_dir
+
     if module_dir not in sys.path:
-        sys.path.append(module_dir)
+        sys.path.insert(0, module_dir)
 
     # add module for running package api
     spec = importlib.util.spec_from_file_location('package_api', path)

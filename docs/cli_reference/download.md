@@ -122,7 +122,7 @@ If multiple methods are used, command-line parameters take precedence over stdin
 #### AWS registry authentication
 Some registries, such as **AWS ECR**, introduce their own custom "enhancements" on top of the classic
 Docker authentication mechanisms like **Basic** and **Bearer**. In this case, git-system-follower follows
-the standard [Docker Registry HTTP API v2](https://docker-docs.uclv.cu/registry/spec/api/) specification,
+the standard [Docker Registry HTTP API v2](https://distribution.github.io/distribution/spec/api/) specification,
 and any additional authentication logic is left to the user or the orchestration system in place.
 
 For AWS ECR specifically, you can authenticate using the AWS CLI (after configuring your local AWS account) like so:

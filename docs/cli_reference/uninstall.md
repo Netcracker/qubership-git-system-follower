@@ -1,12 +1,12 @@
 # uninstall
 Uninstall gears from branches in GitLab repository
 
-git-system-follower uninstall a gears into the repository branch using the package api: `delete`.
+git-system-follower uninstall a gears into the repository branch using the package API: `delete`.
 After it git-system-follower update `.states.yaml` file in root of directory where delete information about uninstalled gears
 
 You can pass a gear to uninstallation as:
 
-1. docker image: it will be downloaded (see [CLI reference/download](download.md))
+1. Docker image: it will be downloaded (see [CLI reference/download](download.md))
 2. `.tar.gz` file
 3. directory with gear (source code)
 
@@ -24,9 +24,9 @@ gsf uninstall --help
 ## Options
 | Name                  | Description                                                                                         | Mandatory |                                     Default value                                      |  Environment variable   | Example                                                          |
 |-----------------------|-----------------------------------------------------------------------------------------------------|:---------:|:--------------------------------------------------------------------------------------:|:-----------------------:|------------------------------------------------------------------|
-| `-r`, `--repo`        | Gitlab repository url                                                                               |     +     |                                           -                                            |            -            | `https://git.company.com/test`, `http://localhost/test.git`      |
+| `-r`, `--repo`        | GitLab repository URL                                                                               |     +     |                                           -                                            |            -            | `https://git.company.com/test`, `http://localhost/test.git`      |
 | `-b`, `--branch`      | Branches in which to uninstall the gears                                                            |     +     |                                           -                                            |            -            | `main`, `features/FAKE-0000`                                     |
-| `-t`, `--token`       | Gitlab access token                                                                                 |     +     |                                           -                                            |     `GSF_GIT_TOKEN`     | `glpat-xxxxxXYvoxqPZw_5Kmyr`                                     |
+| `-t`, `--token`       | GitLab access token                                                                                 |     +     |                                           -                                            |     `GSF_GIT_TOKEN`     | `glpat-xxxxxyyyyyyyyy_duMMy`                                     |
 | `--extra`             | Extra parameters to be passed to the package API: `name`, `value`, `masked`/`no-masked` of variable |     -     |                                           -                                            |            -            | `add_functionality true no-masked`, `password MyPa$$word masked` |
 | `--ticket`            | Ticket ID that will be automatically added to the beginning of each commit message                  |     -     |                                      `FAKE-0000`                                       |            -            | `FAKE-0001`, `ABCD-1234`                                         |
 | `--message`           | Commit message text after the ticket ID'                                                            |     -     |                                 `Uninstalled gear(s)`                                  |            -            | `Another commit message`                                         |
@@ -40,48 +40,48 @@ gsf uninstall --help
 | `--debug`             | Show debug level messages                                                                           |     -     |                                        `False`                                         |            -            |                                                                  |
 
 ## Examples
-Uninstalling the gear (docker image) to main branch
+Uninstalling the gear (Docker image) to main branch
 ```plaintext
 gsf uninstall -r https://git.company.com/test.git \
-              -b main -t glpat-xxxxxXYvoxqPZw_5Kmyr \
+              -b main -t glpat-xxxxxyyyyyyyyy_duMMy \
               artifactory.company.com/path-to/your-image:1.0.0
 ```
 
 Uninstalling the gear (`.tar.gz` archive) to main branch
 ```plaintext
 gsf uninstall -r https://git.company.com/test.git \
-              -b main -t glpat-xxxxxXYvoxqPZw_5Kmyr \
+              -b main -t glpat-xxxxxyyyyyyyyy_duMMy \
               packages/my-archive.tar.gz
 ```
 
 Uninstalling the gear (directory with source code) to main branch
 ```plaintext
 gsf uninstall -r https://git.company.com/test.git \
-              -b main -t glpat-xxxxxXYvoxqPZw_5Kmyr \
+              -b main -t glpat-xxxxxyyyyyyyyy_duMMy \
               packages/my-project
 ```
 
 Specify multiple gears for uninstallation:
-```plantext
+```plaintext
 gsf uninstall -r https://git.company.com/test.git \
-              -b main -t glpat-xxxxxXYvoxqPZw_5Kmyr \
+              -b main -t glpat-xxxxxyyyyyyyyy_duMMy \
               artifactory.company.com/path-to/my-image:1.0.0 \
               packages/some-other-package.tar.gz \
               projects/my-project
 ```
 
 Specify multiple branches for uninstallation:
-```plantext
+```plaintext
 gsf uninstall -r https://git.company.com/test.git \
               -b main -b develop -b feature\DTWO-0000 \
-              -t glpat-xxxxxXYvoxqPZw_5Kmyr \
+              -t glpat-xxxxxyyyyyyyyy_duMMy \
               packages/my-gear@1.0.0.3_r1.7.1
 ```
 
-Passing extra parameters to api package during uninstallation:
-```plantext
+Passing extra parameters to API package during uninstallation:
+```plaintext
 gsf uninstall -r https://git.company.com/test.git \
-              -b main -t glpat-xxxxxXYvoxqPZw_5Kmyr \
+              -b main -t glpat-xxxxxyyyyyyyyy_duMMy \
               --extra FIRST_VAR_NAME FIRST_VAR_VALUE no-masked \
               --extra PASSWORD Pa$$w0rd masked \
               packages/my-gear@1.0.0
@@ -114,7 +114,7 @@ If multiple methods are used, command-line parameters take precedence over stdin
 #### Specific registry authentication
 Some registries, such as **AWS ECR**, introduce their own custom "enhancements" on top of the classic
 Docker authentication mechanisms like **Basic** and **Bearer**. In this case, git-system-follower follows
-the standard [Docker Registry HTTP API v2](https://docker-docs.uclv.cu/registry/spec/api/) specification,
+the standard [Docker Registry HTTP API v2](https://distribution.github.io/distribution/spec/api/) specification,
 and any additional authentication logic is left to the user or the orchestration system in place.
 
 For AWS ECR specifically, you can authenticate using the AWS CLI (after configuring your local AWS account) like so:
@@ -133,7 +133,7 @@ so that when uninstalling, git-system-follower tries to carefully delete created
 
 For example, if a CI/CD variable exist and does not match what the gear
 being uninstalled provides, git-system-follower will skip processing that variable. But if the `--force` parameter is specified or 
-`is_force=True` is specified in deletion variable in package api,
+`is_force=True` is specified in deletion variable in package API,
 git-system-follower will delete the variable regardless of its contents. 
 If CI/CD variable is used by another gear, this variable will raise error.
 

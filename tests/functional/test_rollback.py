@@ -69,7 +69,9 @@ vcr_instance.register_matcher("uri_no_host", path_matcher)
 
 @pytest.mark.functional
 @patch("git_system_follower.install.create_mr")
+@patch("git_system_follower.install.merge_mr_and_wait")
 @patch("git_system_follower.install.merge_mr")
+@patch("git_system_follower.install.wait_for_validation_pipeline")
 @patch("git_system_follower.uninstall.create_mr")
 @patch("git_system_follower.uninstall.merge_mr")
 @patch("git_system_follower.install.processing_branch")
@@ -86,7 +88,9 @@ def test_rollback(
     mock_install_branch,
     mock_uninstall_merge_mr,
     mock_uninstall_create_mr,
+    mock_install_wait,
     mock_install_merge_mr,
+    mock_install_merge_mr_and_wait,
     mock_install_create_mr,
 ):
     scenarios = ["simple", "complex"]

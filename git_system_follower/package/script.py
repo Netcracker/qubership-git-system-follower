@@ -166,8 +166,10 @@ def execute_module(func):
         module = _load_module(path, default=default)
         old = os.getcwd()
         os.chdir(workdir)
-        result = func(path, workdir, current_version_dir, *args, **kwargs, module=module)
-        os.chdir(old)
+        try:
+            result = func(path, workdir, current_version_dir, *args, **kwargs, module=module)
+        finally:
+            os.chdir(old)
         os.remove(PACKAGE_API_RESULT)
         return result
     return wrapper

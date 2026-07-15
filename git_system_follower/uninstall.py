@@ -26,12 +26,14 @@ from git_system_follower.typings.registry import RegistryInfo
 from git_system_follower.typings.package import PackageLocalData
 from git_system_follower.download import download
 from git_system_follower.git_api.gitlab_api import (
-    get_gitlab, get_project, get_states, create_mr, merge_mr, delete_tag
+    get_gitlab, get_project, get_states, create_mr, merge_mr, delete_tag,
+    close_stale_mrs, close_mr_and_delete_branch
 )
 from git_system_follower.git_api.git_api import checkout_to_new_branch, push_installed_packages
 from git_system_follower.git_api.utils import get_packages_str, get_git_repo
 from git_system_follower.typings.repository import RepositoryInfo
 from git_system_follower.utils.retry import retry
+from git_system_follower.utils.cicd_utils import capture_existing_cicd, revert_cicd_changes
 from git_system_follower.states import (
     ChangeStatus, PackageState, StateFile,
     get_installed_packages
@@ -79,10 +81,19 @@ def uninstall(
         if not validated_packages:
             logger.info(f'There are no packages to delete. Skip deletion for {branch} branch')
             continue
-        states[branch] = managing_branch(
-            project, branch, repo, token, validated_packages, states[branch], extras=extras,
-            commit_message=commit_message, username=username, user_email=user_email, is_force=is_force
-        )
+        # Captured once per branch, before any changes, so a revert after retries are
+        # exhausted restores the pre-run state rather than whatever the last attempt left.
+        existing_cicd = capture_existing_cicd(repo.gitlab)
+        try:
+            states[branch] = managing_branch(
+                project, branch, repo, token, validated_packages, states[branch], extras=extras,
+                commit_message=commit_message, username=username, user_email=user_email, is_force=is_force
+            )
+        except Exception as e:
+            logger.debug('Uninstallation failed', exc_info=True)
+            revert_cicd_changes(repo.gitlab, existing_cicd, states[branch])
+            logger.error(f'Uninstallation in {branch} branch failed: {e}')
+            sys.exit(1)
     logger.success('Uninstallation complete')
 
 
@@ -221,27 +232,36 @@ def managing_branch(
         logger.info(f'No changes in {repo.git.active_branch.name} branch. Skip create/merge merge request')
         return state
     logger.info(':: Creating merge request')
-    mr = create_mr(
-        repo.gitlab, repo.git.active_branch.name, branch, title=commit_message,
-        description=f'Installed package(s): {get_packages_str(packages)}'
-    )
-    logger.info(':: Merging merge request')
-    if any(p.get('subtype') == 'component' for p in packages):
-        merge_mr(repo.gitlab, mr)
-        release_name, release_version = next(
-            ((p.get('name') or p['version']), p['version'])
-            for p in packages
-            if p.get('subtype') == 'component'
+    source_branch = repo.git.active_branch.name
+    # Close open MRs left over from a previously failed/retried run to avoid duplicates.
+    close_stale_mrs(repo.gitlab, source_branch, branch)
+    mr = None
+    try:
+        mr = create_mr(
+            repo.gitlab, source_branch, branch, title=commit_message,
+            description=f'Installed package(s): {get_packages_str(packages)}'
         )
-        try:
-            delete_tag(project, release_version)
-            logger.success(f":: Release removed {release_name}@{release_version}")
-        except Exception as e:
-            logger.warning(e)
-            sys.exit(1)
-    else:
-        merge_mr(repo.gitlab, mr)
-    return state
+        logger.info(':: Merging merge request')
+        if any(p.get('subtype') == 'component' for p in packages):
+            merge_mr(repo.gitlab, mr)
+            release_name, release_version = next(
+                ((p.get('name') or p['version']), p['version'])
+                for p in packages
+                if p.get('subtype') == 'component'
+            )
+            try:
+                delete_tag(project, release_version)
+                logger.success(f":: Release removed {release_name}@{release_version}")
+            except Exception as e:
+                logger.warning(e)
+                sys.exit(1)
+        else:
+            merge_mr(repo.gitlab, mr)
+        return state
+    except Exception:
+        # CI/CD variables are reverted by the caller once retries are exhausted, not here.
+        close_mr_and_delete_branch(repo.gitlab, mr, source_branch)
+        raise
 
 
 def processing_branch(

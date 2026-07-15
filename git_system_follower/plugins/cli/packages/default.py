@@ -34,6 +34,15 @@ class SourcePlugin(HookSpec):
     def get_gears(self, value: str, **kwargs) -> list[PackageCLISource]:
         return [PackageCLISource(path=Path(value))]
 
+    def process(self, value: str, **kwargs) -> bool:
+        # Resolve to an absolute path (e.g. "." -> cwd) before it's stored as this
+        # gear's source: a bare "." would otherwise be recorded in .state.yaml and
+        # can never be matched again by normalized_in_string_match, since stripping
+        # non-alphanumeric characters from "." leaves an empty string.
+        if Path(value).is_dir():
+            value = str(Path(value).resolve())
+        return super().process(value, **kwargs)
+
     def __str__(self) -> str:
         return self.value
 

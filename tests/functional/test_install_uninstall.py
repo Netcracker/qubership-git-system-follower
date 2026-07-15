@@ -73,7 +73,9 @@ vcr_instance.register_matcher("uri_no_host", path_matcher)
     ("complex", get_states_cfg())
 ])
 @patch("git_system_follower.install.create_mr")
+@patch("git_system_follower.install.merge_mr_and_wait")
 @patch("git_system_follower.install.merge_mr")
+@patch("git_system_follower.install.wait_for_validation_pipeline")
 @patch("git_system_follower.uninstall.create_mr")
 @patch("git_system_follower.uninstall.merge_mr")
 @patch("git_system_follower.install.processing_branch")
@@ -83,15 +85,17 @@ vcr_instance.register_matcher("uri_no_host", path_matcher)
 @patch("git_system_follower.install.get_git_repo")
 @vcr_instance.use_cassette("test_install_uninstall")
 def test_migrate_simple_complex(
-    mock_install_create_mr,
-    mock_install_merge_mr,
-    mock_uninstall_create_mr,
-    mock_uninstall_merge_mr,
-    mock_install_branch,
-    mock_uninstall_branch,
-    mock_install_push,
-    mock_uninstall_push,
     mock_get_git_repo,
+    mock_uninstall_push,
+    mock_install_push,
+    mock_uninstall_branch,
+    mock_install_branch,
+    mock_uninstall_merge_mr,
+    mock_uninstall_create_mr,
+    mock_install_wait,
+    mock_install_merge_mr,
+    mock_install_merge_mr_and_wait,
+    mock_install_create_mr,
     gear_type, states
 ):
     GEARS_DIR = Path(__file__).parent.parent / "gears" / gear_type

@@ -13,6 +13,8 @@
 # limitations under the License.
 
 """ Module with api for `install` command """
+import sys
+from copy import deepcopy
 from pathlib import Path
 from pprint import pformat
 
@@ -29,7 +31,8 @@ from git_system_follower.typings.registry import RegistryInfo
 from git_system_follower.typings.package import PackageLocalData, PackagesTo
 from git_system_follower.download import download
 from git_system_follower.git_api.gitlab_api import (
-    get_gitlab, get_project, get_states, create_mr, merge_mr, merge_mr_and_wait
+    get_gitlab, get_project, get_states, create_mr, merge_mr, merge_mr_and_wait,
+    wait_for_validation_pipeline, close_stale_mrs, close_mr_and_delete_branch
 )
 from git_system_follower.git_api.git_api import checkout_to_new_branch, push_installed_packages
 from git_system_follower.git_api.utils import get_packages_str, get_git_repo
@@ -41,6 +44,7 @@ from git_system_follower.states import (
 )
 from git_system_follower.utils.cli import Package, get_gears
 from git_system_follower.utils.retry import retry
+from git_system_follower.utils.cicd_utils import capture_existing_cicd, revert_cicd_changes
 from git_system_follower.utils.utility import normalized_in_string_match
 from git_system_follower.utils.version_comparer import VersionComparer
 from git_system_follower.package.initer import init
@@ -82,11 +86,20 @@ def install(
     for i, branch in enumerate(branches, 1):
         logger.info(f'[{i}/{len(branches)}] Processing {branch} branch')
         logger.debug(f'Current state in {branch} branch:\n{states[branch]}')
-        states[branch] = managing_branch(
-            project, branch, repo, token, packages, states[branch], sources=sources, extras=extras,
-            commit_message=commit_message, username=username, user_email=user_email,
-            is_skip_force_rollback=is_skip_force_rollback, is_autoheal=is_autoheal, is_force=is_force
-        )
+        # Captured once per branch, before any changes, so a revert after retries are
+        # exhausted restores the pre-run state rather than whatever the last attempt left.
+        existing_cicd = capture_existing_cicd(repo.gitlab)
+        try:
+            states[branch] = managing_branch(
+                project, branch, repo, token, packages, states[branch], sources=sources, extras=extras,
+                commit_message=commit_message, username=username, user_email=user_email,
+                is_skip_force_rollback=is_skip_force_rollback, is_autoheal=is_autoheal, is_force=is_force
+            )
+        except Exception as e:
+            logger.debug('Installation failed', exc_info=True)
+            revert_cicd_changes(repo.gitlab, existing_cicd, states[branch])
+            logger.error(f'Installation in {branch} branch failed: {e}')
+            sys.exit(1)
 
     logger.success('Installation complete')
 
@@ -195,6 +208,11 @@ def managing_branch(
         commit_message: str, username: str, user_email: str, is_skip_force_rollback: bool,
         is_autoheal: bool, is_force: bool
 ) -> StateFile:
+    # @retry re-invokes this function with the same `state` object on NeedRetry. state is
+    # mutated in place while installing packages, so without a fresh copy each attempt, a
+    # retry would see the previous (failed) attempt's already-applied changes and skip
+    # re-installing them, producing a branch with only the state file changed.
+    state = deepcopy(state)
     checkout_to_new_branch(repo.git, branch)
     logger.info(':: Installing packages')
     state = processing_branch(
@@ -206,27 +224,38 @@ def managing_branch(
         logger.info(f'No changes in {repo.git.active_branch.name} branch. Skip create/merge merge request')
         return state
     logger.info(':: Creating merge request')
-    mr = create_mr(
-        repo.gitlab, repo.git.active_branch.name, branch, title=commit_message,
-        description=f'Installed package(s): {get_packages_str(packages.install)}'
-    )
-    logger.info(':: Merging merge request')
-    if any(p.get('subtype') == 'component' for p in packages.install):
-        component_version = next(p['version'] for p in packages.install if p.get('subtype') == 'component')
-        merge_mr_and_wait(project, mr, tag_name=component_version)
-        release_name, release_version = next(
-            ((p.get('name') or p['version']), p['version'])
-            for p in packages.install
-            if p.get('subtype') == 'component'
+    source_branch = repo.git.active_branch.name
+    # Close open MRs left over from a previously failed/retried run to avoid duplicates.
+    close_stale_mrs(repo.gitlab, source_branch, branch)
+    mr = None
+    try:
+        mr = create_mr(
+            repo.gitlab, source_branch, branch, title=commit_message,
+            description=f'Installed package(s): {get_packages_str(packages.install)}'
         )
-        try:
-            release_url = f"{project.web_url}/-/releases/{release_version}"
-            logger.success(f":: Published {release_name}@{release_version} ({release_url})")
-        except Exception as e:
-            logger.error(f"Failed to get release URL for {release_name}@{release_version}: {e}")
-    else:
-        merge_mr(repo.gitlab, mr)
-    return state
+        logger.info(':: Merging merge request')
+        if any(p.get('subtype') == 'component' for p in packages.install):
+            component_version = next(p['version'] for p in packages.install if p.get('subtype') == 'component')
+            merge_mr_and_wait(project, mr, tag_name=component_version)
+            release_name, release_version = next(
+                ((p.get('name') or p['version']), p['version'])
+                for p in packages.install
+                if p.get('subtype') == 'component'
+            )
+            try:
+                release_url = f"{project.web_url}/-/releases/{release_version}"
+                logger.success(f":: Published {release_name}@{release_version} ({release_url})")
+            except Exception as e:
+                logger.error(f"Failed to get release URL for {release_name}@{release_version}: {e}")
+        else:
+            # Block on the MR's own validation pipeline (if any) before merging.
+            wait_for_validation_pipeline(project, mr)
+            merge_mr(project, mr)
+        return state
+    except Exception:
+        # CI/CD variables are reverted by the caller once retries are exhausted, not here.
+        close_mr_and_delete_branch(repo.gitlab, mr, source_branch)
+        raise
 
 
 def processing_branch(
@@ -357,6 +386,11 @@ def install_package(
     if old_package is None:
         raise PackageNotFoundError(f"Package {package['name']}@{package['version']} not found in "
                                    f"Additional rollback package list:\n{pformat(additional_packages)}")
+
+    # Validate gear type migration and prompt for --force on mismatch, mirroring the
+    # upgrade path. With --force this also updates state['structure_type'] so the
+    # rolled-back (new) gear's type is persisted instead of the stale old type.
+    get_gear_info(package['path'], state=state, is_force=is_force)
 
     response = rollback(
         package, old_package, repo, state,

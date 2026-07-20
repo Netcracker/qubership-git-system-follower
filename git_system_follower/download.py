@@ -21,6 +21,7 @@ import tarfile
 import json
 import shutil
 import re
+import platform
 
 import oras.client
 import oras.container
@@ -51,6 +52,35 @@ from git_system_follower.utils.tmpdir import tempdir
 
 __all__ = ['download']
 
+#: media type of a single, directly runnable image manifest
+IMAGE_MANIFEST_MEDIA_TYPE = 'application/vnd.docker.distribution.manifest.v2+json'
+#: media types of a multi-manifest OCI Image Index / Docker manifest list
+#: (e.g. produced by `docker buildx build --provenance=true`, which adds an extra
+#: attestation manifest marked `unknown/unknown` alongside the runnable platform manifest)
+INDEX_MEDIA_TYPES = (
+    'application/vnd.oci.image.index.v1+json',
+    'application/vnd.docker.distribution.manifest.list.v2+json',
+)
+#: mapping from `platform.machine()` values to OCI/Docker arch names
+_ARCH_ALIASES = {
+    'x86_64': 'amd64', 'amd64': 'amd64',
+    'aarch64': 'arm64', 'arm64': 'arm64',
+}
+
+def get_host_platform() -> tuple[str, str]:
+    """ Get current host OS and architecture in OCI/Docker manifest naming
+
+    :return: (os, architecture), e.g. ('linux', 'amd64') or ('linux', 'arm64')
+    """
+    os_name = platform.system().lower()
+    machine = platform.machine().lower()
+    arch = _ARCH_ALIASES.get(machine)
+    if arch is None:
+        raise DownloadPackageError(
+            f'Unsupported host architecture {machine!r}. Supported architectures: '
+            f'{sorted(set(_ARCH_ALIASES.values()))}'
+        )
+    return os_name, arch
 
 class Registry(ABC, oras.client.OrasClient):
     """ Base class of any new Registry """
@@ -98,10 +128,43 @@ class Registry(ABC, oras.client.OrasClient):
         :return: manifest
         """
         manifest = self.get_manifest(
-            container, allowed_media_type=['application/vnd.docker.distribution.manifest.v2+json']
+            container, allowed_media_type=[IMAGE_MANIFEST_MEDIA_TYPE, *INDEX_MEDIA_TYPES]
         )
         logger.debug(f'Found manifest:\n{pformat(manifest)}')
+        if manifest.get('mediaType') in INDEX_MEDIA_TYPES:
+            manifest = self._resolve_index(manifest, container)
+            logger.debug(f'Resolved index to manifest:\n{pformat(manifest)}')
+
         return manifest
+
+    def _resolve_index(
+            self, index: dict, container: oras.container.Container, *,
+            target_platform: tuple[str, str] | None = None
+    ) -> dict:
+        """ Resolve an OCI Image Index / Docker manifest list to the single image manifest
+        matching the target platform, ignoring non-image entries (e.g. the
+        `unknown/unknown` provenance attestation manifest added by `--provenance=true`)
+
+        :param index: OCI Image Index or Docker manifest list
+        :param container: Oras container with information about target
+        :param target_platform: (os, architecture) to select, e.g. ('linux', 'arm64').
+                                 Defaults to the current host's platform - overridable so this can be
+                                 tested for other platforms without needing that hardware to run on
+        :return: single, runnable image manifest for the target platform
+        :raises DownloadPackageError: no manifest in the index matches the target platform
+        """
+        os_name, arch = target_platform or get_host_platform()
+        for entry in index.get('manifests', []):
+            entry_platform = entry.get('platform', {})
+            if entry_platform.get('os') == os_name and entry_platform.get('architecture') == arch:
+                container.digest = entry['digest']
+                return self.get_manifest(container, allowed_media_type=[IMAGE_MANIFEST_MEDIA_TYPE])
+
+        raise DownloadPackageError(
+            f'{container} resolves to an OCI Image Index/manifest list, but no manifest for '
+            f'{os_name}/{arch} was found in it. Available platforms: '
+            f"{[e.get('platform') for e in index.get('manifests', [])]}"
+        )
 
     def is_gear(self, manifest: dict, container: oras.container.Container) -> bool:
         """ Check if the image is a GSF package

@@ -20,11 +20,12 @@ jobs:
     steps:
     - name: Scan issue or pull request for profanity
       # Conditionally run the step if the actor isn't a bot
-      if: ${{ github.actor != 'dependabot[bot]' && github.actor != 'github-actions[bot]' }}
-      uses: IEvangelist/profanity-filter@7d6e0c79ee3d33ae09b5ed0c6e2fa04b9c512e08 #10.0
+      if: ${{ github.event.sender.type != 'Bot' }}
+      uses: IEvangelist/profanity-filter@96fb7c017b3219ea65c6a7ca70e5aed3ce5b4d7d # v13.4.6.2
       id: profanity-filter
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         # See https://bit.ly/potty-mouth-replacement-strategies
         replacement-strategy: middle-asterisk # See Replacement strategy
         custom-profane-words-url: https://github.com/Hesham-Elbadawi/list-of-banned-words/raw/refs/heads/master/ru
+        exclude-profane-words: mongo,robot

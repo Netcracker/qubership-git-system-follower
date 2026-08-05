@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from functools import cmp_to_key
 from pathlib import Path
 
 from gitlab.v4.objects import Project
@@ -96,7 +97,7 @@ def get_version_dirs(package: PackageLocalData, start_version: str) -> tuple[tup
                 versions.append(file)
 
     # Sort versions using VersionComparer
-    versions = sorted(versions, key=lambda v: (comparer.compare('0.0.0', v.name), v.name))
+    versions = sorted(versions, key=cmp_to_key(lambda a, b: comparer.compare(a.name, b.name)))
     return tuple(versions), current_version
 
 

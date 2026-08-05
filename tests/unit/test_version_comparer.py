@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import pytest
+from functools import cmp_to_key
 from git_system_follower.utils.version_comparer import VersionComparer
 
 
@@ -181,7 +182,7 @@ def test_version_sorting_mixed_types():
     # Sort using the comparer - mimics the logic in updater.py
     sorted_versions = sorted(
         versions,
-        key=lambda v: (comparer.compare('0.0.0', v), v)
+        key=cmp_to_key(comparer.compare)
     )
 
     # Find indices where quarterly and semver versions are
@@ -190,11 +191,22 @@ def test_version_sorting_mixed_types():
     semver_indices = [i for i, v in enumerate(sorted_versions)
                      if not comparer.is_quarterly(v)]
 
-    # Verify all semver versions appear before all quarterly versions
+    # Verify all quarterly versions appear before all semver versions
     if quarterly_indices and semver_indices:
-        assert max(semver_indices) < min(quarterly_indices), \
-            "Semver versions should all come before quarterly versions when sorting"
+        assert max(quarterly_indices) < min(semver_indices), \
+            "Quarterly versions should all come before semver versions when sorting"
 
-    # Expected order: semver versions sorted, then quarterly versions sorted
-    expected = ['1.0.0', '1.1.0', '1.2.0', '23.4_old', '24.1_release', '24.2_feature']
+    # Expected order: quarterly versions sorted, then semver versions sorted
+    expected = ['23.4_old', '24.1_release', '24.2_feature', '1.0.0', '1.1.0', '1.2.0']
     assert sorted_versions == expected
+
+
+@pytest.mark.unit
+def test_version_sorting_numeric_not_lexicographic():
+    comparer = VersionComparer()
+    versions = ["1.3.9", "1.3.28", "1.3.10", "1.3.11", "1.2.0", "1.10.0", "1.9.1"]
+
+    sorted_versions = sorted(versions, key=cmp_to_key(comparer.compare))
+
+    assert sorted_versions == ["1.2.0", "1.3.9", "1.3.10", "1.3.11", "1.3.28", "1.9.1", "1.10.0"]
+    assert sorted_versions.index("1.3.9") < sorted_versions.index("1.3.28")

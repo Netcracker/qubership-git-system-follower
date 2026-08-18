@@ -15,7 +15,6 @@
 from pathlib import Path
 import os
 
-
 ROOT_DIR = Path('.git-system-follower').absolute()
 REPOS_PATH = ROOT_DIR / 'repositories'
 PACKAGES_PATH = ROOT_DIR / 'packages'
@@ -33,5 +32,12 @@ PACKAGE_DESCRIPTION_FILE_API = {
         'optional_sections': ('dependencies',),
         'section_types': (str, str, str, str, {list: str}),
         'package_types': ('gitlab-ci-pipeline',)
+    },
+    'v2': {
+        'mandatory_sections': ('apiVersion', 'type', 'name', 'version'),
+        'optional_sections': ('dependencies', 'description', 'icon', 'subtype'),
+        'section_types': (str, str, str, str, {list: str}),
+        'package_types': ('gitlab-ci-pipeline',),
+        'package_subtypes': ('component',)
     }
 }

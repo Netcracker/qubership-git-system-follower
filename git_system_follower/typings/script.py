@@ -21,8 +21,12 @@ from git_system_follower.package.webhooks import Webhook
 __all__ = ['ScriptResponse']
 
 
-class ScriptResponse(TypedDict):
+class _ScriptResponseBase(TypedDict):
     template: str
     template_variables: dict[str, str]
     cicd_variables: list[CICDVariable]
     webhooks: list[Webhook]
+
+
+class ScriptResponse(_ScriptResponseBase, total=False):
+    project_metadata: dict[str, str | bool]

@@ -1,4 +1,4 @@
-# types module
+# types module (v1)
 API provided in `types.py` module. This module contains classes for easy interaction. You can also use them as type hints in your code.
 
 ## Usage in package API
@@ -9,6 +9,11 @@ from git_system_follower.develop.api.types import (
    CICDVariable, CICDVariables
 )
 ```
+
+!!! note
+    For backward compatibility, v1 packages can import from the legacy unversioned path
+    (`git_system_follower.develop.api.*`). The explicit versioned path
+    (`git_system_follower.develop.api.v1.*`) is equivalent and is preferred for new packages.
 
 ## Classes description
 ### `Parameters` class

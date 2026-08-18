@@ -1,4 +1,4 @@
-# webhooks module
+# webhooks module (v1)
 API provided in `webhooks.py` module. This module contains functions for easy interaction with GitLab webhooks.
 
 !!! info
@@ -309,3 +309,8 @@ GitLab enforces specific rules for webhook URLs. If webhook creation fails, ensu
 - Must use HTTP or HTTPS protocol
 - Local network URLs may be blocked depending on GitLab configuration
 - URL must be accessible from GitLab server
+
+!!! note
+    For backward compatibility, v1 packages can import from the legacy unversioned path
+    (`git_system_follower.develop.api.*`). The explicit versioned path
+    (`git_system_follower.develop.api.v1.*`) is equivalent and is preferred for new packages.

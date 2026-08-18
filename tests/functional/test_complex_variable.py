@@ -89,10 +89,17 @@ def bump_patch_version(version: str, bump_by: str) -> str:
     )
 
 def get_repo_info(project) -> RepositoryInfo:
-    return RepositoryInfo(
-        gitlab=project,
-        git=get_git_repo(project, ENV_VARS["GITLAB_TOKEN"])
-    )
+    try:
+        repo_info = RepositoryInfo()
+        _ = repo_info.gitlab
+        return repo_info
+    except RuntimeError:
+        return RepositoryInfo().initialize(
+            gitlab=project,
+            git=get_git_repo(project, ENV_VARS["GITLAB_TOKEN"]),
+            repo_url=ENV_VARS["GITLAB_URL"],
+            token=ENV_VARS["GITLAB_TOKEN"],
+        )
 
 def install_package(states, branch, package, is_autoheal, is_force, project, extras,
     state_cond=None):

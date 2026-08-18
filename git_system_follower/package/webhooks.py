@@ -17,7 +17,7 @@ from typing import TypedDict
 
 from gitlab.v4.objects import Project
 from gitlab.base import RESTObject
-from gitlab.exceptions import GitlabCreateError
+from gitlab.exceptions import GitlabCreateError, GitlabError
 
 from git_system_follower.logger import logger
 
@@ -25,7 +25,12 @@ from git_system_follower.logger import logger
 __all__ = ['Webhook', 'get_webhooks', 'create_webhook', 'update_webhook', 'delete_webhook']
 
 
-class Webhook(TypedDict, total=False):
+class _WebhookBase(TypedDict):
+    """ GitLab project webhook - required fields """
+    url: str
+
+
+class Webhook(_WebhookBase, total=False):
     """ GitLab project webhook
 
     Dictionary items:
@@ -45,7 +50,6 @@ class Webhook(TypedDict, total=False):
         - token : str | secret token for webhook authentication
         - enable_ssl_verification : bool | enable SSL verification
     """
-    url: str
     push_events: bool
     issues_events: bool
     merge_requests_events: bool
@@ -75,6 +79,25 @@ def get_webhooks(project: Project) -> dict[str, Webhook]:
     for hook in gitlab_hooks:
         webhooks[hook.url] = _serialize_webhook(hook)
     return webhooks
+
+
+def get_webhooks_safely(project: Project) -> dict[str, Webhook] | None:
+    """ Get webhooks tolerating insufficient token permissions
+
+    Reading project webhooks requires at least the Maintainer role. When the
+    token cannot read them (e.g. a Developer token for a gear that does not use
+    webhooks at all) this returns None instead of failing, so the run can
+    proceed. The actual need for Maintainer is enforced at the execution point
+    by git_system_follower.package.permissions.check_token_permissions.
+
+    :param project: GitLab project
+    :return: webhooks dict or None if they could not be read
+    """
+    try:
+        return get_webhooks(project)
+    except GitlabError as e:
+        logger.debug(f"Failed to read webhooks ({e}). Treating them as unavailable.")
+        return None
 
 
 def create_webhook(project: Project, webhook: Webhook) -> Webhook:

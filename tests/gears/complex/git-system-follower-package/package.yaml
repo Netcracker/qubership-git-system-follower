@@ -1,4 +1,4 @@
 apiVersion: v1
+name: complex
 type: gitlab-ci-pipeline
-name: complex-gear
 version: 0.0.1

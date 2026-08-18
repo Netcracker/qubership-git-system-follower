@@ -22,6 +22,7 @@ from pprint import pformat
 import sys
 import base64
 import yaml
+from gitlab.v4.objects import Project
 from git_system_follower.typings.cli import ExtraParam
 from git_system_follower.logger import logger
 from git_system_follower.errors import HashesMismatch
@@ -30,7 +31,7 @@ from git_system_follower.typings.package import PackageLocalData
 from git_system_follower.typings.script import ScriptResponse
 from git_system_follower.package.cicd_variables import CICDVariable
 from git_system_follower.package.webhooks import Webhook
-from git_system_follower.utils.utility import normalized_in_string_match
+from git_system_follower.utils.utility import normalized_in_string_match, get_current_avatar_hash
 
 
 __all__ = [
@@ -51,11 +52,18 @@ class CICDVariablesSection(TypedDict):
     managed_by_gsf: list[str]
     managed_externally: list[str]
 
+class ProjectMetadata(TypedDict):
+    component: bool
+    cicd_catalog: bool
+    pipeline_type: str
+    project_icon: str
+    project_description: str
+
 class WebhooksSection(TypedDict):
     urls: list[str]
     hash: str
 
-class PackageState(TypedDict):
+class _PackageStateBase(TypedDict):
     name: str
     version: str
     used_template: str
@@ -66,6 +74,9 @@ class PackageState(TypedDict):
     cicd_variables: CICDVariablesSection
     webhooks: WebhooksSection
 
+class PackageState(_PackageStateBase, total=False):
+    source: str
+    project_metadata: ProjectMetadata
 
 class StateFileContent(TypedDict):
     hash: str
@@ -88,13 +99,19 @@ class StateFile:
     def __init__(
             self, *, raw: bytes | None = None,
             current_cicd_variables: dict[str, CICDVariable] | None = None,
-            current_webhooks: dict[str, Webhook] | None = None
+            current_webhooks: dict[str, Webhook] | None = None,
+            project: Project | None= None,
+            is_skip_project_description: bool = False,
+            is_skip_project_icon: bool = False
     ):
         """ Read raw state file (e.g. from GitLab REST API) or init state file with empty packages section
 
         :param raw: state file
         :param current_cicd_variables: current CI/CD variables in Gitlab
         :param current_webhooks: current webhooks in Gitlab
+        :param project: GitLab project
+        :param is_skip_project_description: whether to warn instead of exit on project description mismatch
+        :param is_skip_project_icon: whether to warn instead of exit on project icon mismatch
         """
         self.__change_status = ChangeStatus.no_change
         if raw is None:
@@ -110,8 +127,10 @@ class StateFile:
                                  f"generated hash ({computed_hash}) do not match",
                                  state_file_hash=content['hash'], generated_hash=computed_hash)
         for package in content['packages']:
-            self.__check_cicd_variables_hash(package, current_cicd_variables)
+            if current_cicd_variables is not None:
+                self.__check_cicd_variables_hash(package, current_cicd_variables)
             self.__check_webhook_hash(package, current_webhooks)
+            self.__check_metadata(package, project, is_skip_project_description, is_skip_project_icon)
         self.__content = StateFileContent(hash=computed_hash, packages=content['packages'])
 
     def __get_hash(self, state: Any) -> str:
@@ -190,13 +209,58 @@ class StateFile:
                 f"Current hash: {computed_hash}"
             )
 
+    def __check_metadata(self, package: PackageState, project: Project,
+        is_skip_project_description: bool, is_skip_project_icon: bool,
+    ) -> None:
+        """ Check project metadata for <package>
+        A mismatching field raises unless its skip flag is set, in which case it only warns
+
+        :param package: package with information about project metadata
+        :param project: GitLab project
+        :param is_skip_project_description: whether to warn instead of exit on project description mismatch
+        :param is_skip_project_icon: whether to warn instead of exit on project icon mismatch
+        """
+        if 'project_metadata' not in package:
+            return
+
+        metadata = package['project_metadata']
+        errors = []
+        warnings = []
+        if not self.__description_matches(project, metadata.get('description', '')):
+            (warnings if is_skip_project_description else errors).append('description')
+        if not self.__icon_matches(project, metadata.get('icon', ''), metadata.get('icon_hash', '')):
+            (warnings if is_skip_project_icon else errors).append('icon')
+
+        if warnings:
+            logger.warning(self.__metadata_mismatch_message(package, warnings))
+        if errors:
+            logger.error(self.__metadata_mismatch_message(package, errors))
+            sys.exit(1)
+
+    @staticmethod
+    def __metadata_mismatch_message(package: PackageState, fields: list[str]) -> str:
+        """ Format a project metadata mismatch message for <package> and <fields> """
+        return (f"Project metadata mismatch for {package['name']}@{package['version']}: "
+                f"{', '.join(fields)} have been modified externally.")
+
+    def __description_matches(self, project, description: str) -> bool:
+        return project.attributes.get("description") == description
+
+    def __icon_matches(self, project, icon, icon_hash) -> bool:
+        current_avatar = project.attributes.get("avatar_url")
+        if icon is None:
+            return not current_avatar
+
+        current_hash = get_current_avatar_hash(project)
+        return current_hash == icon_hash
+
     def get_installed_packages(self) -> tuple[InstalledPackage, ...]:
         packages = []
         for package in self.__content['packages']:
             packages.append(InstalledPackage(
                 name=package['name'],
                 version=package['version'],
-                source=package['source']))
+                source=package.get('source') or ""))
         return tuple(packages)
 
     def get_all_created_cicd_variables(self) -> tuple[str, ...]:
@@ -231,13 +295,14 @@ class StateFile:
             if is_skip_force_rollback:
                 src.append(state.get('source') or "")
             else:
-                if ":" not in source:
+                if source is not None and ":" not in source:
                     logger.error(
                         f"Rollback with source validation skipped is supported for Docker image sources only. "
                         f"'{source}' appears to be a local .tar.gz archive or local source directory."
                     )
                     sys.exit(1)
-                src.append(state.get("source") or f"{source.rsplit(':', 1)[0]}:{state['version']}")
+                fallback = f"{source.rsplit(':', 1)[0]}:{state['version']}" if source else ""
+                src.append(state.get("source") or fallback)
         return tuple(src)
 
     def update_package_sources(self, sources: tuple[str, ...], is_skip_force_rollback: bool):
@@ -270,7 +335,8 @@ class StateFile:
                     "Final state of files after reinstall is not controlled by the system "
                     "and may be inconsistent. Please verify adequacy of the installed files."
                 )
-            state['source'] = source
+            if source is not None:
+                state['source'] = source
             self.__change_status = ChangeStatus.changed
             self.save
 
@@ -335,7 +401,7 @@ class StateFile:
 
         webhook_urls = [webhook['url'] for webhook in response['webhooks']]
 
-        new_state = PackageState(
+        new_state = dict(
             name=package['name'], version=package['version'],
             used_template=response['template'],
             template_variables={name: mask_data(value) for name, value in response['template_variables'].items()},
@@ -352,8 +418,11 @@ class StateFile:
             webhooks=WebhooksSection(
                 urls=webhook_urls,
                 hash=self.__get_hash(response['webhooks'])
-            )
+            ),
         )
+        if response.get('project_metadata'):
+            new_state['project_metadata'] = response['project_metadata']
+
         if state is None:
             self.__content['packages'].append(new_state)
             return
@@ -389,16 +458,16 @@ class StateFile:
 
 
 def filter_cicd_variables_by_state(
-        state: PackageState | None, current_cicd_variables: dict[str, CICDVariable]
+        state: PackageState | None, current_cicd_variables: dict[str, CICDVariable] | None
 ) -> list[CICDVariable]:
     """ Get current CI/CD variables of package state for CI/CD variables specified in state file
     Note: only variable names are stored in state file
 
     :param state: state from state file with variable names for which necessary to find it's current state
-    :param current_cicd_variables: current CI/CD variables in Gitlab
+    :param current_cicd_variables: current CI/CD variables in Gitlab (None when they could not be read)
     :return: list of CI/CD variables filtered by necessary variable names
     """
-    if state is None:
+    if state is None or current_cicd_variables is None:
         return []
 
     names = state['cicd_variables']['names']
@@ -423,23 +492,6 @@ def get_installed_packages(states: dict[str, StateFile]) -> set[PackageCLI]:
                 version=package.version,
                 source=package.source))
     return installed_packages
-
-def get_installed_packages_and_sources(states: dict[str, StateFile]) -> set[PackageCLI]:
-    """ Getting information about installed packages
-
-    :param states: current states in GitLab repository branches
-    :return: installed packages set
-    """
-    installed_packages = set()
-    for package_states in states.values():
-        for package, source in zip(package_states.get_installed_packages(), package_states.get_package_sources()):
-            installed_packages.add(InstalledPackageSources(
-                name=package.name,
-                version=package.version,
-                source=source
-            ))
-    return installed_packages
-
 
 def update_created_cicd_variables(
         created_cicd_variables: tuple[str, ...], response: ScriptResponse | None

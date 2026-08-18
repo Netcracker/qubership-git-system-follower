@@ -28,7 +28,7 @@ from git_system_follower.typings.cli import ExtraParam
 from git_system_follower.package.cicd_variables import CICDVariable
 from git_system_follower.package.webhooks import Webhook
 from git_system_follower.states import PackageState, filter_cicd_variables_by_state, unmask_data
-from git_system_follower.develop.api.types import Parameters, SystemParameters, ExtraParams
+from git_system_follower.develop.api.common.types import Parameters, SystemParameters, ExtraParams
 from git_system_follower.package.system import get_system_info
 from git_system_follower.typings.script import ScriptResponse
 from git_system_follower.package.default import init_default_main, delete_default_main
@@ -41,8 +41,8 @@ class SubprocessStatus(Enum):
 
 
 def run_script(
-        path: Path, workdir: Path, project: Project, all_cicd_variables: dict[str, CICDVariable],
-        all_webhooks: dict[str, Webhook], used_template: str | None, *,
+        path: Path, workdir: Path, project: Project, all_cicd_variables: dict[str, CICDVariable] | None,
+        all_webhooks: dict[str, Webhook] | None, used_template: str | None, *,
         extras: tuple[ExtraParam, ...], is_force: bool, state: PackageState | None = None,
         created_cicd_variables: tuple[str, ...], created_webhooks: tuple[str, ...],
         current_version_dir: Path | None = None,
@@ -53,8 +53,8 @@ def run_script(
     :param path: path to package api
     :param workdir: workdir for package api
     :param project: gitlab project
-    :param all_cicd_variables: all CI/CD variables in Gitlab repository
-    :param all_webhooks: all webhooks in Gitlab repository
+    :param all_cicd_variables: all CI/CD variables in Gitlab repository (None when they could not be read)
+    :param all_webhooks: all webhooks in Gitlab repository (None when they could not be read)
     :param used_template: last used template
     :param created_cicd_variables: list of created CI/CD variables in previous package installations
     :param created_webhooks: list of created webhook URLs in previous package installations
@@ -65,6 +65,10 @@ def run_script(
         after running package api
     """
     template_variables = get_template_variables(state)
+    # When CI/CD variables/webhooks could not be read (insufficient token), expose
+    # them to the package api as empty rather than None so scripts can iterate.
+    all_cicd_variables = all_cicd_variables or {}
+    all_webhooks = all_webhooks or {}
     cicd_variables = filter_cicd_variables_by_state(state, all_cicd_variables)
     webhooks = filter_webhooks_by_state(state, all_webhooks)
     created_cicd_vars_in_other_pkgs = _fetch_cicd_vars_except_package(created_cicd_variables, cicd_variables)
@@ -122,16 +126,16 @@ def _fetch_webhooks_except_package(all_webhook_urls: tuple[str, ...], pkg_webhoo
     return result
 
 
-def filter_webhooks_by_state(state: PackageState | None, all_webhooks: dict[str, Webhook]) -> list[Webhook]:
+def filter_webhooks_by_state(state: PackageState | None, all_webhooks: dict[str, Webhook] | None) -> list[Webhook]:
     """ Filter webhooks by state
 
     Note: only webhook URLs are stored in state file, actual configurations are fetched from GitLab
 
     :param state: current state for this package with another version
-    :param all_webhooks: all webhooks in Gitlab repository
+    :param all_webhooks: all webhooks in Gitlab repository (None when they could not be read)
     :return: webhooks for this package
     """
-    if state is None:
+    if state is None or all_webhooks is None:
         return []
 
     urls = state.get('webhooks', {}).get('urls', [])
@@ -226,7 +230,7 @@ def execute_package_api(
                 'template': used_template,
                 'template_variables': template_variables,
                 'cicd_variables': [value for key, value in cicd_variables.items()],
-                'webhooks': [value for key, value in webhooks.items()]
+                'webhooks': [value for key, value in webhooks.items()],
             },
             file
         )

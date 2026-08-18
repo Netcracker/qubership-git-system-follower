@@ -20,6 +20,7 @@ from git_system_follower.typings.cli import ExtraParam
 from git_system_follower.typings.script import ScriptResponse
 from git_system_follower.package.deleter import delete
 from git_system_follower.package.initer import init
+from git_system_follower.git_api.gitlab_api import delete_tag
 
 
 __all__ = ['rollback']
@@ -41,4 +42,22 @@ def rollback(
         # rollback by default without validation does a force reinstall
         response = init(package, repo, state, created_cicd_variables=tuple([]), created_webhooks=tuple([]),
                        extras=extras, is_autoheal=is_autoheal, is_force=True)
+    _delete_release_tag_if_component(repo, old_package)
     return response
+
+
+def _delete_release_tag_if_component(repo: RepositoryInfo, old_package: PackageLocalData) -> None:
+    """ Remove the release tag of the rolled back (removed) version.
+
+    Component gears publish a release tag on install; when a rollback removes that
+    version, the tag must be deleted too — mirroring what `uninstall` does.
+    """
+    if old_package.get('subtype') != 'component':
+        return
+    release_version = old_package['version']
+    release_name = old_package.get('name') or release_version
+    try:
+        delete_tag(repo.gitlab, release_version)
+        logger.success(f":: Release removed {release_name}@{release_version}")
+    except Exception as e:
+        logger.warning(e)

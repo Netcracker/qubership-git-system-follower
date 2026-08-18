@@ -1,0 +1,7 @@
+apiVersion: v2
+type: gitlab-ci-pipeline
+name: simple
+version: 1.0.0
+subtype: component
+icon: 'icon.png'
+description: 'This is a simple gear v2'

@@ -170,6 +170,14 @@ def download_command(
     help='Skip validation if rollback is supported by installed gear'
 )
 @click.option(
+    '--skip-project-description', 'is_skip_project_description', is_flag=True, default=False,
+    help='Warn instead of exit on project description mismatch'
+)
+@click.option(
+    '--skip-project-icon', 'is_skip_project_icon', is_flag=True, default=False,
+    help='Warn instead of exit on project icon mismatch'
+)
+@click.option(
     '--autoheal', 'is_autoheal', is_flag=True, default=False,
     help='Autoheal: overwrites user changes with gear files'
 )
@@ -179,11 +187,11 @@ def download_command(
 )
 @click.option('--debug', 'is_debug', is_flag=True, default=False, help='Show debug level messages')
 def install_command(
-        gears: tuple[HookSpec, ...], repo: str,
-        branches: tuple[str, ...], token: str, extras: tuple[ExtraParam], extras_external: tuple[ExtraParam],
-        message: str, username: str, email: str,
+        gears: tuple[HookSpec, ...], repo: str, branches: tuple[str, ...], token: str,
+        extras: tuple[ExtraParam], extras_external: tuple[ExtraParam], message: str, username: str, email: str,
         registry_type: str, registry_username: str | None, registry_password: str | None, is_insecure: bool,
-        is_skip_force_rollback: bool, is_autoheal: bool, is_force: bool, is_debug: bool,
+        is_skip_force_rollback: bool, is_skip_project_description: bool, is_skip_project_icon: bool,
+        is_autoheal: bool, is_force: bool, is_debug: bool,
         *args, **kwargs  # dont delete, these parameters for plugin manager
 ):
     """ Install gears to branches in repository
@@ -233,6 +241,8 @@ def install_command(
         gears, sources, repo, branches, token, extras=extras,
         commit_message=message, username=username, user_email=email,
         registry=registry, is_skip_force_rollback=is_skip_force_rollback,
+        is_skip_project_description=is_skip_project_description,
+        is_skip_project_icon=is_skip_project_icon,
         is_autoheal=is_autoheal, is_force=is_force
     )
 
@@ -299,6 +309,14 @@ def install_command(
     help='Allow insecure connections to the registry (use HTTP instead of HTTPS)'
 )
 @click.option(
+    '--skip-project-description', 'is_skip_project_description', is_flag=True, default=False,
+    help='Warn instead of exit on project description mismatch'
+)
+@click.option(
+    '--skip-project-icon', 'is_skip_project_icon', is_flag=True, default=False,
+    help='Warn instead of exit on project icon mismatch'
+)
+@click.option(
     '-f', '--force', 'is_force', is_flag=True, default=False,
     help='Forced uninstallation: change of files, CI/CD variables as specified in gear'
 )
@@ -308,6 +326,7 @@ def uninstall_command(
         branches: tuple[str, ...], token: str, extras: tuple[ExtraParam, ...], extras_external: tuple[ExtraParam],
         message: str, username: str, email: str,
         registry_type: str, registry_username: str | None, registry_password: str | None, is_insecure: bool,
+        is_skip_project_description: bool, is_skip_project_icon: bool,
         is_force: bool, is_debug: bool,
         *args, **kwargs  # dont delete, these parameters for plugin manager
 ):
@@ -359,7 +378,8 @@ def uninstall_command(
     uninstall(
         gears, repo, branches, token, extras=extras,
         commit_message=message, username=username, user_email=email,
-        registry=registry, is_force=is_force
+        registry=registry, is_skip_project_description=is_skip_project_description,
+        is_skip_project_icon=is_skip_project_icon, is_force=is_force
     )
 
 

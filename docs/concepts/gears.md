@@ -1,7 +1,7 @@
 # Gears
 git-system-follower uses a packaging format called Gear. Gear is a collection of files describe the variables and structure of files in a repository.
 
-Gears are created as files laid out in a particular directory tree. They can be packaged into archives, docker images/OCI artifacts.
+Gears are created as files laid out in a particular directory tree. They can be packaged into archives, Docker images/OCI artifacts.
 
 ## The Gear file structure
 A Gear is organized as a collection of files in the `git-system-follower-package/` directory inside your project.
@@ -20,9 +20,12 @@ apiVersion: The Gear API version (required)
 type: The type of the Gear (required)
 name: The name of the Gear (required)
 version: The version of the Gear (required)
+description: The project description to sync to GitLab (optional, v2 only)
+icon: The path to the project icon file to upload to GitLab (optional, v2 only)
 dependencies: # A list of the Gear requirements (optional)
   - Docker image of another package
   - Another docker image of another package
+subtype: The subtype of the Gear (optional, v2 only)
 ```
 
 ### The `apiVersion` field
@@ -33,6 +36,22 @@ You can check [available `apiVersion` list](api_version_list/index.md)
 ### The `type` field
 `type` field allows git-system-follower to understand how work with this Gear
 
+### The `description` field
+`description` field (available since `apiVersion` v2, optional) sets the GitLab project
+description. When present together with `icon`, it is synchronized to the GitLab project
+on `install`/`update` and tracked in `.state.yaml` (see
+[`apiVersion` v2](api_version_list/v2.md)).
+
+### The `icon` field
+`icon` field (available since `apiVersion` v2, optional) is a relative path (inside the
+`scripts/` directory) to an image file which is uploaded as the GitLab project avatar.
+When present together with `description`, it is synchronized to the GitLab project on
+`install`/`update` and tracked in `.state.yaml`.
+
+### The `subtype` field
+`subtype` field (available since `apiVersion` v2) narrows down the Gear type.
+Currently the only supported value is `component`.
+
 ### Naming: the `name` field
 `name` field allows git-system-follower to uniquely identify the Gear. Acceptable characters: letter, digits, `.`, `-`, `_`
 
@@ -42,7 +61,9 @@ Every Gears must have a version number. A version must follow TBD
 For more detailed description of the version sync policy, see [Version Synchronization](version.md).
 
 ### Gears dependencies: the `dependencies` field
-One gear may depend on any number of other gears. To add a dependency, it must be specified as a docker image in the `dependencies` section.
+One gear may depend on any number of other gears. To add a dependency, it must be specified as a Docker image in the `dependencies` section.
+
+For more detailed description of how gear dependencies are declared, installed, and uninstalled, see [Gear Dependencies](gear_dependencies.md).
 
 ## The package API (`scripts/` directory)
 
@@ -121,7 +142,15 @@ from git_system_follower.develop.api.cicd_variables import CICDVariable, create_
 from git_system_follower.develop.api.templates import create_template
 ```
 
-For more details on how to develop your package api, see [API reference](../api_reference/index.md)
+New Gears are recommended to import from the versioned surface matching their `apiVersion` (e.g. `git_system_follower.develop.api.v2` for `apiVersion: v2`).
+
+### Project metadata (v2)
+Since `apiVersion` v2, Gears can synchronize the GitLab project metadata. When `description`
+and `icon` are present in `package.yaml`, git-system-follower automatically sets the project
+description and uploads the project icon on `install`/`update`, and tracks them in `.state.yaml`
+(see [`apiVersion` v2](api_version_list/v2.md)).
+
+For more details on how to develop your package API, see [API reference](../api_reference/index.md)
 
 If you don't want to work with CI/CD variables, but only to create template(s), 
 you may not create init.py, delete.py, default functions will be used for them.
@@ -181,7 +210,7 @@ You can use variables that have been passed as extra parameters to git-system-fo
 which have been passed to git-system-follower as `--extra VAR_NAME VAR_VALUE no-masked`, in template as `{{ cookiecutter.VAR_NAME }}`
 
 ## Build Gear
-The gear is built into a docker image for future use and distibution.
+The gear is built into a Docker image for future use and distribution.
 
 For more details on how to build you gear, see [build gear](../how_to/build.md)
 
@@ -209,8 +238,8 @@ For more details on how to build you gear, see [build gear](../how_to/build.md)
 ```
 
 ## Advanced
-### Why package being built as a docker image
-The build process is docker image oriented because docker images are easy to build and transport
+### Why package being built as a Docker image
+The build process is Docker image oriented because Docker images are easy to build and transport
 
 ### How version is updated
 git-system-follower sequentially installs all version that stand between versions A and B, where A is version currently installed,
@@ -237,6 +266,6 @@ Each new version keeps the scripts of older versions, so git-system-follower won
 After some time you will realize that some versions will no longer be used/supported, update your package in your repositories and you
 will be able to remove scripts of irrelevant version from new version
 
-### Template generation work in package api
+### Template generation work in package API
 Template is generated in the temp directory (`/tmp/`) with `gsf-package-manager-...` name (where `...` is a bunch of different letters and numbers)
 and then files are copied to local repository directory. This is so that if we have identical files, we can compare their contents for careful template generation

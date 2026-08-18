@@ -13,11 +13,10 @@
 # limitations under the License.
 
 """ Module with api for `uninstall` command """
+import sys
 from pathlib import Path
-
 from gitlab.v4.objects import Project
 from outlify.list import TitledList
-
 from git_system_follower.logger import logger
 from git_system_follower.errors import UninstallationError
 from git_system_follower.typings.cli import (
@@ -27,7 +26,7 @@ from git_system_follower.typings.registry import RegistryInfo
 from git_system_follower.typings.package import PackageLocalData
 from git_system_follower.download import download
 from git_system_follower.git_api.gitlab_api import (
-    get_gitlab, get_project, get_states, create_mr, merge_mr
+    get_gitlab, get_project, get_states, create_mr, merge_mr, delete_tag
 )
 from git_system_follower.git_api.git_api import checkout_to_new_branch, push_installed_packages
 from git_system_follower.git_api.utils import get_packages_str, get_git_repo
@@ -38,6 +37,9 @@ from git_system_follower.states import (
     get_installed_packages
 )
 from git_system_follower.package.deleter import delete
+from git_system_follower.package.permissions import (
+    check_token_permissions, detect_package_requirements, reset_registered_requirements
+)
 
 
 __all__ = ['uninstall']
@@ -47,13 +49,16 @@ def uninstall(
         packages_cli: tuple[PackageCLIImage | PackageCLITarGz | PackageCLISource, ...],
         repo_url: str, branches: tuple[str, ...], token: str, *,
         extras: tuple[ExtraParam, ...], commit_message: str,
-        username: str, user_email: str,
-        registry: RegistryInfo, is_force: bool
+        username: str, user_email: str, registry: RegistryInfo,
+        is_skip_project_description: bool, is_skip_project_icon: bool, is_force: bool
 ) -> None:
     gitlab_instance = get_gitlab(repo_url, token)
     project = get_project(gitlab_instance, repo_url)
-    states = get_states(project, branches)
-
+    repo = RepositoryInfo().initialize(gitlab=project, git=get_git_repo(project, token),
+            repo_url=repo_url, token=token)
+    states = get_states(project, branches,
+        is_skip_project_description=is_skip_project_description,
+        is_skip_project_icon=is_skip_project_icon)
     packages = get_packages(packages_cli, states, registry=registry)
     if not packages:
         logger.info('No packages of these versions found in state file')
@@ -75,7 +80,7 @@ def uninstall(
             logger.info(f'There are no packages to delete. Skip deletion for {branch} branch')
             continue
         states[branch] = managing_branch(
-            project, branch, token, validated_packages, states[branch], extras=extras,
+            project, branch, repo, token, validated_packages, states[branch], extras=extras,
             commit_message=commit_message, username=username, user_email=user_email, is_force=is_force
         )
     logger.success('Uninstallation complete')
@@ -202,13 +207,11 @@ def _whether_to_delete_main_packages(
 
 @retry(output_func=logger.info, error_output_func=logger.error)
 def managing_branch(
-        project: Project, branch: str, token: str, packages: tuple[PackageLocalData, ...], state: StateFile, *,
-        extras: tuple[ExtraParam, ...], commit_message: str, username: str, user_email: str,
+        project: Project, branch: str, repo: RepositoryInfo, token: str, packages: tuple[PackageLocalData, ...],
+        state: StateFile, *, extras: tuple[ExtraParam, ...], commit_message: str, username: str, user_email: str,
         is_force: bool
 ) -> StateFile:
-    repo = RepositoryInfo(gitlab=project, git=get_git_repo(project, token))
     checkout_to_new_branch(repo.git, branch)
-
     logger.info(':: Uninstalling packages')
     state = processing_branch(
         packages, repo, state, extras=extras, is_force=is_force,
@@ -223,7 +226,21 @@ def managing_branch(
         description=f'Installed package(s): {get_packages_str(packages)}'
     )
     logger.info(':: Merging merge request')
-    merge_mr(repo.gitlab, mr)
+    if any(p.get('subtype') == 'component' for p in packages):
+        merge_mr(repo.gitlab, mr)
+        release_name, release_version = next(
+            ((p.get('name') or p['version']), p['version'])
+            for p in packages
+            if p.get('subtype') == 'component'
+        )
+        try:
+            delete_tag(project, release_version)
+            logger.success(f":: Release removed {release_name}@{release_version}")
+        except Exception as e:
+            logger.warning(e)
+            sys.exit(1)
+    else:
+        merge_mr(repo.gitlab, mr)
     return state
 
 
@@ -263,6 +280,10 @@ def uninstall_packages(
         if package_state is None:
             logger.info(f"{package['name']}@{package['version']} package is not installed")
             continue
+        reset_registered_requirements()
+        # Fast-fail on statically known needs (e.g. description/icon => Owner)
+        # before running any script.
+        check_token_permissions(repo.gitlab, detect_package_requirements(package))
         try:
             delete(
                 package, repo, package_state,
@@ -274,4 +295,7 @@ def uninstall_packages(
             logger.critical(f"An error came out at one stage of uninstallation. "
                             f"Uninstallation {package['name']}@{package['version']} aborted")
             raise UninstallationError('Uninstallation failed in one of the steps. Please check log above')
+        # Runtime needs (CI/CD variables/webhooks => Maintainer) only become known
+        # when a package's scripts ran. Fail before the changes are pushed/merged.
+        check_token_permissions(repo.gitlab)
     return state

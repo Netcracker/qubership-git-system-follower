@@ -114,15 +114,15 @@ def test_rollback(
 
             if gear_type == "simple":
                 install(gears_dir, is_autoheal, registry, extras, states)
-                update_package_yaml(package_path, "simple-gear", "0.1.0")
+                update_package_yaml(package_path, "simple", "0.1.0")
                 install(gears_dir, is_autoheal, registry, extras, states)
                 uninstall(gears_dir, registry, extras, states)
-                update_package_yaml(package_path, "simple-gear", "1.0.0")
+                update_package_yaml(package_path, "simple", "1.0.0")
 
             else:
-                update_package_yaml(package_path, "complex-gear", "0.1.0")
+                update_package_yaml(package_path, "complex", "0.1.0")
                 install(gears_dir, is_autoheal, registry, extras, states)
-                update_package_yaml(package_path, "complex-gear", "0.0.1")
+                update_package_yaml(package_path, "complex", "0.0.1")
                 install(gears_dir, is_autoheal, registry, extras, states)
                 uninstall(gears_dir, registry, extras, states)
 

@@ -85,7 +85,7 @@ markdown_extensions:
 
 # Page tree
 nav:
-  - Intoduction: index.md
+  - Introduction: index.md
   - Docs Home: home.md
   - Getting Started:
     - getting_started/index.md
@@ -94,19 +94,28 @@ nav:
   - Concepts:
     - concepts/index.md
     - Gears Guide: concepts/gears.md
+    - Gear Dependencies: concepts/gear_dependencies.md
     - apiVersion list: 
       - concepts/api_version_list/index.md
+      - apiVersion v2: concepts/api_version_list/v2.md
       - apiVersion v1: concepts/api_version_list/v1.md
     - Version Synchronization: concepts/version.md
     - .state.yaml Guide: concepts/state.md
+    - Project Metadata Skip Flags: concepts/project_metadata_skip_flags.md
+    - Token Permissions: concepts/token_permissions.md
     - Plugins Guide:
       - concepts/plugins/index.md
       - CLI Arguments Extension Point: concepts/plugins/cli_arguments.md
       # - Versioning: concepts/plugins/versioning.md
   - How to:
     - how_to/index.md
-    - Build Gear: how_to/build.md
+    - Build Gear:
+      - how_to/build.md
+      - v1: how_to/build_v1.md
+      - v2: how_to/build_v2.md
+    - Image Labels: how_to/image_labels.md
     # - Gear Development Cases: how_to/gear_development_cases.md
+    - Component Release: how_to/component_release.md
     # - Integration with semantic-release: how_to/semantic_release.md
   - CLI reference:
     - cli_reference/index.md
@@ -119,6 +128,13 @@ nav:
     - api_reference/index.md
     - Develop interface: 
       - api_reference/develop_interface/index.md
-      - types Module: api_reference/develop_interface/types.md
-      - cicd_variables Module: api_reference/develop_interface/cicd_variables.md
-      - templates Module: api_reference/develop_interface/templates.md
+      - v1:
+        - Types Module: api_reference/develop_interface/types_v1.md
+        - cicd_variables Module: api_reference/develop_interface/cicd_variables_v1.md
+        - webhooks Module: api_reference/develop_interface/webhooks_v1.md
+        - templates Module: api_reference/develop_interface/templates_v1.md
+      - v2:
+        - Types Module: api_reference/develop_interface/types_v2.md
+        - cicd_variables Module: api_reference/develop_interface/cicd_variables_v2.md
+        - webhooks Module: api_reference/develop_interface/webhooks_v2.md
+        - templates Module: api_reference/develop_interface/templates_v2.md

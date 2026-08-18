@@ -25,8 +25,9 @@ from git_system_follower.typings.cli import ExtraParam
 from git_system_follower.typings.script import ScriptResponse
 from git_system_follower.package.script import run_script
 from git_system_follower.package.package_info import get_scripts_dir_by_complexity
-from git_system_follower.package.cicd_variables import CICDVariable, get_cicd_variables
-from git_system_follower.package.webhooks import Webhook, get_webhooks
+from git_system_follower.package.project_metadata import initialize_metadata
+from git_system_follower.package.cicd_variables import CICDVariable, get_cicd_variables_safely
+from git_system_follower.package.webhooks import Webhook, get_webhooks_safely
 from git_system_follower.utils.utility import get_package_dependency
 
 __all__ = ['init']
@@ -39,6 +40,7 @@ def init(
 ) -> ScriptResponse:
     logger.info('==> Package initialization')
     workdir = Path(repo.git.working_dir)
+    initialize_metadata(package, repo)
     scripts_dir, is_force = get_scripts_dir_by_complexity(
         path=package['path'] / PACKAGE_DIRNAME / SCRIPTS_DIR / package['version'],
         is_force=is_force,
@@ -46,8 +48,8 @@ def init(
     if not scripts_dir.exists():
         raise FileNotFoundError(f'Scripts directory is missing ({scripts_dir.absolute()})')
 
-    current_cicd_variables = get_cicd_variables(repo.gitlab)
-    current_webhooks = get_webhooks(repo.gitlab)
+    current_cicd_variables = get_cicd_variables_safely(repo.gitlab)
+    current_webhooks = get_webhooks_safely(repo.gitlab)
     response = run_init_script(
         scripts_dir, workdir, repo.gitlab, current_cicd_variables, current_webhooks, state,
         created_cicd_variables=created_cicd_variables, created_webhooks=created_webhooks,
@@ -58,8 +60,9 @@ def init(
 
 
 def run_init_script(
-        script_dir: Path, workdir: Path, project: Project, current_cicd_variables: dict[str, CICDVariable],
-        current_webhooks: dict[str, Webhook], state: PackageState, *,
+        script_dir: Path, workdir: Path, project: Project,
+        current_cicd_variables: dict[str, CICDVariable] | None,
+        current_webhooks: dict[str, Webhook] | None, state: PackageState, *,
         created_cicd_variables: tuple[str, ...], created_webhooks: tuple[str, ...],
         extras: tuple[ExtraParam, ...], is_autoheal: bool, is_force: bool
 ) -> ScriptResponse:

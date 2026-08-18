@@ -1,0 +1,7 @@
+apiVersion: v2
+type: gitlab-ci-pipeline
+name: complex
+version: 1.0.0
+subtype: component
+icon: 'icon.png'
+description: 'This is a complex gear v2'

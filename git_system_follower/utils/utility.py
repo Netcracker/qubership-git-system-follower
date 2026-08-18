@@ -17,8 +17,10 @@ import runpy
 import site
 import logging
 import tempfile
+import hashlib
 from pathlib import Path
 from git_system_follower.logger import logger
+from git_system_follower.typings.repository import RepositoryInfo
 from git_system_follower.errors import PackageApiError
 
 
@@ -97,3 +99,22 @@ def get_package_dependency(path: Path):
             if run_pip([req] + find_links + ['--no-index']) != 0:
                 logger.error(f'Failed to install {req} from site-packages')
                 sys.exit(1)
+
+def get_current_avatar_hash(project):
+    current_avatar = project.attributes.get("avatar_url")
+    if not current_avatar:
+        return None
+
+    try:
+        repo = RepositoryInfo()
+        response = project.manager.gitlab.session.get(
+            f"{project.manager.gitlab.url}/api/v4/projects/{project.id}/avatar",
+            headers={"PRIVATE-TOKEN": repo.token},
+            timeout=10,
+        )
+        response.raise_for_status()
+        return hashlib.sha256(response.content).hexdigest()
+
+    except Exception as e:
+        logger.warning(f"Failed to download project avatar: {e}")
+        return None

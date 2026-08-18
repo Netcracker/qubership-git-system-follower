@@ -12,60 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Module with api with types for package developers  """
-from dataclasses import dataclass
-from pathlib import Path
-from typing import Optional
+""" Module with api with types for package developers
 
-from gitlab.v4.objects import Project
-from git_system_follower.typings.cli import ExtraParam
-from git_system_follower.package.cicd_variables import CICDVariable
-from git_system_follower.package.webhooks import Webhook
-
-
-__all__ = [
-    'Parameters', 'SystemParameters', 'System',
-    'CICDVariable', 'CICDVariables',
-    'ExtraParam', 'ExtraParams',
-    'Webhook', 'Webhooks'
-]
-
-
-@dataclass(frozen=True)
-class SystemParameters:
-    project: Project
-    created_cicd_vars_names: list[str]
-    created_webhooks_urls: list[str]
-    script_dir: Path
-    is_force: bool
-    is_autoheal: bool = False
-
-
-@dataclass(frozen=True)
-class System:
-    host_domain: str
-
-
-ExtraParamName = str
-ExtraParams = dict[ExtraParamName, ExtraParam]
-
-CICDVariableName = str
-CICDVariables = dict[CICDVariableName, CICDVariable]
-
-WebhookURL = str
-Webhooks = dict[WebhookURL, Webhook]
-
-
-@dataclass(frozen=True)
-class Parameters:
-    __system_params: SystemParameters
-    system: System
-    workdir: Path
-    extras: ExtraParams
-    cicd_variables: CICDVariables
-    all_cicd_variables: CICDVariables
-    webhooks: Webhooks
-    all_webhooks: Webhooks
-    used_template: str
-    template_variables: dict[str, str]
-    current_version_dir: Optional[Path]
+Backwards-compatible shim: the implementation now lives in
+git_system_follower.develop.api.common. New packages should import from the
+versioned surface (git_system_follower.develop.api.v1 / .v2) instead.
+"""
+from git_system_follower.develop.api.common.types import (
+    __all__ as __all__,
+    Parameters, SystemParameters, System,   # noqa: F401
+    CICDVariable, CICDVariables, CICDVariableName,  # noqa: F401
+    ExtraParam, ExtraParams, ExtraParamName,    # noqa: F401
+    Webhook, Webhooks, WebhookURL     # noqa: F401
+)

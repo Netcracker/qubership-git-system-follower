@@ -29,7 +29,9 @@ from git_system_follower.uninstall import (
 )
 from tests.config import project, BRANCHES, ENV_VARS, USER_EMAIL
 from git_system_follower.states import ChangeStatus
+from git_system_follower.git_api.utils import get_git_repo
 from git_system_follower.typings.cli import PackageCLISource
+from git_system_follower.typings.repository import RepositoryInfo
 from git_system_follower.logger import logger
 
 IS_FORCE = False
@@ -77,6 +79,19 @@ def get_package_path(gear_type):
     """Get package path for gear type"""
     return Path(__file__).parent.parent / "gears" / gear_type / 'git-system-follower-package'
 
+def get_repo_info(project) -> RepositoryInfo:
+    try:
+        repo_info = RepositoryInfo()
+        _ = repo_info.gitlab
+        return repo_info
+    except RuntimeError:
+        return RepositoryInfo().initialize(
+            gitlab=project,
+            git=get_git_repo(project, ENV_VARS["GITLAB_TOKEN"]),
+            repo_url=ENV_VARS["GITLAB_URL"],
+            token=ENV_VARS["GITLAB_TOKEN"],
+        )
+
 def install(gear_dir, is_autoheal, registry, extras, states):
     packages = get_packages_by_action(
         [PackageCLISource(path=gear_dir)], states, registry, action="install"
@@ -88,8 +103,8 @@ def install(gear_dir, is_autoheal, registry, extras, states):
         logger.info(f"[{i}/{len(BRANCHES)}] Processing {branch}")
         logger.debug(f"State:\n{states[branch]}")
         states[branch] = install_managing_branch(
-            project, branch, ENV_VARS["GITLAB_TOKEN"], packages, states[branch], 'test-repo',
-            extras=extras, commit_message="Installed gear(s) test",
+            project, branch, get_repo_info(project), ENV_VARS["GITLAB_TOKEN"], packages, states[branch],
+            'test-repo', extras=extras, commit_message="Installed gear(s) test",
             username="dummy_user", user_email=USER_EMAIL, is_skip_force_rollback=False,
             is_autoheal=is_autoheal, is_force=IS_FORCE
         )

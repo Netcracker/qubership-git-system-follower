@@ -1,4 +1,4 @@
-# templates module
+# templates module (v1)
 API provided in `templates.py` module. This module contains functions for easy interaction with `cookiecutter` templates.
 
 ## Usage in package API
@@ -16,6 +16,11 @@ def main(parameters: Parameters):
    delete_template(parameters)
    create_template(parameters, 'default')
 ```
+
+!!! note
+    For backward compatibility, v1 packages can import from the legacy unversioned path
+    (`git_system_follower.develop.api.*`). The explicit versioned path
+    (`git_system_follower.develop.api.v1.*`) is equivalent and is preferred for new packages.
 
 ## Functions description
 ### `get_template_names` function

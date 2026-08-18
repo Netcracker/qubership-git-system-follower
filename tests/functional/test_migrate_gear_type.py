@@ -73,10 +73,17 @@ def process_body(raw_body):
 
 # Package Operation Helpers
 def get_repo_info(project) -> RepositoryInfo:
-    return RepositoryInfo(
-        gitlab=project,
-        git=get_git_repo(project, ENV_VARS["GITLAB_TOKEN"])
-    )
+    try:
+        repo_info = RepositoryInfo()
+        _ = repo_info.gitlab
+        return repo_info
+    except RuntimeError:
+        return RepositoryInfo().initialize(
+            gitlab=project,
+            git=get_git_repo(project, ENV_VARS["GITLAB_TOKEN"]),
+            repo_url=ENV_VARS["GITLAB_URL"],
+            token=ENV_VARS["GITLAB_TOKEN"],
+        )
 
 def install_package_non_empty_state(states, branch, package, is_autoheal, is_force, project, extras):
     ins_install_package(

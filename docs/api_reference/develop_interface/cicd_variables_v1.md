@@ -1,10 +1,10 @@
-# cicd_variables module
+# cicd_variables module (v1)
 API provided in `cicd_variables.py` module. This module contains functions for easy interaction with CI/CD variables.
 
 !!! warning
-      When you want to mask a variable, follow [Gitlab Mask a CI/CD variable rules](https://docs.gitlab.com/ee/ci/variables/#mask-a-cicd-variable)
+      When you want to mask a variable, follow [GitLab Mask a CI/CD variable rules](https://docs.gitlab.com/ee/ci/variables/#mask-a-cicd-variable)
 
-## Usage in package api
+## Usage in package API
 
 ```python
 from git_system_follower.develop.api.cicd_variables import create_variable, delete_variable
@@ -22,6 +22,11 @@ def main(parameters: Parameters):
     create_variable(parameters, CICDVariable(name='KUBE_TOKEN', value='new_kubernetes_token', env='*', masked=True))
 ```
 
+!!! note
+    For backward compatibility, v1 packages can import from the legacy unversioned path
+    (`git_system_follower.develop.api.*`). The explicit versioned path
+    (`git_system_follower.develop.api.v1.*`) is equivalent and is preferred for new packages.
+
 ## Functions description
 ### `create_variable` function
 ```python
@@ -30,7 +35,7 @@ def create_variable(
     is_force: bool = False
 ) -> RESTObject | None
 ```
-Create CI/CD variable using gitlab REST API
+Create CI/CD variable using GitLab REST API
 
 If `is_force` parameter is `False`, then it will necessarily be safe to create CI/CD variable:
 
@@ -49,7 +54,7 @@ If `is_force` parameter is `True`, then it will necessarily be force to create C
 #### Arguments
 | Name         | Type           | Description                                    |
 |--------------|----------------|------------------------------------------------|
-| `parameters` | `Parameters`   | parameters that were passed to the package api |
+| `parameters` | `Parameters`   | parameters that were passed to the package API |
 | `variable`   | `CICDVariable` | CI/CD variable to be created                   |
 
 #### Keyword arguments
@@ -67,7 +72,7 @@ def delete_variable(
     is_force: bool = False
 ) -> None
 ```
-Delete CI/CD variable using gitlab REST API
+Delete CI/CD variable using GitLab REST API
 
 If `is_force` parameter is `False`, then it will necessarily be safe to delete CI/CD variable:
 
@@ -87,7 +92,7 @@ If `is_force` parameter is `True`, then it will necessarily be force to delete C
 #### Arguments
 | Name         | Type           | Description                                    |
 |--------------|----------------|------------------------------------------------|
-| `parameters` | `Parameters`   | parameters that were passed to the package api |
+| `parameters` | `Parameters`   | parameters that were passed to the package API |
 | `variable`   | `CICDVariable` | CI/CD variable to be deleted                   |
 
 #### Keyword arguments

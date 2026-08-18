@@ -14,8 +14,8 @@
 
 """ Module with defaults for package api: init.py, delete.py """
 
-from git_system_follower.develop.api.types import Parameters
-from git_system_follower.develop.api.templates import get_template_names, create_template, delete_template
+from git_system_follower.develop.api.common.types import Parameters
+from git_system_follower.develop.api.common.templates import get_template_names, create_template, delete_template
 
 
 def init_default_main(parameters: Parameters):

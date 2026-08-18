@@ -29,14 +29,15 @@ from git_system_follower.typings.registry import RegistryInfo
 from git_system_follower.typings.package import PackageLocalData, PackagesTo
 from git_system_follower.download import download
 from git_system_follower.git_api.gitlab_api import (
-    get_gitlab, get_project, get_states, create_mr, merge_mr
+    get_gitlab, get_project, get_states, create_mr, merge_mr, merge_mr_and_wait
 )
 from git_system_follower.git_api.git_api import checkout_to_new_branch, push_installed_packages
 from git_system_follower.git_api.utils import get_packages_str, get_git_repo
 from git_system_follower.typings.repository import RepositoryInfo
 from git_system_follower.states import (
     ChangeStatus, PackageState, StateFile,
-    get_installed_packages, update_created_cicd_variables
+    get_installed_packages, update_created_cicd_variables,
+    get_all_created_webhooks
 )
 from git_system_follower.utils.cli import Package, get_gears
 from git_system_follower.utils.retry import retry
@@ -45,8 +46,10 @@ from git_system_follower.utils.version_comparer import VersionComparer
 from git_system_follower.package.initer import init
 from git_system_follower.package.updater import update
 from git_system_follower.package.rollbacker import rollback
+from git_system_follower.package.permissions import (
+    check_token_permissions, detect_package_requirements, reset_registered_requirements
+)
 from git_system_follower.typings.script import ScriptResponse
-
 
 __all__ = ['install']
 
@@ -55,11 +58,16 @@ def install(
         packages: tuple[PackageCLIImage | PackageCLITarGz | PackageCLISource, ...],
         sources: tuple[str, ...], repo_url: str, branches: tuple[str, ...], token: str, *,
         extras: tuple[ExtraParam, ...], commit_message: str, username: str, user_email: str,
-        registry: RegistryInfo, is_skip_force_rollback: bool, is_autoheal: bool, is_force: bool
+        registry: RegistryInfo, is_skip_force_rollback: bool, is_skip_project_description: bool,
+        is_skip_project_icon: bool, is_autoheal: bool, is_force: bool
 ) -> None:
     gitlab_instance = get_gitlab(repo_url, token)
     project = get_project(gitlab_instance, repo_url)
-    states = get_states(project, branches)
+    repo = RepositoryInfo().initialize(gitlab=project, git=get_git_repo(project, token),
+            repo_url=repo_url, token=token)
+    states = get_states(project, branches,
+        is_skip_project_description=is_skip_project_description,
+        is_skip_project_icon=is_skip_project_icon)
     packages = get_packages(packages, states, sources, branches,
         registry=registry, is_skip_force_rollback=is_skip_force_rollback)
     logger.info(TitledList(
@@ -75,10 +83,11 @@ def install(
         logger.info(f'[{i}/{len(branches)}] Processing {branch} branch')
         logger.debug(f'Current state in {branch} branch:\n{states[branch]}')
         states[branch] = managing_branch(
-            project, branch, token, packages, states[branch], sources=sources, extras=extras,
+            project, branch, repo, token, packages, states[branch], sources=sources, extras=extras,
             commit_message=commit_message, username=username, user_email=user_email,
             is_skip_force_rollback=is_skip_force_rollback, is_autoheal=is_autoheal, is_force=is_force
         )
+
     logger.success('Installation complete')
 
 
@@ -105,7 +114,7 @@ def get_packages(
     for branch in branches:
         states[branch].update_package_sources(sources, is_skip_force_rollback=is_skip_force_rollback)
     packages = PackagesTo(
-        install=_get_packages_to_install(packages_cli, registry=registry),
+        install=_get_packages_to_install(packages_cli, states, registry=registry),
         rollback=()
     )
     installed_packages = get_installed_packages(states)
@@ -116,16 +125,19 @@ def get_packages(
 
 
 def _get_packages_to_install(
-        packages_cli: tuple[PackageCLIImage | PackageCLITarGz | PackageCLISource, ...], *,
+        packages_cli: tuple[PackageCLIImage | PackageCLITarGz | PackageCLISource, ...],
+        states: dict[str, StateFile], *,
         registry: RegistryInfo
 ) -> tuple[PackageLocalData, ...]:
     """ Getting information about packages to install
 
     :param packages_cli: listing packages to be installed
+    :param states: current states in GitLab repository branches
     :param registry: registry information like credentials for auth, insecure mode, etc.
     :return: packages info to install tuple
     """
     packages = tuple(download(packages_cli, is_deps_first=True, registry=registry))
+
     for i, package in enumerate(packages):
         for j, comparison_package in enumerate(packages):
             if i != j and package['name'] == comparison_package['name']:
@@ -178,12 +190,11 @@ def _is_necessary_package_to_rollback(package_cli: PackageCLI, installed_package
 
 @retry(output_func=logger.info, error_output_func=logger.error)
 def managing_branch(
-        project: Project, branch: str, token: str, packages: PackagesTo, state: StateFile,
-        sources: tuple[str, ...], *, extras: tuple[ExtraParam, ...], commit_message: str,
-        username: str, user_email: str, is_skip_force_rollback: bool, is_autoheal: bool,
-        is_force: bool
+        project: Project, branch: str, repo: RepositoryInfo, token: str, packages: PackagesTo,
+        state: StateFile, sources: tuple[str, ...], *, extras: tuple[ExtraParam, ...],
+        commit_message: str, username: str, user_email: str, is_skip_force_rollback: bool,
+        is_autoheal: bool, is_force: bool
 ) -> StateFile:
-    repo = RepositoryInfo(gitlab=project, git=get_git_repo(project, token))
     checkout_to_new_branch(repo.git, branch)
     logger.info(':: Installing packages')
     state = processing_branch(
@@ -200,7 +211,21 @@ def managing_branch(
         description=f'Installed package(s): {get_packages_str(packages.install)}'
     )
     logger.info(':: Merging merge request')
-    merge_mr(repo.gitlab, mr)
+    if any(p.get('subtype') == 'component' for p in packages.install):
+        component_version = next(p['version'] for p in packages.install if p.get('subtype') == 'component')
+        merge_mr_and_wait(project, mr, tag_name=component_version)
+        release_name, release_version = next(
+            ((p.get('name') or p['version']), p['version'])
+            for p in packages.install
+            if p.get('subtype') == 'component'
+        )
+        try:
+            release_url = f"{project.web_url}/-/releases/{release_version}"
+            logger.success(f":: Published {release_name}@{release_version} ({release_url})")
+        except Exception as e:
+            logger.error(f"Failed to get release URL for {release_name}@{release_version}: {e}")
+    else:
+        merge_mr(repo.gitlab, mr)
     return state
 
 
@@ -231,10 +256,13 @@ def install_packages(
         is_skip_force_rollback: bool, is_autoheal: bool, is_force: bool
 ) -> StateFile:
     created_cicd_variables = state.get_all_created_cicd_variables()
-    from git_system_follower.states import get_all_created_webhooks
     created_webhooks = get_all_created_webhooks(state)
     for i, package in enumerate(packages.install, 1):
         logger.info(f"({i}/{len(packages.install)}) Installing {package['name']}@{package['version']} package")
+        reset_registered_requirements()
+        # Fast-fail on statically known needs (e.g. description/icon => Owner)
+        # before running any script.
+        check_token_permissions(repo.gitlab, detect_package_requirements(package))
         package_state = state.get_package(package, for_delete=False)
         try:
             response = install_package(
@@ -262,6 +290,9 @@ def install_packages(
             logger.critical(f"An error came out at one stage of installation. "
                             f"Installation {package['name']}@{package['version']} aborted.")
             raise InstallationError('Installation failed in one of the steps. Please check log above')
+        # Runtime needs (CI/CD variables/webhooks => Maintainer) only become known
+        # when a package's scripts ran. Fail before the changes are pushed/merged.
+        check_token_permissions(repo.gitlab)
     return state
 
 

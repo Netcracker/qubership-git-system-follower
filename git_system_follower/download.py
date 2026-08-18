@@ -31,7 +31,9 @@ import requests
 from requests.auth import HTTPBasicAuth
 import yaml
 
-from git_system_follower.variables import IMAGE_PACKAGE_MAP, PACKAGES_PATH, PACKAGE_DIRNAME
+from git_system_follower.variables import (
+    IMAGE_PACKAGE_MAP, PACKAGES_PATH, PACKAGE_DIRNAME
+)
 from git_system_follower.logger import logger
 from git_system_follower.errors import (
     RemoteRepositoryError, DownloadPackageError, UnknownRegistryError, PackageNotFoundError
@@ -97,7 +99,7 @@ class Registry(ABC, oras.client.OrasClient):
         :param target: OCI artifact or image url without protocol
         :param outdir: directory where need to save package
         :param registry: registry information like credentials for auth, insecure mode, etc.
-        :return: content of downloaded OCI artifact or image
+        :return: path to downloaded package or None
         """
         pass
 
@@ -424,7 +426,7 @@ def download(
         result = add_dependencies(result, dependencies_data, is_deps_first)
         logger.info(
             f"{data['name']}@{data['version']} package is "
-            f"of {get_gear_info(data['path'])['structure_type']} structure type"
+            f"of {get_gear_info(data['path'])['structure_type']} structure_type"
         )
 
     if dependency_level == 0:
@@ -441,7 +443,7 @@ def get_source(
     :param package: packages to be downloaded
     :param directory: directory where need to download package
     :param registry: registry information like credentials for auth, insecure mode, etc.
-    :return: source code (download package with unpacking or unpacking .tar.gz archive or already ready-made code)
+    :return: source code path or None
     """
     if package.type == PackageCLITypes.source:
         source = package.path
@@ -495,7 +497,7 @@ def download_package(
     :param outdir: directory where need to download package
     :param tmpdir: temporary directory where package will be downloaded and manipulated
     :param registry: registry information like credentials for auth, insecure mode, etc.
-    :return: downloaded package (tar.gz file): `<outdir>/<package tar.gz file>`
+    :return: downloaded package (tar.gz file) or None
     """
     if not IMAGE_PACKAGE_MAP.exists():
         with open(IMAGE_PACKAGE_MAP, 'w') as file:

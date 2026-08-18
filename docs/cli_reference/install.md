@@ -38,9 +38,19 @@ gsf install --help
 | `--registry-password` | Password for basic authentication in the registry when downloading Gears                            |     -     |                                           -                                            | `GSF_REGISTRY_PASSWORD` | `MyPa$$w0rd`                                                     |
 | `--insecure-registry` | Allow insecure connections to the registry (use HTTP instead of HTTPS)                              |     -     |                                        `False`                                         |            -            |                                                                  |
 | `--skip-force-rollback` | Skip or allow validation if rollback is supported by installed gear                               |     -     |                                        `False`                                         |            -            |                                                                  |
+| `--skip-project-description` | Warn instead of exit on project description mismatch                                                     |     -     |                                        `False`                                         |            -            |                                                                  |
+| `--skip-project-icon` | Warn instead of exit on project icon mismatch                                                             |     -     |                                        `False`                                         |            -            |                                                                  |
+|
 | `--autoheal` | Autoheal: overwrites user changes with gear files                                                            |     -     |                                        `False`                                         |            -            |                                                                  |
 | `--force`             | Forced installation: change of files, CI/CD variables as specified in gear                          |     -     |                                        `False`                                         |            -            |                                                                  |
 | `--debug`             | Show debug level messages                                                                           |     -     |                                        `False`                                         |            -            |                                                                  |
+
+!!! note "Project metadata"
+    The `--skip-project-description` and `--skip-project-icon` flags relax the
+    project metadata validation performed on subsequent runs. They are no-ops on a
+    fresh install and do not apply to gears without `description`/`icon`. See
+    [Project Metadata Skip Flags](../concepts/project_metadata_skip_flags.md) for
+    the full behavior, including v1 to v2 migration scenarios.
 
 ## Examples
 Installing the gear (Docker image) to main branch

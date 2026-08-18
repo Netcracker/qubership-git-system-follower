@@ -17,7 +17,7 @@ from typing import TypedDict
 
 from gitlab.v4.objects import Project
 from gitlab.base import RESTObject
-from gitlab.exceptions import GitlabCreateError
+from gitlab.exceptions import GitlabCreateError, GitlabError
 
 from git_system_follower.logger import logger
 
@@ -54,6 +54,25 @@ def get_cicd_variables(project: Project) -> dict[str, CICDVariable]:
             name=variable.key, value=variable.value, env=variable.environment_scope, masked=variable.masked
         )
     return variables
+
+
+def get_cicd_variables_safely(project: Project) -> dict[str, CICDVariable] | None:
+    """ Get CI/CD variables tolerating insufficient token permissions
+
+    Reading project CI/CD variables requires at least the Maintainer role. When
+    the token cannot read them (e.g. a Developer token for a gear that does not
+    use variables at all) this returns None instead of failing, so the run can
+    proceed. The actual need for Maintainer is enforced at the execution point
+    by git_system_follower.package.permissions.check_token_permissions.
+
+    :param project: GitLab project
+    :return: CI/CD variables dict or None if they could not be read
+    """
+    try:
+        return get_cicd_variables(project)
+    except GitlabError as e:
+        logger.debug(f"Failed to read CI/CD variables ({e}). Treating them as unavailable.")
+        return None
 
 
 def create_variable(

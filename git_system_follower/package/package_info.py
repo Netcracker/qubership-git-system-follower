@@ -14,8 +14,7 @@
 
 """ Package description file (package.yaml) processing module """
 from pathlib import Path
-from typing import TypedDict, Tuple, Optional, Any
-
+from typing import TypedDict, Tuple, Optional, Any, Callable
 import yaml
 import sys
 from git_system_follower.logger import logger
@@ -40,11 +39,14 @@ MAX_DEPENDENCY_LEVEL = 1
 PACKAGE_DESCRIPTION_FILE_API: dict[str, 'ApiVersionInfo']
 
 
-class ApiVersionInfo(TypedDict):
+class _ApiVersionInfoBase(TypedDict):
     mandatory_sections: tuple[str, ...]
     optional_sections: tuple[str, ...]
     section_types: tuple[object, ...]
     package_types: tuple[str, ...]
+
+class ApiVersionInfo(_ApiVersionInfoBase, total=False):
+    package_subtypes: tuple[str, ...]
 
 
 def _has_downloaded(path: Path) -> bool:
@@ -71,7 +73,9 @@ def add_dependencies(
     return packages
 
 
-def get_package_info(directory: Path, name: str) -> PackageLocalData:
+def get_package_info(
+        directory: Path, name: str
+) -> PackageLocalData:
     """ Get package info from package description file (package.yaml)
 
     :param directory: path to directory with local package
@@ -112,7 +116,6 @@ def _validate_package_info(data: dict[str, Any]) -> PackageData:
     api_version = _validate_api_version_section(data)
     api_info = PACKAGE_DESCRIPTION_FILE_API[api_version]
     _validate_section_names(data, api_info['mandatory_sections'], api_info['optional_sections'])
-    # _validate_section_types(data, api_info['sections'], api_info['section_types'])
     _validate_type_section(data['type'], api_info['package_types'])
     updated_dependencies = []
     dependencies = data.get('dependencies')
@@ -126,13 +129,35 @@ def _validate_package_info(data: dict[str, Any]) -> PackageData:
     return data
 
 
+def _validate_v1(data: dict[str, Any], api_info: ApiVersionInfo) -> None:
+    """ v1 has no version-specific validation """
+    pass
+
+
+def _validate_v2(data: dict[str, Any], api_info: ApiVersionInfo) -> None:
+    if 'subtype' in data:
+        _validate_type_section(data['subtype'], api_info['package_subtypes'])
+
+
+_API_VERSION_VALIDATORS: dict[str, Callable[..., None]] = {
+    'v1': _validate_v1,
+    'v2': _validate_v2,
+}
+
+
 def _validate_api_version_section(data: dict[str, Any]) -> str:
     if (api_version := data.get('apiVersion')) is None:
-        raise DescriptionSectionError("Section 'apiVersion' missing")
+        msg = "Section 'apiVersion' missing"
+        logger.error(msg)
+        raise DescriptionSectionError(msg)
 
     if api_version not in PACKAGE_DESCRIPTION_FILE_API.keys():
-        raise DescriptionSectionError(f"Unsupported package description file api version: '{api_version}'. "
-                                      f"Available versions: {', '.join(PACKAGE_DESCRIPTION_FILE_API.keys())}")
+        msg = (f"Unsupported package description file api version: '{api_version}'. "
+               f"Available versions: {', '.join(PACKAGE_DESCRIPTION_FILE_API.keys())}")
+        logger.error(msg)
+        raise DescriptionSectionError(msg)
+
+    _API_VERSION_VALIDATORS[api_version](data, PACKAGE_DESCRIPTION_FILE_API[api_version])
     return api_version
 
 
@@ -145,11 +170,15 @@ def _validate_section_names(
     """
     for mandatory_key in mandatory_keys:
         if mandatory_key not in data.keys():
-            raise DescriptionSectionError(f'No mandatory section in {DESCRIPTION_FILENAME} file ({mandatory_key})')
+            msg = f'No mandatory section in {DESCRIPTION_FILENAME} file ({mandatory_key})'
+            logger.error(msg)
+            raise DescriptionSectionError(msg)
 
     for key in data.keys():
         if key not in mandatory_keys and key not in optional_keys:
-            raise DescriptionSectionError(f'An extra section is specified in {DESCRIPTION_FILENAME} file ({key})')
+            msg = f'An extra section is specified in {DESCRIPTION_FILENAME} file ({key})'
+            logger.error(msg)
+            raise DescriptionSectionError(msg)
 
 
 def _validate_section_types(data: dict[str, Any], sections: tuple[str, ...], types: tuple[object, ...]) -> None:
@@ -159,8 +188,9 @@ def _validate_section_types(data: dict[str, Any], sections: tuple[str, ...], typ
 
 def _validate_type_section(package_type: str, available_types: tuple[str, ...]) -> None:
     if package_type not in available_types:
-        raise DescriptionSectionError(f"Unsupported package type: '{package_type}'. "
-                                      f"Available types: {', '.join(available_types)}")
+        msg = f"Unsupported package type: '{package_type}'. Available types: {', '.join(available_types)}"
+        logger.error(msg)
+        raise DescriptionSectionError(msg)
 
 
 def check_dependency_depth(level: int, tree: str) -> None:

@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from functools import cmp_to_key
 from pathlib import Path
 
 from gitlab.v4.objects import Project
@@ -78,14 +77,14 @@ def get_version_dirs(package: PackageLocalData, start_version: str) -> tuple[tup
             current_version = file
 
         if is_quarterly_to_semver:
-            # For quarterly -> semver: include all quarterly > start, plus the target semver
+            # For quarterly -> semver: include all quarterly > start, plus all semver <= target
             if comparer.is_quarterly(file.name):
                 # Include quarterly versions > start
                 if comparer.compare(start_version, file.name) < 0:
                     versions.append(file)
             else:
-                # Include only the exact target semver version
-                if comparer.compare(file.name, package['version']) == 0:
+                # Include all semver versions <= target
+                if comparer.compare(file.name, package['version']) <= 0:
                     versions.append(file)
         else:
             # Normal case: start_version < file_version <= end_version
@@ -95,7 +94,11 @@ def get_version_dirs(package: PackageLocalData, start_version: str) -> tuple[tup
                 versions.append(file)
 
     # Sort versions using VersionComparer
-    versions = sorted(versions, key=cmp_to_key(lambda a, b: comparer.compare(a.name, b.name)))
+    versions = sorted(versions, key=lambda v: (
+        not comparer.is_quarterly(v.name),
+        comparer.compare('0.0.0', v.name),
+        v.name
+    ))
     return tuple(versions), current_version
 
 

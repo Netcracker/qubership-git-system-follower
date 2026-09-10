@@ -167,3 +167,5 @@ cython_debug/
 **/.git-system-follower/
 # devbox
 .devbox/
+# LLM
+.claude/

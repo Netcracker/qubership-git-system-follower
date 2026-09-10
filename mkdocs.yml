@@ -103,6 +103,11 @@ nav:
     - .state.yaml Guide: concepts/state.md
     - Project Metadata Skip Flags: concepts/project_metadata_skip_flags.md
     - Token Permissions: concepts/token_permissions.md
+    - Gear Lifecycle:
+      - lifecycle/index.md
+      - Migration: lifecycle/migration.md
+      - Update: lifecycle/update.md
+      - Rollback: lifecycle/rollback.md
     - Plugins Guide:
       - concepts/plugins/index.md
       - CLI Arguments Extension Point: concepts/plugins/cli_arguments.md
@@ -114,7 +119,7 @@ nav:
       - v1: how_to/build_v1.md
       - v2: how_to/build_v2.md
     - Image Labels: how_to/image_labels.md
-    # - Gear Development Cases: how_to/gear_development_cases.md
+    - Gear Development Cases: how_to/gear_development_cases.md
     - Component Release: how_to/component_release.md
     # - Integration with semantic-release: how_to/semantic_release.md
   - CLI reference:

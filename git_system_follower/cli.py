@@ -29,6 +29,7 @@ from git_system_follower.git_api.utils import get_config
 from git_system_follower.download import download
 from git_system_follower.install import install
 from git_system_follower.uninstall import uninstall
+from git_system_follower.template import show_template
 from git_system_follower import __version__
 
 from git_system_follower.plugins.managers import managers
@@ -395,6 +396,87 @@ def version_command():
     print(__version__)
 
 
+@click.command(name='template')
+@click.argument('gears', nargs=-1, type=Package)
+@click.option(
+    '--extravar', 'extravars', type=(str, str), multiple=True,
+    help='Extra context variable for template rendering: variable name and value',
+    metavar='<NAME VALUE>...'
+)
+@click.option(
+    '--registry-type',
+    type=click.Choice([registry_type.value for registry_type in RegistryTypes], case_sensitive=False),
+    required=False, default='Autodetect',
+    help='Specify the registry type or use automatic detection'
+)
+@click.option(
+    # env variable is specified in resolve_credentials because of priority
+    '--registry-username', type=str, required=False, default=None,
+    help='Username for basic authentication in the registry when downloading Gears'
+)
+@click.option(
+    # env variable is specified in resolve_credentials because of priority
+    '--registry-password', type=str, required=False, default=None,
+    help='Password for basic authentication in the registry when downloading Gears'
+)
+@click.option(
+    '--insecure-registry', 'is_insecure', is_flag=True, default=False,
+    help='Allow insecure connections to the registry (use HTTP instead of HTTPS)'
+)
+@click.option(
+    '-d', '--directory', type=click.Path(dir_okay=True, file_okay=False, path_type=Path),
+    default=None,
+    help='Directory where generated files will be written. If not specified, a preview is shown in stdout'
+)
+@click.option(
+    '-o', '--output', 'output_file', type=click.Path(dir_okay=False, path_type=Path),
+    default=None,
+    help='File where the rendered template output will be captured (instead of stdout)'
+)
+@click.option('--debug', 'is_debug', is_flag=True, default=False, help='Show debug level messages')
+def template_command(
+        gears: tuple[HookSpec, ...], extravars: tuple[tuple[str, str], ...],
+        registry_type: str, registry_username: str | None, registry_password: str | None,
+        is_insecure: bool, directory: Path | None, output_file: Path | None, is_debug: bool,
+        *args, **kwargs  # dont delete, these parameters for plugin manager
+):
+    """ Template out gear templates and show the generated files in stdout
+
+    \b
+    GEARS                         Render templates from gears specified as:
+                                  1. image: <registry>/<repository>/<name>:<tag>, e.g.
+                                  artifactory.company.com/path-to/your-image:1.0.0
+                                  2. .tar.gz archive: /path/to/archive.tar.gz, e.g.
+                                  your-archive@1.0.0.tar.gz
+                                  3. source code files: /path/to/gear directory, e.g.
+                                  your-gear@1.0.0
+    """
+    credentials = resolve_credentials(registry_username, registry_password)
+    banner(version=__version__, output_func=logger.info)
+
+    common_params = {
+        'gears': ', '.join(map(str, gears)) if gears else '',
+        'extravars': ', '.join(f'{name}={value}' for name, value in extravars),
+        'directory': directory.absolute() if directory is not None else '<stdout preview>',
+        'debug': is_debug,
+    }
+    registry_params = {
+        'registry-type': registry_type,
+        'registry-username': credentials.username if credentials is not None else '',
+        'registry-password': credentials.password if credentials is not None else '',
+        'insecure-registry': is_insecure,
+    }
+    display_params({'Gears': common_params, 'Registry': registry_params})
+
+    if gears == ():
+        raise CLIParamsError('Gears for templating are not specified')
+    set_level(is_debug)
+
+    gears = get_gears(gears)
+    registry = RegistryInfo(credentials=credentials, type=RegistryTypes(registry_type), is_insecure=is_insecure)
+    show_template(gears, extravars, registry=registry, directory=directory, output_file=output_file)
+
+
 @click.group()
 @click.version_option(__version__, message='%(version)s')
 def cli():
@@ -411,6 +493,7 @@ cli.add_command(install_command, name='install')
 cli.add_command(uninstall_command, name='uninstall')
 cli.add_command(list_command, name='list')
 cli.add_command(version_command, name='version')
+cli.add_command(template_command, name='template')
 
 
 if __name__ == '__main__':

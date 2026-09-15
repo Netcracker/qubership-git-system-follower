@@ -89,12 +89,15 @@ This distinction helps git-system-follower auto-determine how to apply updates a
     │  ├─ delete.py
     │  ├─ init.py
     │  ├─ update.py
-    │  └─ templates/
-    │     ├─ <template>/
-    │     │  ├─ cookiecutter.json
-    │     │  └─ {{ cookiecutter.gsf_repository_name }}/
-    │     │     └─ <template files>
-    │     └─ <other template>
+    │  ├─ templates/            (optional)
+    │  │  ├─ <template>/
+    │  │  │  ├─ cookiecutter.json
+    │  │  │  └─ {{ cookiecutter.gsf_repository_name }}/
+    │  │  │     └─ <template files>
+    │  │  └─ <other template>
+    │  │     └─ ...
+    │  └─ files/                (optional: static files)
+    │     └─ <template>/
     │        └─ ...
     └─ <next version>/
       └─ ...
@@ -110,12 +113,15 @@ This distinction helps git-system-follower auto-determine how to apply updates a
     scripts/
     ├─ delete.py
     ├─ init.py
-    └─ templates/
-       ├─ <template>/
-       │  ├─ cookiecutter.json
-       │  └─ {{ cookiecutter.gsf_repository_name }}/
-       │     └─ <template files>
-       └─ <other template>
+    ├─ templates/               (optional)
+    │  ├─ <template>/
+    │  │  ├─ cookiecutter.json
+    │  │  └─ {{ cookiecutter.gsf_repository_name }}/
+    │  │     └─ <template files>
+    │  └─ <other template>
+    │     └─ ...
+    └─ files/                   (optional: static files)
+       └─ <template>/
           └─ ...
     ```
 
@@ -204,7 +210,7 @@ and add `gsf_repository_name` section with an empty value (`""`) in `cookiecutte
 }
 ```
 
-P.S. Even if you don't need templates, but just copy files, still use `cookiecutter` with regular files for this purpose
+If you need to ship files verbatim without any Jinja rendering, use the `files/` directory instead of a cookiecutter template — see [Static files](../how_to/gear_development_cases.md#static-files) for details.
 
 You can use variables that have been passed as extra parameters to git-system-follower. For example, you can use parameter,
 which have been passed to git-system-follower as `--extra VAR_NAME VAR_VALUE no-masked`, in template as `{{ cookiecutter.VAR_NAME }}`

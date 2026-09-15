@@ -66,7 +66,12 @@ git-system-follower-package/
         cookiecutter.json
         {{ cookiecutter.gsf_repository_name }}/
           ...
+    files/
+      my-template/
+        static.txt
 ```
+
+Static (non-templated) files can also be placed in `scripts/files/<template>/` and will be copied as-is to the target repository. See [Static files](#static-files) below for full behavior details.
 
 **When to use:** Choose simple when your gear is self-contained, doesn't need versioned migrations, and will be updated by reinstalling with `--force`.
 
@@ -91,6 +96,9 @@ git-system-follower-package/
       templates/
         my-template/
           ...
+      files/
+        my-template/
+          static.txt
     1.1.0/
       init.py
       update.py
@@ -98,7 +106,12 @@ git-system-follower-package/
       templates/
         my-template/
           ...
+      files/
+        my-template/
+          static.txt
 ```
+
+Static (non-templated) files can also be placed at `scripts/<version>/files/<template>/`. See [Static files](#static-files) below for full behavior details.
 
 **When to use:** Choose complex when your gear needs controlled migrations between versions, or when you want to preserve user modifications to files during upgrades.
 
@@ -124,6 +137,55 @@ Key characteristics:
     This allows the structure type change but **review the affected files in your repository manually** to make sure everything looks as expected before moving forward.
 
 For more details, see [Gears](../concepts/gears.md) and [apiVersion list](../concepts/api_version_list/index.md).
+
+## Static files
+
+Static files are copied verbatim to the target repository — they bypass cookiecutter rendering entirely. Unlike cookiecutter-managed files, they do not use `skip_files` and are not stored in the GSF state file.
+
+Use static files when a file must be delivered exactly as-is (binary assets, pre-rendered configs, licenses, etc.) or when you want to ship a file alongside a cookiecutter template without putting it through Jinja.
+
+### Placement
+
+Place static files under `scripts/files/<template-name>/` (or `scripts/<version>/files/<template-name>/` for complex gears). Call `create_template` / `delete_template` with the same template name as usual.
+
+```text
+scripts/
+  init.py
+  delete.py
+  files/
+    my-template/
+      .editorconfig
+      docs/contributing.md
+```
+
+```python
+# init.py
+from git_system_follower.develop.api.types import Parameters
+from git_system_follower.develop.api.templates import create_template
+
+def main(parameters: Parameters):
+    create_template(parameters, 'my-template')
+```
+
+A gear can have both a cookiecutter `templates/<name>/` and a `files/<name>/` using the same template name — they are independent and both get applied when `create_template` is called.
+
+### Behavior
+
+| Operation | No user changes | User changes found |
+|-----------|----------------|-------------------|
+| Fresh install | Always write | Always write |
+| Update / rollback | Overwrite | Warn + **skip** |
+| Uninstall | Delete | Warn + **skip** |
+
+During update or rollback, GSF uses the previously installed gear's `files/` directory as the baseline to detect user changes:
+
+- **No user changes** (target matches the previously installed gear file) — GSF overwrites with the new gear version.
+- **User changes found** (target differs from the previously installed gear file) — GSF leaves the file untouched and logs a warning.
+
+On fresh install the file is always written. On uninstall the current gear's file is compared against the target to decide whether to delete.
+
+!!! note
+    User changes in static files are always preserved. Unlike cookiecutter templates, static files are **never** overwritten when user changes are detected — not by `--force`, `--autoheal`, or any other flag. GSF will warn and skip the file regardless of the operation.
 
 ## package.yaml
 

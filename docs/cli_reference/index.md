@@ -3,10 +3,11 @@ This CLI provides several commands for managing gears within your GitLab reposit
 Below are pages with the available commands and their functionalities:
 
 1. [download](download.md) - Download gears
-2. [install](install.md) - Install gears to Gitlab repository
+2. [install](install.md) - Install gears to GitLab repository
 3. [list](list.md) - List installed gears: **in develop** :exclamation:
-4. [uninstall](uninstall.md) - Uninstall gears from Gitlab repository
-5. [version](version.md) - Show version
+4. [template](template.md) - Template out files using a cookiecutter template and show them in stdout
+5. [uninstall](uninstall.md) - Uninstall gears from GitLab repository
+6. [version](version.md) - Show version
 
 ## Entry points
 You can use long and short entry point to use git-system-follower, their functionality is the same:
@@ -34,10 +35,11 @@ Options:
   --help  Show this message and exit.
 
 Commands:
-  download   Download packages
-  install    Install packages to branches in GitLab repository
-  list       List installed packages: in develop
-  uninstall  Uninstall packages from branches in GitLab repository
+  download   Download gears
+  install    Install gears to branches in repository
+  list       List installed gears: in develop
+  template   Template out files using a cookiecutter template and show...
+  uninstall  Uninstall gears from branches in repository
   version    Show version
 ```
 

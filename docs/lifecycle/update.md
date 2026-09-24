@@ -17,13 +17,16 @@ The primary difference between Simple and Complex gears lies in how they handle 
 scripts/
 ├─ delete.py
 ├─ init.py
-└─ templates/
-   ├─ <template>/
-   │  ├─ cookiecutter.json
-   │  │  └─ {{ cookiecutter.gsf_repository_name }}/
-   │  │  └─ <template files>
-   │  └─ <other template>
-   │  └─ ...
+├─ templates/     (optional)
+│  ├─ <template>/
+│  │  ├─ cookiecutter.json
+│  │  │  └─ {{ cookiecutter.gsf_repository_name }}/
+│  │  │  └─ <template files>
+│  │  └─ <other template>
+│  │  └─ ...
+└─ files/         (optional: static files)
+   └─ <template>/
+      └─ ...
 ```
 
 ### Complex Gear Layout (Multiple Semantic Versions, e.g., 1.0.0 and 1.0.2)
@@ -36,16 +39,21 @@ scripts/
 │  ├─ delete.py
 │  ├─ init.py
 │  ├─ update.py
-│  └─ templates/
+│  ├─ templates/  (optional)
 │  │  ├─ <template>/
 │  │  │  ├─ cookiecutter.json
 │  │  │  └─ {{ cookiecutter.gsf_repository_name }}/
 │  │  │  └─ <template files>
 │  │  └─ <other template>
 │  │     └─ ...
-│  └─ <next version>/
-│    └─ ...
+│  └─ files/      (optional: static files)
+│     └─ <template>/
+│        └─ ...
+└─ <next version>/
+   └─ ...
 ```
+
+See [Static files](../how_to/gear_development_cases.md#static-files) for static file placement and behavior during updates.
 
 
 ## Simple Gear Updates

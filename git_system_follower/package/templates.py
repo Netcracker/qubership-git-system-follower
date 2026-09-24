@@ -30,12 +30,26 @@ __all__ = ['get_template_names', 'create_template', 'delete_template']
 
 
 def get_template_names(script_dir: Path) -> tuple[str, ...]:
-    """ Get available template names in package api """
-    path = script_dir / 'templates'
-    if not path.exists():
-        raise PackageApiError(f'Template directory is missing. Path: {path}')
+    """ Get available template names in package api
 
-    return tuple(template.name for template in path.iterdir() if (path / template).is_dir())
+    Scans both 'templates/' and 'files/' directories for template names.
+    """
+    templates_dir = script_dir / 'templates'
+    files_dir = script_dir / 'files'
+    names = set()
+
+    if templates_dir.exists():
+        names.update(t.name for t in templates_dir.iterdir() if t.is_dir())
+    if files_dir.exists():
+        names.update(t.name for t in files_dir.iterdir() if t.is_dir())
+
+    if not names:
+        raise PackageApiError(
+            f'No templates found. Neither templates/ nor files/ directory exists or contains template directories. '
+            f'Checked: {templates_dir}, {files_dir}'
+        )
+
+    return tuple(sorted(names))
 
 
 @multi_tempdirs(2)
@@ -49,26 +63,30 @@ def create_template(
         logger.info('\t\tNo template specified. Skip operations')
         return
     path = script_dir / 'templates' / template
+    top_level_files_path = script_dir / 'files' / template
 
-    if not path.exists():
+    if not path.exists() and not top_level_files_path.exists():
         raise PackageApiError(f'Template is missing. Template path: {path}')
 
-    new_version_path = tmpdir[0]
-    current_version_path = tmpdir[1]
-    cookiecutter(
-        template=str(path), output_dir=new_version_path, no_input=True,
-        extra_context=_get_extra_content(target, variables=variables)
-    )
-    if current_version_dir is not None:
-        current_version_dir = current_version_dir / 'templates' / template
+    if path.exists():
+        new_version_path = tmpdir[0]
+        current_version_path = tmpdir[1]
         cookiecutter(
-            template=str(current_version_dir), output_dir=current_version_path, no_input=True,
+            template=str(path), output_dir=new_version_path, no_input=True,
             extra_context=_get_extra_content(target, variables=variables)
         )
-    _copy_files(
-        new_version_path / target.name, current_version_path / target.name, target,
-        script_dir=script_dir, skip_files=skip_files, is_autoheal=is_autoheal, is_force=is_force
-    )
+        if current_version_dir is not None:
+            prev_template_dir = current_version_dir / 'templates' / template
+            cookiecutter(
+                template=str(prev_template_dir), output_dir=current_version_path, no_input=True,
+                extra_context=_get_extra_content(target, variables=variables)
+            )
+        _copy_files(
+            new_version_path / target.name, current_version_path / target.name, target,
+            script_dir=script_dir, skip_files=skip_files, is_autoheal=is_autoheal, is_force=is_force
+        )
+    if top_level_files_path.exists():
+        _copy_static_files(top_level_files_path, target)
     logger.info(f'\t\tSuccessful use template ({path})')
 
 
@@ -121,6 +139,26 @@ def _copy_files(source: Path, source_current: Path, target: Path, *, script_dir:
         logger.warning(f'\t\tFile {relative_path} already exists. Cannot copy. Skip operations')
 
 
+def _copy_static_files(files_dir: Path, target: Path) -> None:
+    for path in files_dir.glob('**/*'):
+        if path.is_dir():
+            continue
+        relative_path = path.relative_to(files_dir)
+        target_path = target / relative_path
+        if not target_path.exists():
+            target_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy(path, target_path)
+            logger.info(f'\t\tStatic file {relative_path} does not exist. Copied it from files')
+            continue
+        gear_hash = _calculate_hash(path)
+        target_hash = _calculate_hash(target_path)
+        if gear_hash == target_hash:
+            shutil.copy(path, target_path)
+            logger.info(f'\t\tStatic file {relative_path}: no user changes. Updated from files')
+        else:
+            logger.warning(f'\t\tUser changes found for static file {relative_path}. Cannot copy. Skip operations')
+
+
 def _calculate_hash(path: Path) -> str:
     """ Calculating file content hash
 
@@ -147,14 +185,19 @@ def delete_template(
         logger.info('\t\tNo template specified. Skip operations')
         return
     path = script_dir / 'templates' / template
-    if not path.exists():
+    top_level_files_path = script_dir / 'files' / template
+
+    if not path.exists() and not top_level_files_path.exists():
         raise PackageApiError(f'Template is missing. Template path: {path}')
 
-    cookiecutter(
-        template=str(path), output_dir=tmpdir, no_input=True,
-        extra_context=_get_extra_content(target, variables=variables)
-    )
-    _delete_files(tmpdir / target.name, target, skip_files=skip_files, is_force=is_force)
+    if path.exists():
+        cookiecutter(
+            template=str(path), output_dir=tmpdir, no_input=True,
+            extra_context=_get_extra_content(target, variables=variables)
+        )
+        _delete_files(tmpdir / target.name, target, skip_files=skip_files, is_force=is_force)
+    if top_level_files_path.exists():
+        _delete_static_files(top_level_files_path, target)
     logger.info(f'\t\tSuccessful delete files using template ({path})')
 
 
@@ -192,3 +235,30 @@ def _delete_files(source: Path, target: Path, *, skip_files: tuple[str, ...],
             continue
         logger.warning(f'\t\tFile {relative_path} exists and does not match the template. '
                        f'Cannot delete. Skip operations')
+
+
+def _delete_static_files(files_dir: Path, target: Path) -> None:
+    """ Delete static (non-templated) files previously copied by _copy_static_files.
+
+    The gear's own file is used as the baseline: if the target hash matches the gear file
+    hash there are no user changes and the file is removed; if they differ the user has
+    modified it and the file is left untouched with a warning.
+
+    :param files_dir: source 'files' directory for the gear being uninstalled
+    :param target: destination repository directory
+    """
+    for path in files_dir.glob('**/*'):
+        if path.is_dir():
+            continue
+        relative_path = path.relative_to(files_dir)
+        target_path = target / relative_path
+        if not target_path.exists():
+            logger.info(f'\t\tStatic file {relative_path} does not exist. Skip operations')
+            continue
+        gear_hash = _calculate_hash(path)
+        target_hash = _calculate_hash(target_path)
+        if gear_hash == target_hash:
+            os.remove(target_path)
+            logger.info(f'\t\tStatic file {relative_path}: no user changes. Deleted')
+        else:
+            logger.warning(f'\t\tUser changes found for static file {relative_path}. Cannot delete. Skip operations')

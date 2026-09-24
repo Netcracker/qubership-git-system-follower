@@ -1,5 +1,7 @@
 # templates module (v1)
-API provided in `templates.py` module. This module contains functions for easy interaction with `cookiecutter` templates.
+API provided in `templates.py` module. This module contains functions for easy interaction with `cookiecutter` templates and static files.
+
+In addition to cookiecutter rendering, `create_template` and `delete_template` automatically handle **static files** placed in a `files/` directory alongside the template or at the top level of the scripts directory. Static files are copied verbatim — no Jinja rendering — and user changes are respected on update and uninstall. See [Static files](../../how_to/gear_development_cases.md#static-files) for full details.
 
 ## Usage in package API
 ```python

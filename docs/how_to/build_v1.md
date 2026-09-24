@@ -46,6 +46,8 @@ oras push <your registry> git-system-follower-package/
 └─ <your other files>
 ```
 
+The `scripts/` directory may contain cookiecutter `templates/` directories and/or `files/` directories for static files. See [Gear structure types](gear_development_cases.md#gear-structure-types) and [Static files](gear_development_cases.md#static-files) for the full layout.
+
 ## `package.yaml`
 
 Example:

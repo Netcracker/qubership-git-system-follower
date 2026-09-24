@@ -127,6 +127,7 @@ nav:
     - download: cli_reference/download.md
     - install: cli_reference/install.md
     - list: cli_reference/list.md
+    - template: cli_reference/template.md
     - uninstall: cli_reference/uninstall.md
     - version: cli_reference/version.md
   - API reference: 

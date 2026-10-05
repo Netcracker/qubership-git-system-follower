@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from pathlib import Path
-
+import os
 import click
 
 from git_system_follower.logger import logger, set_level
@@ -112,8 +112,8 @@ def download_command(
     help='Gitlab repository url', metavar='URL'
 )
 @click.option(
-    '-b', '--branch', 'branches', type=str, required=True, multiple=True,
-    help='Branches in which to install the gears', metavar='BRANCH...'
+    '-b', '--branch', 'branches', type=str, required=False, multiple=True,
+    help='Branches in which to install the gears (default: CI_DEFAULT_BRANCH)', metavar='BRANCH...'
 )
 @click.option(
     '-t', '--token', type=str, envvar='GSF_GIT_TOKEN', required=True,
@@ -210,6 +210,14 @@ def install_command(
     credentials = resolve_credentials(registry_username, registry_password)
     banner(version=__version__, output_func=logger.info)
 
+    # Handle default branch from CI_DEFAULT_BRANCH
+    if not branches:
+        default_branch = os.environ.get('CI_DEFAULT_BRANCH')
+        if default_branch:
+            branches = (default_branch,)
+        else:
+            raise CLIParamsError('Branch is required. Use -b/--branch or set CI_DEFAULT_BRANCH environment variable')
+
     common_params = {
         'gears': ', '.join(map(str, gears)),
         'extras': ', '.join(map(str, extras)),
@@ -249,14 +257,18 @@ def install_command(
 
 
 @click.command(name='uninstall')
-@click.argument('gears', nargs=-1, type=Package)
+@click.argument('gears', nargs=-1, type=Package, required=False)
 @click.option(
     '-r', '--repo', 'repo', type=str, required=True,
     help='Gitlab repository url', metavar='URL'
 )
 @click.option(
-    '-b', '--branch', 'branches', type=str, required=True, multiple=True,
-    help='Branches in which to uninstall the gears', metavar='BRANCH...'
+    '-b', '--branch', 'branches', type=str, required=False, multiple=True,
+    help='Branches in which to uninstall the gears (default: CI_DEFAULT_BRANCH)', metavar='BRANCH...'
+)
+@click.option(
+    '--gear-name', 'gear_names', type=str, required=False, multiple=True,
+    help='Uninstall only specific gear names from state file (can be used multiple times)', metavar='NAME...'
 )
 @click.option(
     '-t', '--token', type=str, envvar='GSF_GIT_TOKEN', required=True,
@@ -329,6 +341,7 @@ def uninstall_command(
         registry_type: str, registry_username: str | None, registry_password: str | None, is_insecure: bool,
         is_skip_project_description: bool, is_skip_project_icon: bool,
         is_force: bool, is_debug: bool,
+        gear_names: tuple[str, ...],
         *args, **kwargs  # dont delete, these parameters for plugin manager
 ):
     """ Uninstall gears from branches in repository
@@ -343,13 +356,25 @@ def uninstall_command(
                                   your-archive@1.0.0.tar.gz
                                   3. source code files: /path/to/gear directory, e.g.
                                   your-gear@1.0.0
+
+    When no GEARS are provided, uninstalls all GSF packages from the state file.
+    Use --gear-name to filter specific gears.
     """
     extras = extras + extras_external
     credentials = resolve_credentials(registry_username, registry_password)
     banner(version=__version__, output_func=logger.info)
 
+    # Handle default branch from CI_DEFAULT_BRANCH
+    if not branches:
+        default_branch = os.environ.get('CI_DEFAULT_BRANCH')
+        if default_branch:
+            branches = (default_branch,)
+        else:
+            raise CLIParamsError('Branch is required. Use -b/--branch or set CI_DEFAULT_BRANCH environment variable')
+
     common_params = {
-        'gears': ', '.join(map(str, gears)),
+        'gears': ', '.join(map(str, gears)) if gears else
+            f"(From state file) {', '.join(gear_names) if gear_names else '(All)'}",
         'extras': ', '.join(map(str, extras)),
         'force': is_force,
         'debug': is_debug,
@@ -370,8 +395,6 @@ def uninstall_command(
     }
     display_params({'Common': common_params, 'Registry': registry_params, 'Git': git_params})
 
-    if gears == ():
-        raise CLIParamsError('Gears for uninstallation are not specified')
     set_level(is_debug)
 
     gears = get_gears(gears)
@@ -380,7 +403,8 @@ def uninstall_command(
         gears, repo, branches, token, extras=extras,
         commit_message=message, username=username, user_email=email,
         registry=registry, is_skip_project_description=is_skip_project_description,
-        is_skip_project_icon=is_skip_project_icon, is_force=is_force
+        is_skip_project_icon=is_skip_project_icon, is_force=is_force,
+        gear_names=gear_names
     )
 
 

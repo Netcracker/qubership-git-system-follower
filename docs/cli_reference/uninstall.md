@@ -10,6 +10,8 @@ You can pass a gear to uninstallation as:
 2. `.tar.gz` file
 3. directory with gear (source code)
 
+**Alternatively**, when no GEARS are provided, git-system-follower reads the `.state.yaml` file from the repository and uninstalls all GSF packages tracked there. This enables full repository cleanup without needing the original gear images.
+
 ## Display help text
 To list the help on any command just execute the command, followed by the `--help` option
 ```bash
@@ -19,13 +21,14 @@ gsf uninstall --help
 ## Arguments
 | Name    | Description                                                                                                                                                                              | Example                                                                                                                                |
 |---------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
-| `GEARS` | Uninstall all listed gears as:<br/>1. image: `<registry>/<repository>/<name>:<tag>`<br/>2. .tar.gz archive: `/path/to/archive.tar.gz`<br/>3.source code files: `/path/to/gear directory` | `artifactory.company.com/path-to/your-image:1.0.0`, `/path/to/my-archive@1.0.0.tar.gz`, `/path/to/my-gear@1.0.0`, `project/my-package` |
+| `GEARS` | Uninstall all listed gears as:<br/>1. image: `<registry>/<repository>/<name>:<tag>`<br/>2. .tar.gz archive: `/path/to/archive.tar.gz`<br/>3.source code files: `/path/to/gear directory`<br/><br/>**Optional**: When omitted, uninstalls all packages from state file | `artifactory.company.com/path-to/your-image:1.0.0`, `/path/to/my-archive@1.0.0.tar.gz`, `/path/to/my-gear@1.0.0`, `project/my-package` |
 
 ## Options
 | Name                  | Description                                                                                         | Mandatory |                                     Default value                                      |  Environment variable   | Example                                                          |
 |-----------------------|-----------------------------------------------------------------------------------------------------|:---------:|:--------------------------------------------------------------------------------------:|:-----------------------:|------------------------------------------------------------------|
 | `-r`, `--repo`        | GitLab repository URL                                                                               |     +     |                                           -                                            |            -            | `https://git.company.com/test`, `http://localhost/test.git`      |
-| `-b`, `--branch`      | Branches in which to uninstall the gears                                                            |     +     |                                           -                                            |            -            | `main`, `features/FAKE-0000`                                     |
+| `-b`, `--branch`      | Branches in which to uninstall the gears                                                            |     -     |                    `CI_DEFAULT_BRANCH` (if set)                                        |            -            | `main`, `features/FAKE-0000`                                     |
+| `--gear-name`         | Uninstall only specific gear names from state file (can be used multiple times)                     |     -     |                    (all gears in state file)                                           |            -            | `my-gear`, `another-gear`                                        |
 | `-t`, `--token`       | GitLab access token                                                                                 |     +     |                                           -                                            |     `GSF_GIT_TOKEN`     | `glpat-xxxxxyyyyyyyyy_duMMy`                                     |
 | `--extra`             | Extra parameters to be passed to the package API: `name`, `value`, `masked`/`no-masked` of variable |     -     |                                           -                                            |            -            | `add_functionality true no-masked`, `password MyPa$$word masked` |
 | `--ticket`            | Ticket ID that will be automatically added to the beginning of each commit message                  |     -     |                                      `FAKE-0000`                                       |            -            | `FAKE-0001`, `ABCD-1234`                                         |
@@ -40,6 +43,9 @@ gsf uninstall --help
 | `--skip-project-icon` | Warn instead of exit on project icon mismatch                                                             |     -     |                                        `False`                                         |            -            |                                                                  |
 | `--force`             | Forced uninstallation: change of files, CI/CD variables as specified in gear                        |     -     |                                        `False`                                         |            -            |                                                                  |
 | `--debug`             | Show debug level messages                                                                           |     -     |                                        `False`                                         |            -            |                                                                  |
+
+!!! warning "Mutually exclusive"
+    `--gear-name` and `GEARS` argument cannot be used together. Use either explicit gears or `--gear-name` filter.
 
 !!! note "Project metadata"
     The `--skip-project-description` and `--skip-project-icon` flags relax the
@@ -94,6 +100,35 @@ gsf uninstall -r https://git.company.com/test.git \
               --extra FIRST_VAR_NAME FIRST_VAR_VALUE no-masked \
               --extra PASSWORD Pa$$w0rd masked \
               packages/my-gear@1.0.0
+```
+
+### Full repository cleanup (from state file)
+Uninstall all GSF packages tracked in the state file:
+```plaintext
+gsf uninstall -r https://git.company.com/test.git \
+              -b main -t glpat-xxxxxyyyyyyyyy_duMMy
+```
+
+Uninstall all GSF packages using default branch from `CI_DEFAULT_BRANCH`:
+```plaintext
+gsf uninstall -r https://git.company.com/test.git \
+              -t glpat-xxxxxyyyyyyyyy_duMMy
+```
+
+### Selective uninstall from state file
+Uninstall only specific gears by name:
+```plaintext
+gsf uninstall -r https://git.company.com/test.git \
+              -b main -t glpat-xxxxxyyyyyyyyy_duMMy \
+              --gear-name my-gear
+```
+
+Uninstall multiple specific gears:
+```plaintext
+gsf uninstall -r https://git.company.com/test.git \
+              -b main -t glpat-xxxxxyyyyyyyyy_duMMy \
+              --gear-name my-gear \
+              --gear-name another-gear
 ```
 
 ## Advanced

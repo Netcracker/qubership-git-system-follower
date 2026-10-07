@@ -27,7 +27,7 @@ gsf install --help
 | Name                  | Description                                                                                         | Mandatory |                                     Default value                                      |  Environment variable   | Example                                                          |
 |-----------------------|-----------------------------------------------------------------------------------------------------|:---------:|:--------------------------------------------------------------------------------------:|:-----------------------:|------------------------------------------------------------------|
 | `-r`, `--repo`        | GitLab repository URL                                                                               |     +     |                                           -                                            |            -            | `https://git.company.com/test`, `http://localhost/test.git`      |
-| `-b`, `--branch`      | Branches in which to install the gears                                                              |     +     |                                           -                                            |            -            | `main`, `features/FAKE-0000`                                     |
+| `-b`, `--branch`      | Branches in which to install the gears                                                              |     -     |                    `CI_DEFAULT_BRANCH` (if set)                                        |            -            | `main`, `features/FAKE-0000`                                     |
 | `-t`, `--token`       | GitLab access token                                                                                 |     +     |                                           -                                            |     `GSF_GIT_TOKEN`     | `<GITLAB_TOKEN>`                                     |
 | `--extra`             | Extra parameters to be passed to the package API: `name`, `value`, `masked`/`no-masked` of variable |     -     |                                           -                                            |            -            | `add_functionality true no-masked`, `password MyPa$$word masked` |
 | `--message`           | Commit message                                                                                      |     -     |                                  `Installed gear(s)`                                   |            -            | `FAKE-0000 update our tools`                                     |
@@ -106,6 +106,15 @@ gsf install -r https://git.company.com/test.git \
             -b main -t <GITLAB_TOKEN> \
             --autoheal \
             packages/my-gear@1.0.0
+```
+
+### Using default branch from CI_DEFAULT_BRANCH
+Install without specifying branch when `CI_DEFAULT_BRANCH` is set:
+```plaintext
+export CI_DEFAULT_BRANCH=main
+gsf install -r https://git.company.com/test.git \
+            -t <GITLAB_TOKEN> \
+            artifactory.company.com/my-image:1.0.0
 ```
 
 ## Advanced

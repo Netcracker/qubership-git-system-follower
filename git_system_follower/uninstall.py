@@ -18,7 +18,7 @@ from pathlib import Path
 from gitlab.v4.objects import Project
 from outlify.list import TitledList
 from git_system_follower.logger import logger
-from git_system_follower.errors import UninstallationError
+from git_system_follower.errors import UninstallationError, CLIParamsError
 from git_system_follower.typings.cli import (
     PackageCLI, ExtraParam, PackageCLIImage, PackageCLITarGz, PackageCLISource
 )
@@ -52,8 +52,14 @@ def uninstall(
         repo_url: str, branches: tuple[str, ...], token: str, *,
         extras: tuple[ExtraParam, ...], commit_message: str,
         username: str, user_email: str, registry: RegistryInfo,
-        is_skip_project_description: bool, is_skip_project_icon: bool, is_force: bool
+        is_skip_project_description: bool, is_skip_project_icon: bool, is_force: bool,
+        gear_names: tuple[str, ...] = ()
 ) -> None:
+    if packages_cli and gear_names:
+        raise CLIParamsError(
+            'Cannot specify both GEARS and --gear-name. '
+            'Use either explicit gears or --gear-name filter.')
+
     gitlab_instance = get_gitlab(repo_url, token)
     project = get_project(gitlab_instance, repo_url)
     repo = RepositoryInfo().initialize(gitlab=project, git=get_git_repo(project, token),
@@ -61,7 +67,14 @@ def uninstall(
     states = get_states(project, branches,
         is_skip_project_description=is_skip_project_description,
         is_skip_project_icon=is_skip_project_icon)
-    packages = get_packages(packages_cli, states, registry=registry)
+
+    if packages_cli:
+        # Traditional mode: uninstall specific gears provided via CLI
+        packages = get_packages(packages_cli, states, registry=registry)
+    else:
+        # New mode: uninstall all packages from state file (optionally filtered by gear_names)
+        packages = get_packages_from_state(states, gear_names, registry=registry)
+
     if not packages:
         logger.info('No packages of these versions found in state file')
         return
@@ -110,6 +123,77 @@ def get_packages(
             if _is_necessary_package_to_delete(download_package, installed_package):
                 packages.append(download_package)
     return tuple(packages)
+
+
+def _parse_source(source: str, name: str, version: str) -> PackageCLIImage | PackageCLISource | None:
+    """Parse source string into PackageCLI object. Returns None if source is empty."""
+    if not source:
+        return None
+    from git_system_follower.typings.cli import PackageCLIImage, PackageCLISource, PackageCLITypes
+    from pathlib import Path
+
+    # Docker image format: registry/repo/image:tag or registry/image:tag
+    if ':' in source and '/' in source and '\\' not in source:
+        image_part, tag = source.rsplit(':', 1)
+        parts = image_part.split('/')
+        if len(parts) >= 2:
+            registry = parts[0]
+            repository = '/'.join(parts[1:-1]) if len(parts) > 2 else ''
+            image = parts[-1]
+            return PackageCLIImage(
+                type=PackageCLITypes.image, name=name, version=version,
+                registry=registry, repository=repository, image=image, tag=tag, source=source
+            )
+    # Local path (.tar.gz or directory)
+    return PackageCLISource(
+        type=PackageCLITypes.source, name=name, version=version,
+        path=Path(source), source=source
+    )
+
+
+def get_packages_from_state(
+        states: dict[str, StateFile],
+        gear_names: tuple[str, ...] = (),
+        registry: RegistryInfo | None = None
+) -> tuple[PackageLocalData, ...]:
+    """Get packages to uninstall from state file. Downloads gears using source from state file."""
+    # Collect unique packages from all branches (filtered by gear_names)
+    all_packages: dict[str, PackageLocalData] = {}
+    for state in states.values():
+        for ip in state.get_packages():
+            if gear_names and ip['name'] not in gear_names:
+                continue
+            key = f"{ip['name']}@{ip['version']}"
+            if key not in all_packages:
+                all_packages[key] = PackageLocalData(
+                    name=ip['name'], version=ip['version'],
+                    dependencies=[], subtype=None, source=ip.get('source', '')
+                )
+
+    logger.info(TitledList(
+        [f"{p['name']}@{p['version']}" for p in all_packages.values()],
+        title='Packages from state file'
+    ))
+
+    if not all_packages or registry is None:
+        if registry is None and all_packages:
+            logger.warning('No registry provided, cannot download gears for uninstallation')
+        return tuple(all_packages.values())
+
+    # Parse sources and download
+    packages_cli = []
+    for pkg in all_packages.values():
+        parsed = _parse_source(pkg['source'], pkg['name'], pkg['version'])
+        if parsed:
+            packages_cli.append(parsed)
+        else:
+            logger.warning(f"Package {pkg['name']}@{pkg['version']} has no source in state file, skipping download")
+
+    if not packages_cli:
+        logger.warning('No valid sources found in state file for download')
+        return tuple(all_packages.values())
+
+    return download(packages_cli, is_deps_first=False, registry=registry)
 
 
 def _is_necessary_package_to_delete(download_package: PackageLocalData, installed_package: PackageCLI) -> bool:

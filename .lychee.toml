@@ -1,0 +1,16 @@
+verbose = "info"
+no_progress = true
+accept = ["100..=103", "200..=299", "429"]
+retry_wait_time = 60
+max_retries = 8
+max_concurrency = 4
+cache = true
+max_cache_age = "1d"
+cache_exclude_status = ["429", "500..=504"]
+cookie_jar = "cookies.json"
+exclude_all_private = true
+user_agent = "Mozilla/5.0 (X11; Linux x86_64) Chrome/134.0.0.0"
+
+remap = [
+    "https://github.com/(.*)/blob/(.*) https://raw.githubusercontent.com/$1/$2"
+]

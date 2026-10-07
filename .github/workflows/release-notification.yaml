@@ -1,0 +1,87 @@
+name: Release Notification
+
+on:
+  workflow_dispatch:
+    inputs:
+      request:
+        description: 'Request number(s), e.g. ABC-123 or ABC-123,DEF-456'
+        required: true
+
+permissions:
+  contents: read
+
+env:
+  REQUEST_INPUT: ${{ inputs.request }}
+
+jobs:
+  notify-webex:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Collect release data
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          echo "::add-mask::$REQUEST_INPUT"
+          RELEASE_JSON=$(gh release view --json tagName,name,body,url,author,publishedAt)
+          {
+            echo "REQUEST=$REQUEST_INPUT"
+            echo "RELEASE_TAG=$(echo "$RELEASE_JSON" | jq -r '.tagName')"
+            echo "RELEASE_NAME=$(echo "$RELEASE_JSON" | jq -r '.name')"
+            echo "RELEASE_URL=$(echo "$RELEASE_JSON" | jq -r '.url')"
+            echo "RELEASE_AUTHOR=$(echo "$RELEASE_JSON" | jq -r '.author.login')"
+            echo "RELEASE_DATE=$(echo "$RELEASE_JSON" | jq -r '.publishedAt')"
+          } >> "$GITHUB_ENV"
+          {
+            echo "RELEASE_BODY<<EOF"
+            echo "$RELEASE_JSON" | jq -r '.body'
+            echo "EOF"
+          } >> "$GITHUB_ENV"
+
+      - name: Build changes summary
+        run: |
+          printf '%s\n' "$RELEASE_BODY" | grep -iE '(^|[^[:alpha:]])fix(\([^)]*\))?[:]' \
+            | sed -E 's/^[[:space:]]*([0-9]+[.)]|[[:punct:]]+)[[:space:]]*//' \
+            | sed -E 's/ by @[^\s]+ in https:\/\/github\.com\/[^\s]+\/pull\/[0-9]+.*$//' \
+            | sed -E 's/^Fix: /fix: /I' \
+            | awk '!seen[$0]++' > fixes.txt || true
+          printf '%s\n' "$RELEASE_BODY" | grep -iE '(^|[^[:alpha:]])feat(\([^)]*\))?[:]' \
+            | sed -E 's/^[[:space:]]*([0-9]+[.)]|[[:punct:]]+)[[:space:]]*//' \
+            | sed -E 's/ by @[^\s]+ in https:\/\/github\.com\/[^\s]+\/pull\/[0-9]+.*$//' \
+            | sed -E 's/^Feat: /feat: /I' \
+            | awk '!seen[$0]++' > feats.txt || true
+          jq -rn \
+            --rawfile fixes fixes.txt \
+            --rawfile feats feats.txt \
+            --arg body "$RELEASE_BODY" '
+            if $fixes == "" and $feats == "" then
+              $body
+            else
+              (if $fixes != "" then "🛠 **Bug Fixes**\n" + $fixes + "\n\n" else "" end) +
+              (if $feats != "" then "✨ **Features**\n" + $feats else "" end)
+            end' > changes.txt
+
+      - name: Send Webex notification
+        env:
+          WEBEX_BOT_TOKEN: ${{ secrets.WEBEX_BOT_TOKEN }}
+          WEBEX_ROOM_ID: ${{ secrets.WEBEX_ROOM_ID }}
+        run: |
+          RELEASE_DATE=$(date -d "$RELEASE_DATE" +%Y/%-m/%-d)
+          jq -n \
+            --arg repo "${{ github.repository }}" \
+            --arg tag "$RELEASE_TAG" \
+            --arg request "$REQUEST" \
+            --arg date "$RELEASE_DATE" \
+            --rawfile changes changes.txt \
+            --arg url "$RELEASE_URL" \
+            '{roomId: $ENV.WEBEX_ROOM_ID,
+              markdown: ("🔔 **" + $repo + " released**" +
+              "\n\nRelease version: " + $tag + " (" + $date + ")" +
+              (if $request != "" then "\nRequest: " + $request else "" end) +
+              "\n\nChanges:\n" + $changes +
+              "\n\n🎉 The release is available on [GitHub](" + $url + ") 🎉")}' \
+            > payload.json
+          curl -X POST "https://webexapis.com/v1/messages" \
+            -H "Authorization: Bearer $WEBEX_BOT_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d @payload.json

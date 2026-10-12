@@ -157,3 +157,42 @@ def test_get_version_dirs_quarterly_to_quarterly(tmp_path):
     assert "24.3_end" in version_names
     assert "24.1_start" not in version_names
     assert current_version.name == "24.1_start"
+
+
+@pytest.mark.unit
+def test_get_version_dirs_missing_start_version(tmp_path, caplog):
+    """
+    Test update when installed version directory doesn't exist
+    (e.g., installed via init with non-standard version)
+    """
+    package_dir = tmp_path / "package"
+    scripts_dir = package_dir / "git-system-follower-package" / "scripts"
+
+    # Create version directories for real releases only (with v prefix to match start_version)
+    semver_versions = ["v2.0.0", "v2.1.0", "v2.1.1", "v2.5.1"]
+
+    for v in semver_versions:
+        (scripts_dir / v).mkdir(parents=True, exist_ok=True)
+
+    package = PackageLocalData({
+        "name": "test-gear",
+        "version": "v2.5.1",
+        "path": package_dir,
+        "dependencies": [],
+        "type": "gitlab-ci-pipeline"
+    })
+
+    # State version is a non-standard version that was installed via init (not a real release)
+    # v2.1.0-1 is a post-release version of v2.1.0, so it's > v2.1.0 but < v2.1.1
+    start_version = "v2.1.0-1"
+
+    with pytest.raises(SystemExit) as exc_info:
+        get_version_dirs(package, start_version)
+
+    assert exc_info.value.code == 1
+    # Check suggestion logged via logger.error
+    assert "Update failed for 'test-gear':" in caplog.text
+    assert f"version directory for installed version '{start_version}' not found in package scripts" in caplog.text
+    assert "Available versions in package: v2.0.0, v2.1.0, v2.1.1, v2.5.1" in caplog.text
+    assert "To fix uninstall the currently installed gear using the same gear" in caplog.text
+    assert "then install/update as per your plan" in caplog.text

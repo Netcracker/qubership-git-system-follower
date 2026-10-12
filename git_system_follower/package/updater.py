@@ -13,6 +13,8 @@
 # limitations under the License.
 
 from pathlib import Path
+from typing import Optional
+import sys
 
 from gitlab.v4.objects import Project
 
@@ -38,7 +40,7 @@ def update(
         package: PackageLocalData, repo: RepositoryInfo, state: PackageState, *,
         created_cicd_variables: tuple[str, ...], created_webhooks: tuple[str, ...],
         extras: tuple[ExtraParam, ...], is_autoheal: bool, is_force: bool
-) -> ScriptResponse:
+) -> ScriptResponse | None:
     logger.info('==> Package update')
     workdir = Path(repo.git.working_dir)
     initialize_metadata(package, repo)
@@ -54,17 +56,20 @@ def update(
         )
         logger.info(f"Updated to {package['name']}@{version_dir.name} version")
         current_version = version_dir
+    if response is None:
+        logger.info('No version updates to apply')
     return response
 
 
-def get_version_dirs(package: PackageLocalData, start_version: str) -> tuple[tuple[Path, ...], Path]:
+def get_version_dirs(package: PackageLocalData, start_version: str) -> tuple[tuple[Path, ...], Optional[Path]]:
     path = package['path'] / PACKAGE_DIRNAME / SCRIPTS_DIR
     if not path.exists():
         raise FileNotFoundError(f'Scripts directory is missing ({path.absolute()})')
 
     comparer = VersionComparer()
     versions = []
-    current_version = Path()
+    all_available_versions = []
+    current_version: Optional[Path] = None
     # Check if upgrading from quarterly to semver
     is_quarterly_to_semver = (comparer.is_quarterly(start_version) and
                                not comparer.is_quarterly(package['version']))
@@ -72,6 +77,7 @@ def get_version_dirs(package: PackageLocalData, start_version: str) -> tuple[tup
     for file in files:
         if file.is_file():
             continue
+        all_available_versions.append(file.name)
         # Check for current version match
         if comparer.compare(start_version, file.name) == 0:
             current_version = file
@@ -93,6 +99,22 @@ def get_version_dirs(package: PackageLocalData, start_version: str) -> tuple[tup
             if is_greater_than_start and is_less_equal_end:
                 versions.append(file)
 
+    if current_version is None:
+        available_str = ", ".join(sorted(all_available_versions)) if all_available_versions else "none"
+        logger.error(
+            f"Update failed for '{package['name']}': "
+            f"version directory for installed version '{start_version}' not found in package scripts. "
+            f"Cannot determine base version for update."
+        )
+        logger.info(
+            f"Available versions in package: {available_str}"
+        )
+        logger.warning(
+            "To fix uninstall the currently installed gear using the same gear "
+            "with which it was installed, then install/update as per your plan."
+        )
+        sys.exit(1)
+
     # Sort versions using VersionComparer
     versions = sorted(versions, key=lambda v: (
         not comparer.is_quarterly(v.name),
@@ -105,7 +127,7 @@ def get_version_dirs(package: PackageLocalData, start_version: str) -> tuple[tup
 def run_update_script(
         script_dir: Path, workdir: Path, project: Project,
         current_cicd_variables: dict[str, CICDVariable] | None,
-        current_webhooks: dict[str, Webhook] | None, state: PackageState, *, current_version_dir: Path,
+        current_webhooks: dict[str, Webhook] | None, state: PackageState, *, current_version_dir: Optional[Path],
         created_cicd_variables: tuple[str, ...], created_webhooks: tuple[str, ...],
         extras: tuple[ExtraParam, ...], is_autoheal: bool, is_force: bool
 ) -> ScriptResponse:

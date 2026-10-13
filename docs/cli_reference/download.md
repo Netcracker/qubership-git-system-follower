@@ -18,7 +18,8 @@ gsf download --help
 | Name                  | Description                                                              | Mandatory |      Default value      |  Environment variable   | Example                                           |
 |-----------------------|--------------------------------------------------------------------------|:---------:|:-----------------------:|:-----------------------:|---------------------------------------------------|
 | `-d`, `--directory`   | Directory where gears will be downloaded                                 |     -     | `.` (Current directory) |            -            | `/opt/gsf-packages`                               |
-| `--registry-type`     | Specify the registry type or use automatic detection                     |     -     |      `Autodetect`       |            -            | `Autodetect`, `Dockerhub`, `Artifactory`, `Nexus` |
+| `--registry-type`     | Specify the registry type or use automatic detection                     |     -     |      `Autodetect`       |            -            | `Autodetect`, `Dockerhub`, `Artifactory`, `Nexus`, `Custom` |
+| `--registry`          | Custom registry URL for authentication (required when `--registry-type=Custom`) |     -     |            -            |            -            | `https://my-registry.com` |
 | `--registry-username` | Username for basic authentication in the registry when downloading Gears |     -     |            -            | `GSF_REGISTRY_USERNAME` | `myusername`, `k1shk1n`                           |
 | `--registry-password` | Password for basic authentication in the registry when downloading Gears |     -     |            -            | `GSF_REGISTRY_PASSWORD` | `MyPa$$w0rd`                                      |
 | `--insecure-registry` | Allow insecure connections to the registry (use HTTP instead of HTTPS)   |     -     |         `False`         |            -            |                                                   |
@@ -36,7 +37,7 @@ gsf download artifactory.company.com/my-image:1.0.0 -d packages
 ```plaintext
 [04:26:54.404] INFO     |
      .-,
-  .^.: :.^.    ┏┓╻┳ ┏┓╻╻┏┓┳┏┓┏┳┓ ┏┓┏┓╻ ╻ ┏┓┏ ┓┏┓┳┓
+   .^.: :.^.    ┏┓╻┳ ┏┓╻╻┏┓┳┏┓┏┳┓ ┏┓┏┓╻ ╻ ┏┓┏ ┓┏┓┳┓
  ,-' .-. '-,   ┃┓┃┃ ┗┓┗┃┗┓┃┣ ┃┃┃ ┣ ┃┃┃ ┃ ┃┃┃┃┃┣ ┣┛
  '-. '-' .-'   ┗┛╹╹ ┗┛┗┛┗┛╹┗┛╹ ╹ ╹ ┗┛┗┛┗┛┗┛┗┻┛┗┛┛┗
   '.`; ;`.'    git-system-follower v0.0.1
@@ -50,7 +51,7 @@ gsf download artifactory.company.com/my-image:1.0.0 -d packages
   registry-password =
   insecure-registry =
   debug             = False
-╰══════════════════════════════════════════════════════════════════════════════════════════════════╯
+╰════════════════════════════════════════════════════════════════════════════════════════════════════════╯
 [04:26:54.405] INFO     | :: Downloading packages
 [04:26:54.405] INFO     | -> Downloading artifactory.company.com/my-image:1.0.0
 [04:26:54.424] INFO     | artifactory.company.com is of type Artifactory
@@ -59,6 +60,15 @@ gsf download artifactory.company.com/my-image:1.0.0 -d packages
 [04:26:55.465] SUCCESS  | Download complete
 ```
 </div>
+
+### Using Custom Registry Type
+For registries not supported by auto-detection (e.g., Harbor, Quay, self-hosted), use `--registry-type=Custom` with `--registry`:
+
+```bash
+gsf download --registry-type=Custom --registry=https://my-harbor.com my-harbor.com/my-image:1.0.0
+```
+
+> **Note:** The `--registry` parameter is only valid when `--registry-type=Custom` is specified. The URL should be the registry's authentication endpoint (base URL, not the full `/v2/token` path).
 
 Downloading package (next times):
 

@@ -29,6 +29,7 @@ class RegistryTypes(Enum):
     artifactory = 'Artifactory'
     awsecr = 'AwsEcr'
     gcpgar = 'GcpGar'
+    custom = 'Custom'
 
 
 @dataclass
@@ -36,3 +37,4 @@ class RegistryInfo:
     credentials: Optional[Credentials]
     type: RegistryTypes
     is_insecure: bool
+    registry_url: Optional[str] = None

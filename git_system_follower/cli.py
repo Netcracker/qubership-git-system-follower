@@ -66,11 +66,15 @@ GIT_EMAIL = config.get_value('user', 'email', default='unknown@example.com')
     '--insecure-registry', 'is_insecure', is_flag=True, default=False,
     help='Allow insecure connections to the registry (use HTTP instead of HTTPS)'
 )
+@click.option(
+    '--registry', 'registry_url', type=str, required=False, default=None,
+    help='Custom registry URL for authentication (required when --registry-type=Custom)'
+)
 @click.option('--debug', 'is_debug', is_flag=True, default=False, help='Show debug level messages')
 def download_command(
         gears: tuple[HookSpec, ...], directory: Path,
-        registry_type: str, registry_username: str | None, registry_password: str | None, is_insecure: bool,
-        is_debug: bool,
+        registry_type: str, registry_username: str | None, registry_password: str | None,
+        is_insecure: bool, registry_url: str | None, is_debug: bool,
         *args, **kwargs  # dont delete, these parameters for plugin manager
 ):
     """ Download gears
@@ -93,15 +97,24 @@ def download_command(
         'registry-username': credentials.username if credentials is not None else '',
         'registry-password': credentials.password if credentials is not None else '',
         'insecure-registry': is_insecure,
+        'registry-url': registry_url or '',
     }
     display_params({'Common': common_params, 'Registry': registry_params})
 
     if gears == ():
         raise CLIParamsError('Gears for downloading are not specified')
+    # Validate --registry only used with --registry-type=custom
+    if registry_url and registry_type != 'Custom':
+        raise CLIParamsError('--registry parameter can only be used with --registry-type=Custom')
     set_level(is_debug)
 
     gears = get_gears(gears)
-    registry = RegistryInfo(credentials=credentials, type=RegistryTypes(registry_type), is_insecure=is_insecure)
+    registry = RegistryInfo(
+        credentials=credentials,
+        type=RegistryTypes(registry_type),
+        is_insecure=is_insecure,
+        registry_url=registry_url,
+    )
     download(gears, directory, is_deps_first=True, registry=registry)
 
 
@@ -167,6 +180,10 @@ def download_command(
     help='Allow insecure connections to the registry (use HTTP instead of HTTPS)'
 )
 @click.option(
+    '--registry', 'registry_url', type=str, required=False, default=None,
+    help='Custom registry URL for authentication (required when --registry-type=Custom)'
+)
+@click.option(
     '--skip-force-rollback', 'is_skip_force_rollback', is_flag=True, default=False,
     help='Skip validation if rollback is supported by installed gear'
 )
@@ -190,11 +207,12 @@ def download_command(
 def install_command(
         gears: tuple[HookSpec, ...], repo: str, branches: tuple[str, ...], token: str,
         extras: tuple[ExtraParam], extras_external: tuple[ExtraParam], message: str, username: str, email: str,
-        registry_type: str, registry_username: str | None, registry_password: str | None, is_insecure: bool,
+        registry_type: str, registry_username: str | None, registry_password: str | None,
+        is_insecure: bool, registry_url: str | None,
         is_skip_force_rollback: bool, is_skip_project_description: bool, is_skip_project_icon: bool,
         is_autoheal: bool, is_force: bool, is_debug: bool,
         *args, **kwargs  # dont delete, these parameters for plugin manager
-):
+    ):
     """ Install gears to branches in repository
 
     \b
@@ -229,6 +247,7 @@ def install_command(
         'registry-username': credentials.username if credentials is not None else '',
         'registry-password': credentials.password if credentials is not None else '',
         'insecure-registry': is_insecure,
+        'registry-url': registry_url or '',
     }
     git_params = {
         'repo': repo,
@@ -242,10 +261,17 @@ def install_command(
 
     if gears == ():
         raise CLIParamsError('Gears for installation are not specified')
+    if registry_url and registry_type != 'Custom':
+        raise CLIParamsError('--registry parameter can only be used with --registry-type=Custom')
     set_level(is_debug)
 
     sources, gears = gears, get_gears(gears)
-    registry = RegistryInfo(credentials=credentials, type=RegistryTypes(registry_type), is_insecure=is_insecure)
+    registry = RegistryInfo(
+        credentials=credentials,
+        type=RegistryTypes(registry_type),
+        is_insecure=is_insecure,
+        registry_url=registry_url,
+    )
     install(
         gears, sources, repo, branches, token, extras=extras,
         commit_message=message, username=username, user_email=email,
@@ -322,6 +348,10 @@ def install_command(
     help='Allow insecure connections to the registry (use HTTP instead of HTTPS)'
 )
 @click.option(
+    '--registry', 'registry_url', type=str, required=False, default=None,
+    help='Custom registry URL for authentication (required when --registry-type=Custom)'
+)
+@click.option(
     '--skip-project-description', 'is_skip_project_description', is_flag=True, default=False,
     help='Warn instead of exit on project description mismatch'
 )
@@ -338,12 +368,13 @@ def uninstall_command(
         gears: tuple[HookSpec, ...], repo: str,
         branches: tuple[str, ...], token: str, extras: tuple[ExtraParam, ...], extras_external: tuple[ExtraParam],
         message: str, username: str, email: str,
-        registry_type: str, registry_username: str | None, registry_password: str | None, is_insecure: bool,
+        registry_type: str, registry_username: str | None, registry_password: str | None,
+        is_insecure: bool, registry_url: str | None,
         is_skip_project_description: bool, is_skip_project_icon: bool,
         is_force: bool, is_debug: bool,
         gear_names: tuple[str, ...],
         *args, **kwargs  # dont delete, these parameters for plugin manager
-):
+    ):
     """ Uninstall gears from branches in repository
 
     It is necessary to have gears, since the manager interacts with the delete package api
@@ -384,6 +415,7 @@ def uninstall_command(
         'registry-username': credentials.username if credentials is not None else '',
         'registry-password': credentials.password if credentials is not None else '',
         'insecure-registry': is_insecure,
+        'registry-url': registry_url or '',
     }
     git_params = {
         'repo': repo,
@@ -395,10 +427,17 @@ def uninstall_command(
     }
     display_params({'Common': common_params, 'Registry': registry_params, 'Git': git_params})
 
+    if registry_url and registry_type != 'Custom':
+        raise CLIParamsError('--registry parameter can only be used with --registry-type=Custom')
     set_level(is_debug)
 
     gears = get_gears(gears)
-    registry = RegistryInfo(credentials=credentials, type=RegistryTypes(registry_type), is_insecure=is_insecure)
+    registry = RegistryInfo(
+        credentials=credentials,
+        type=RegistryTypes(registry_type),
+        is_insecure=is_insecure,
+        registry_url=registry_url,
+    )
     uninstall(
         gears, repo, branches, token, extras=extras,
         commit_message=message, username=username, user_email=email,
@@ -448,6 +487,10 @@ def version_command():
     help='Allow insecure connections to the registry (use HTTP instead of HTTPS)'
 )
 @click.option(
+    '--registry', 'registry_url', type=str, required=False, default=None,
+    help='Custom registry URL for authentication (required when --registry-type=Custom)'
+)
+@click.option(
     '-d', '--directory', type=click.Path(dir_okay=True, file_okay=False, path_type=Path),
     default=None,
     help='Directory where generated files will be written. If not specified, a preview is shown in stdout'
@@ -461,9 +504,9 @@ def version_command():
 def template_command(
         gears: tuple[HookSpec, ...], extravars: tuple[tuple[str, str], ...],
         registry_type: str, registry_username: str | None, registry_password: str | None,
-        is_insecure: bool, directory: Path | None, output_file: Path | None, is_debug: bool,
+        is_insecure: bool, registry_url: str | None, directory: Path | None, output_file: Path | None, is_debug: bool,
         *args, **kwargs  # dont delete, these parameters for plugin manager
-):
+    ):
     """ Template out gear templates and show the generated files in stdout
 
     \b
@@ -489,15 +532,23 @@ def template_command(
         'registry-username': credentials.username if credentials is not None else '',
         'registry-password': credentials.password if credentials is not None else '',
         'insecure-registry': is_insecure,
+        'registry-url': registry_url or '',
     }
     display_params({'Gears': common_params, 'Registry': registry_params})
 
     if gears == ():
         raise CLIParamsError('Gears for templating are not specified')
+    if registry_url and registry_type != 'Custom':
+        raise CLIParamsError('--registry parameter can only be used with --registry-type=Custom')
     set_level(is_debug)
 
     gears = get_gears(gears)
-    registry = RegistryInfo(credentials=credentials, type=RegistryTypes(registry_type), is_insecure=is_insecure)
+    registry = RegistryInfo(
+        credentials=credentials,
+        type=RegistryTypes(registry_type),
+        is_insecure=is_insecure,
+        registry_url=registry_url,
+    )
     show_template(gears, extravars, registry=registry, directory=directory, output_file=output_file)
 
 

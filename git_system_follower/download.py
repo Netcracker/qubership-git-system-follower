@@ -333,6 +333,76 @@ class AwsEcr(RegistryV2):
 
         return self._download_layer(container, manifest, outdir)
 
+
+class Custom(RegistryV2):
+    """ Generic OCI registry client for custom/unsupported registries.
+
+    Uses basic auth with the provided registry URL for authentication.
+    This allows using any OCI-compliant registry without requiring
+    specific auto-detection logic.
+    """
+
+    @staticmethod
+    def _parse_registry_url(registry: RegistryInfo) -> tuple[str, str, str]:
+        """Parse registry_url into (scheme, host, token_url).
+        Returns:
+            scheme: 'http' or 'https'
+            host: registry host (without scheme)
+            token_url: full token endpoint URL
+        """
+        if registry.registry_url:
+            if registry.registry_url.startswith('https://'):
+                host = registry.registry_url[8:]
+                return 'https', host, f'{registry.registry_url}/v2/token'
+            elif registry.registry_url.startswith('http://'):
+                host = registry.registry_url[7:]
+                return 'http', host, f'{registry.registry_url}/v2/token'
+        # Fallback
+        scheme = 'http' if registry.is_insecure else 'https'
+        return scheme, '', ''
+
+    def _basic_auth(self, container: oras.container.Container, *, registry: RegistryInfo) -> str:
+        auth = None
+        if registry.credentials is not None:
+            auth = HTTPBasicAuth(registry.credentials.username, registry.credentials.password)
+
+        scheme, host, token_url = self._parse_registry_url(registry)
+        if token_url:
+            service = registry.registry_url
+        else:
+            token_url = f'{self.prefix}://{container.registry}/v2/token'
+            service = container.registry
+
+        response = requests.get(
+            token_url,
+            params={
+                'service': service,
+                'scope': f'repository:{container.namespace}/{container.repository}:pull'
+            }, auth=auth, verify=not registry.is_insecure
+        )
+        return self._check_anonymous_token_request(response, container)
+
+    def download(self, target: str, outdir: Path, *, registry: RegistryInfo) -> Path | None:
+        container = self.get_container(target)
+
+        scheme, host, _ = self._parse_registry_url(registry)
+        if host:
+            self.prefix = scheme
+            container.registry = host
+        elif registry.is_insecure:
+            self.prefix = 'http'
+
+        token = self._basic_auth(container, registry=registry)
+        self.auth.set_token_auth(token)
+
+        manifest = self.get_manifest_wrapper(container)
+        if not self.is_gear(manifest, container):
+            logger.warning(f'{target} is not a git-system-follower package. Skip downloading')
+            return None
+
+        return self._download_layer(container, manifest, outdir)
+
+
 def get_name_and_version_version_from_targz(path: Path) -> tuple[str, str]:
     """ Get name and version of package for .tar.gz archive
 
@@ -549,15 +619,24 @@ def _get_current_path_using_mapping(package: PackageCLI | PackageCLIImage, packa
 
 def get_client(
         registry_address: str, *, registry: RegistryInfo
-) -> Dockerhub | Artifactory | Nexus | AwsEcr:
+) -> Dockerhub | Artifactory | Nexus | AwsEcr | GcpGar | Custom:
     """ Identifies registry type and returns appropriate client
 
     :param registry_address: image registry (eg 'docker.io', 'artifactory.example.com:17001', 'nexus.host.com:16001')
     :param registry: registry information like credentials for auth, insecure mode, etc.
-    :returns: Instance of Dockerhub, Artifactory, or Nexus client
+    :returns: Instance of Dockerhub, Artifactory, Nexus, GcpGar, AwsEcr, or Custom client
 
     :raises UnknownRegistryError: registry could not be identified
     """
+    # Custom registry type - explicitly requested by user, skip auto-detection
+    if registry.type == RegistryTypes.custom:
+        if not registry.registry_url:
+            raise UnknownRegistryError(
+                'Custom registry type requires --registry parameter to be specified'
+            )
+        logger.info(f'Using custom registry: {registry.registry_url}')
+        return Custom(hostname=registry_address)
+
     scheme = 'http' if registry.is_insecure else 'https'
     if is_dockerhub(scheme, registry_address, registry_type=registry.type, is_insecure=registry.is_insecure):
         logger.info(f'{registry_address} is of type DockerHub')
@@ -581,7 +660,8 @@ def get_client(
 
     raise UnknownRegistryError(
         f'Could not determine the registry type for {registry_address}. '
-        f'Supported registries: DockerHub, Artifactory, Nexus, AWS ECR'
+        f'Supported registries: DockerHub, Artifactory, Nexus, AWS ECR, GCP GAR. '
+        f'If your registry is not listed, try: --registry-type=custom --registry=<your-auth-url>'
     )
 
 

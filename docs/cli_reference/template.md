@@ -21,7 +21,8 @@ gsf template --help
 | Name | Description | Mandatory | Default value | Environment variable | Example |
 |------|-------------|:---------:|:-------------:|:--------------------:|---------|
 | `--extravar` | Extra context variable for template rendering: variable name and value (repeatable) | - | - | - | `project_name my-proj` |
-| `--registry-type` | Specify the registry type or use automatic detection | - | `Autodetect` | - | `Autodetect`, `Dockerhub`, `Artifactory`, `Nexus` |
+| `--registry-type` | Specify the registry type or use automatic detection | - | `Autodetect` | - | `Autodetect`, `Dockerhub`, `Artifactory`, `Nexus`, `Custom` |
+| `--registry` | Custom registry URL for authentication (required when `--registry-type=Custom`) | - | - | - | `https://my-registry.com` |
 | `--registry-username` | Username for basic authentication in the registry when downloading Gears | - | - | `GSF_REGISTRY_USERNAME` | `myusername` |
 | `--registry-password` | Password for basic authentication in the registry when downloading Gears | - | - | `GSF_REGISTRY_PASSWORD` | `MyPa$$w0rd` |
 | `--insecure-registry` | Allow insecure connections to the registry (use HTTP instead of HTTPS) | - | `False` | - | |

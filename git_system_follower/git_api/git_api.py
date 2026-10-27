@@ -39,6 +39,13 @@ class PushFlags(IntFlag):
 
 def checkout_to_new_branch(repo: Repo, base_branch: str) -> str:
     new_branch = f'{base_branch}.temp-manage-packages'
+    # Ensure the base branch is fetched from origin, as it may have been created
+    # on the remote after the local repo was cloned/last fetched (e.g. while
+    # packages were being downloaded). Without this, `git checkout <branch>`
+    # fails with "pathspec did not match" for freshly created branches.
+    repo.remotes.origin.fetch(
+        f'+refs/heads/{base_branch}:refs/remotes/origin/{base_branch}'
+    )
     repo.git.checkout(base_branch)
     repo.remotes.origin.pull(base_branch)
 

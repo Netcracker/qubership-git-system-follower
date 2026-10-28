@@ -31,7 +31,7 @@ from git_system_follower.typings.registry import RegistryInfo
 from git_system_follower.typings.package import PackageLocalData, PackagesTo
 from git_system_follower.download import download
 from git_system_follower.git_api.gitlab_api import (
-    get_gitlab, get_project, get_states, create_mr, merge_mr, merge_mr_and_wait,
+    get_gitlab, get_project, get_states_or_exit, create_mr, merge_mr, merge_mr_and_wait,
     wait_for_validation_pipeline, close_stale_mrs, close_mr_and_delete_branch
 )
 from git_system_follower.git_api.git_api import checkout_to_new_branch, push_installed_packages
@@ -69,7 +69,7 @@ def install(
     project = get_project(gitlab_instance, repo_url)
     repo = RepositoryInfo().initialize(gitlab=project, git=get_git_repo(project, token),
             repo_url=repo_url, token=token)
-    states = get_states(project, branches,
+    states = get_states_or_exit(project, branches,
         is_skip_project_description=is_skip_project_description,
         is_skip_project_icon=is_skip_project_icon)
     packages = get_packages(packages, states, sources, branches,

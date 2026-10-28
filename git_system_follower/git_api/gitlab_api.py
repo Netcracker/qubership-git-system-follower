@@ -29,7 +29,7 @@ from git_system_follower.package.cicd_variables import get_cicd_variables_safely
 from git_system_follower.package.webhooks import get_webhooks_safely
 from git_system_follower.utils.retry import NeedRetry
 
-__all__ = ['get_gitlab', 'get_project', 'get_states', 'create_mr',
+__all__ = ['get_gitlab', 'get_project', 'get_states', 'get_states_or_exit', 'create_mr',
     'merge_mr', 'merge_mr_and_wait', 'wait_for_pipeline', 'wait_for_validation_pipeline',
     'delete_tag', 'create_tag',
     'close_stale_mrs', 'close_mr_and_delete_branch']
@@ -41,6 +41,9 @@ WAIT = 15
 # mergeability. Give it a generous hard budget (1 hour); the wait normally ends
 # earlier because the check completes and merge_status flips.
 MAX_WAIT = 3600
+# variables for waiting for a freshly pushed branch to become visible
+BRANCH_POLL_WAIT = 5   # poll interval when waiting for a branch to appear (seconds)
+BRANCH_MAX_WAIT = 30   # max time to wait for a branch to appear (seconds)
 PIPELINE_WAIT = 20
 PIPELINE_MAX_WAIT = 1800
 PIPELINE_APPEAR_WAIT = 60
@@ -81,6 +84,48 @@ def get_project(instance: Gitlab, url: str) -> Project:
     return project
 
 
+def _wait_for_branch(project: Project, branch: str) -> None:
+    """ Wait until `branch` is resolvable via direct ref resolution.
+
+    GitLab's branch list endpoint can lag seconds-to-tens-of-seconds behind a
+    freshly pushed ref, and paging ``get_all=True`` over a large branch list can
+    drop an existing branch from the stitched snapshot when concurrent
+    creates/deletes shift page boundaries.  Direct ref resolution
+    (``GET /projects/:id/repository/branches/:branch``) is immediate, so poll it
+    instead of listing all branches, retrying until the branch appears or the
+    budget is exhausted.
+
+    :param project: GitLab project
+    :param branch: branch name to wait for
+    :raises RemoteRepositoryError: if the branch never appears
+    """
+    total = 0
+    attempt = 0
+    while True:
+        attempt += 1
+        try:
+            project.branches.get(branch)
+            return
+        except gitlab.exceptions.GitlabGetError:
+            pass
+        remaining = BRANCH_MAX_WAIT - total
+        if remaining <= 0:
+            raise RemoteRepositoryError(
+                f'Branch {branch} not found. '
+                f'Please ensure the branch exists in the remote repository and try again.'
+            )
+        if attempt == 1:
+            logger.info(
+                f'Branch {branch} not found yet, waiting for it to appear in the remote repository '
+                f'(max {BRANCH_MAX_WAIT}s, polling every {BRANCH_POLL_WAIT}s)...'
+            )
+        logger.info(
+            f'Branch {branch} not found yet (attempt {attempt}, elapsed {total}s)... '
+        )
+        sleep(BRANCH_POLL_WAIT)
+        total += BRANCH_POLL_WAIT
+
+
 def get_states(project: Project, branches: tuple[str, ...],
     is_skip_project_description: bool = False,
     is_skip_project_icon: bool = False) -> dict[str, StateFile]:
@@ -92,13 +137,11 @@ def get_states(project: Project, branches: tuple[str, ...],
     :return: return dictionary with key - branch name, value - state file for this branch
     """
     states = {}
-    remote_branches = [branch.name for branch in project.branches.list(get_all=True)]
+    for branch in branches:
+        _wait_for_branch(project, branch)
     cicd_variables = get_cicd_variables_safely(project)
     webhooks = get_webhooks_safely(project)
     for branch in branches:
-        if branch not in remote_branches:
-            raise RemoteRepositoryError(f'Branch {branch} not found')
-
         try:
             raw = project.files.raw(file_path='.state.yaml', ref=branch)
             states[branch] = StateFile(raw=raw, current_cicd_variables=cicd_variables,
@@ -114,6 +157,31 @@ def get_states(project: Project, branches: tuple[str, ...],
                             f'State file hash: {error.state_file_hash} != {error.generated_hash}: Generated hash')
             raise
     return states
+
+
+def get_states_or_exit(project: Project, branches: tuple[str, ...],
+    is_skip_project_description: bool = False,
+    is_skip_project_icon: bool = False) -> dict[str, StateFile]:
+    """ Get state files, exiting cleanly if a branch is not found.
+
+    Common wrapper around :func:`get_states` used by install and uninstall so
+    the "branch not found" error is reported in one place instead of being
+    duplicated at every call site.
+
+    :param project: GitLab project
+    :param branches: branch names listing
+    :param is_skip_project_description: whether to warn instead of exit on project description mismatch
+    :param is_skip_project_icon: whether to warn instead of exit on project icon mismatch
+    :return: return dictionary with key - branch name, value - state file for this branch
+    :raises SystemExit: if a branch is not found within the wait budget
+    """
+    try:
+        return get_states(project, branches,
+            is_skip_project_description=is_skip_project_description,
+            is_skip_project_icon=is_skip_project_icon)
+    except RemoteRepositoryError as error:
+        logger.error(str(error))
+        sys.exit(1)
 
 
 def create_mr(

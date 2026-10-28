@@ -1,0 +1,15 @@
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 0
+    cooldown:
+      default-days: 7
+    ignore:
+      # non-direct dependencies that are not used in the project
+      - dependency-name: "virtualenv"
+        versions: ["*"]
+      - dependency-name: "filelock"
+        versions: ["*"]

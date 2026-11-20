@@ -15,7 +15,6 @@
 """ Helper functions to capture and revert CI/CD variable changes in GitLab projects """
 from git_system_follower.package.cicd_variables import delete_variable
 from git_system_follower.logger import logger
-from gitlab.exceptions import GitlabGetError
 
 
 def capture_existing_cicd(project) -> dict:
@@ -36,10 +35,7 @@ def restore_existing_cicd(project, existing_cicd: dict) -> None:
         original_value, is_masked = original['value'], original['masked']
         masked_value = '*****' if is_masked else original_value
         try:
-            try:
-                var_obj = project.variables.get(var_name)
-            except GitlabGetError:
-                var_obj = None
+            var_obj = next((v for v in project.variables.list(iterator=True) if v.key == var_name), None)
             if var_obj:
                 var_obj.value = original_value
                 var_obj.save()

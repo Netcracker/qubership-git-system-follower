@@ -68,6 +68,7 @@ class ExtraParam(NamedTuple):
     name: str
     value: str
     masked: bool
+    expanded: bool
     managed_by: str
 ```
 Extra parameter information
@@ -79,15 +80,35 @@ Extra parameter information
 | `name`       | `str`  | extra parameter name                      |
 | `value`      | `str`  | extra parameter value                     |
 | `masked`     | `bool` | whether to mask a extra parameter in logs |
+| `expanded`   | `bool` | whether variable references are expanded  |
 | `managed_by` | `str`  | managed by gsf or external like CI token  |
+
+#### Default behavior across GitLab versions
+
+`expanded` is optional. If it is not passed (`--extra NAME VALUE MASKED` without `expanded`/`no-expanded`), git-system-follower
+checks the GitLab version and uses the same default as the GitLab server for the `raw` field:
+
+| GitLab version | Default when `expanded` is not passed | Sent to GitLab |
+|----------------|---------------------------------------|----------------|
+| Pre-18.6 | expanded | `raw=false` |
+| 18.6+ | not expanded | `raw=true` |
+
+If the GitLab version can't be determined, `raw` is not sent and the server default is used.
+
+To force the behavior regardless of GitLab version, pass it explicitly:
+
+```
+--extra MY_VAR my_value masked expanded
+--extra MY_VAR my_value masked no-expanded
+```
 
 ### `ExtraParams` class
 ```python
 ExtraParamName = str
 ExtraParams = dict[ExtraParamName, ExtraParam]
 ```
-Extra parameters which have been passed in git-system-follower as `--extra <name> <value> <masked/no-masked>`
-Extra external parameters which have been passed in git-system-follower as `--extra-external <name> <value> <masked/no-masked>`
+Extra parameters which have been passed in git-system-follower as `--extra <name> <value> <masked/no-masked> <expanded/no-expanded>`
+Extra external parameters which have been passed in git-system-follower as `--extra-external <name> <value> <masked/no-masked> <expanded/no-expanded>`
 
 This is `dict` where key is parameter name, value is `ExtraParam`
 

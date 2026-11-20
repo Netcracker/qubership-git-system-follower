@@ -13,11 +13,12 @@
 # limitations under the License.
 
 """ Module with api to work with CI/CD variables """
+import re
 from typing import TypedDict
 
 from gitlab.v4.objects import Project
 from gitlab.base import RESTObject
-from gitlab.exceptions import GitlabCreateError, GitlabGetError, GitlabError
+from gitlab.exceptions import GitlabCreateError, GitlabError
 
 from git_system_follower.logger import logger
 
@@ -25,7 +26,11 @@ from git_system_follower.logger import logger
 __all__ = ['CICDVariable', 'get_cicd_variables', 'create_variable', 'delete_variable']
 
 
-class CICDVariable(TypedDict):
+class _CICDVariableOptional(TypedDict, total=False):
+    expanded: bool | None
+
+
+class CICDVariable(_CICDVariableOptional):
     """ Gitlab CI/CD variables
 
     Dictionary items:
@@ -33,11 +38,27 @@ class CICDVariable(TypedDict):
         - value : str | variable value
         - env : str | Gitlab environment in which to create variable
         - masked : bool | whether to mask variables in log messages (in Gitlab, in git-system-follower log messages)
+        - expanded : bool | None | whether variable references are expanded (raw=false) or treated as raw (raw=true).
+            If omitted/None, default is chosen by GitLab version: expanded before 18.6, raw since 18.6
     """
     name: str
     value: str
     env: str
     masked: bool
+
+
+def get_default_expanded(project: Project) -> bool | None:
+    """ Default `expanded` matching GitLab server default for `raw` (expanded before 18.6, raw since 18.6)
+
+    :return: default value or None if GitLab version can't be determined (`raw` is then not sent)
+    """
+    try:
+        version = project.manager.gitlab.version()[0]
+        major, minor = (int(part) for part in re.match(r'(\d+)\.(\d+)', version).groups())
+    except Exception:
+        logger.debug('Unable to determine GitLab version. Server default for variable expansion will be used')
+        return None
+    return (major, minor) < (18, 6)
 
 
 def get_cicd_variables(project: Project) -> dict[str, CICDVariable]:
@@ -51,7 +72,8 @@ def get_cicd_variables(project: Project) -> dict[str, CICDVariable]:
     variables = {}
     for variable in gitlab_variables:
         variables[variable.key] = CICDVariable(
-            name=variable.key, value=variable.value, env=variable.environment_scope, masked=variable.masked
+            name=variable.key, value=variable.value, env=variable.environment_scope,
+            masked=variable.masked, expanded=not variable.raw
         )
     return variables
 
@@ -90,14 +112,12 @@ def create_variable(
     is_masked = variable['masked']
     masked_value = '*****' if is_masked else variable['value']
 
-    remote_var: RESTObject | None = None
-    try:
-        remote_var = project.variables.get(variable['name'])
-    except GitlabGetError:
-        remote_var = None
-
-    if remote_var is not None:
+    remote_variables: list[RESTObject] = project.variables.list(iterator=True)
+    for remote_var in remote_variables:
         remote_masked_value = '*****' if remote_var.masked else remote_var.value
+        if variable['name'] != remote_var.key:
+            continue
+
         if variable['value'] == remote_var.value:
             logger.info(f"\t\tVariable with this name ({variable['name']}) and "
                         f"value ({masked_value}) already exist. Skip creation")
@@ -113,11 +133,17 @@ def create_variable(
                        f"(old value: {remote_masked_value}, new value: {masked_value}). "
                        f"Force flag disabled. Skip creation/update")
         return _serialize_var(remote_var)
+    expanded = variable.get('expanded')
+    if expanded is None:
+        expanded = get_default_expanded(project)
+    payload = {
+        'key': variable['name'], 'value': variable['value'], 'environment_scope': variable['env'],
+        'masked': variable['masked']
+    }
+    if expanded is not None:
+        payload['raw'] = not expanded
     try:
-        variable = project.variables.create({
-            'key': variable['name'], 'value': variable['value'], 'environment_scope': variable['env'],
-            'masked': variable['masked']
-        })
+        variable = project.variables.create(payload)
     except GitlabCreateError:
         msg = (
             f"Failed to create {variable['name']} CI/CD variable with {masked_value} value. "
@@ -148,14 +174,12 @@ def delete_variable(
     logger.info('\t-> Deleting CI/CD variables')
     masked_value = '*****' if variable['masked'] else variable['value']
 
-    remote_var: RESTObject | None = None
-    try:
-        remote_var = project.variables.get(variable['name'])
-    except GitlabGetError:
-        remote_var = None
-
-    if remote_var is not None:
+    remote_variables: list[RESTObject] = project.variables.list(iterator=True)
+    for remote_var in remote_variables:
         remote_masked_value = '*****' if remote_var.masked else remote_var.value
+        if variable['name'] != remote_var.key:
+            continue
+
         if variable['value'] == remote_var.value:
             project.variables.delete(variable['name'])
             logger.info(f"\t\tVariable with this name ({variable['name']}) and "
@@ -178,5 +202,6 @@ def _serialize_var(remote_var: RESTObject)-> CICDVariable:
         name = remote_var.key,
         value = remote_var.value,
         env = remote_var.environment_scope,
-        masked = remote_var.masked
+        masked = remote_var.masked,
+        expanded = not remote_var.raw
     )

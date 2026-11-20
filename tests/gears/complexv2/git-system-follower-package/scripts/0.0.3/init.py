@@ -32,7 +32,8 @@ def main(parameters: Parameters):
             name=extra.name,
             value=extra.value,
             env='*',
-            masked=extra.masked
+            masked=extra.masked,
+            expanded=extra.expanded
         ))
 
 def check_prerequisites(extras: ExtraParams) -> ExtraParams:

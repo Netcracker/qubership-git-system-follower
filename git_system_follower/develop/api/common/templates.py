@@ -218,5 +218,6 @@ def update_cicd_variables(parameters: Parameters, template_variables_names: list
             name=extra.name,
             value=extra.value,
             env='*',
-            masked=extra.masked
+            masked=extra.masked,
+            expanded=extra.expanded
         ))

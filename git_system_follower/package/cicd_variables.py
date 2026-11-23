@@ -17,7 +17,7 @@ from typing import TypedDict
 
 from gitlab.v4.objects import Project
 from gitlab.base import RESTObject
-from gitlab.exceptions import GitlabCreateError, GitlabError
+from gitlab.exceptions import GitlabCreateError, GitlabGetError, GitlabError
 
 from git_system_follower.logger import logger
 
@@ -47,7 +47,7 @@ def get_cicd_variables(project: Project) -> dict[str, CICDVariable]:
 
     :return: CI/CD variables dict: key - variable name, value - variable information
     """
-    gitlab_variables = project.variables.list()
+    gitlab_variables = project.variables.list(iterator=True)
     variables = {}
     for variable in gitlab_variables:
         variables[variable.key] = CICDVariable(
@@ -90,12 +90,14 @@ def create_variable(
     is_masked = variable['masked']
     masked_value = '*****' if is_masked else variable['value']
 
-    remote_variables: list[RESTObject] = project.variables.list()
-    for remote_var in remote_variables:
-        remote_masked_value = '*****' if remote_var.masked else remote_var.value
-        if variable['name'] != remote_var.key:
-            continue
+    remote_var: RESTObject | None = None
+    try:
+        remote_var = project.variables.get(variable['name'])
+    except GitlabGetError:
+        remote_var = None
 
+    if remote_var is not None:
+        remote_masked_value = '*****' if remote_var.masked else remote_var.value
         if variable['value'] == remote_var.value:
             logger.info(f"\t\tVariable with this name ({variable['name']}) and "
                         f"value ({masked_value}) already exist. Skip creation")
@@ -146,12 +148,14 @@ def delete_variable(
     logger.info('\t-> Deleting CI/CD variables')
     masked_value = '*****' if variable['masked'] else variable['value']
 
-    remote_variables: list[RESTObject] = project.variables.list()
-    for remote_var in remote_variables:
-        remote_masked_value = '*****' if remote_var.masked else remote_var.value
-        if variable['name'] != remote_var.key:
-            continue
+    remote_var: RESTObject | None = None
+    try:
+        remote_var = project.variables.get(variable['name'])
+    except GitlabGetError:
+        remote_var = None
 
+    if remote_var is not None:
+        remote_masked_value = '*****' if remote_var.masked else remote_var.value
         if variable['value'] == remote_var.value:
             project.variables.delete(variable['name'])
             logger.info(f"\t\tVariable with this name ({variable['name']}) and "

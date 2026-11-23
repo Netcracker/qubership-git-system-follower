@@ -15,13 +15,14 @@
 """ Helper functions to capture and revert CI/CD variable changes in GitLab projects """
 from git_system_follower.package.cicd_variables import delete_variable
 from git_system_follower.logger import logger
+from gitlab.exceptions import GitlabGetError
 
 
 def capture_existing_cicd(project) -> dict:
     """ Capture current CI/CD variables so their values can be restored if the merge fails """
     existing_cicd = {}
     try:
-        remote_vars = project.variables.list()
+        remote_vars = project.variables.list(iterator=True)
         for v in remote_vars:
             existing_cicd[v.key] = {'value': v.value, 'masked': v.masked}
     except Exception:
@@ -35,7 +36,10 @@ def restore_existing_cicd(project, existing_cicd: dict) -> None:
         original_value, is_masked = original['value'], original['masked']
         masked_value = '*****' if is_masked else original_value
         try:
-            var_obj = next((v for v in project.variables.list() if v.key == var_name), None)
+            try:
+                var_obj = project.variables.get(var_name)
+            except GitlabGetError:
+                var_obj = None
             if var_obj:
                 var_obj.value = original_value
                 var_obj.save()

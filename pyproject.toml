@@ -11,7 +11,7 @@ packages = [{include = "git_system_follower"}]
 python = "^3.10"
 click = "8.4.0"
 cookiecutter = "2.7.1"
-gitpython = "3.1.62"
+gitpython = "3.2.1"
 python-gitlab = {version = "^8.3.0", extras = ["graphql"]}
 pyyaml = "6.0.3"
 requests = "2.34.2"
@@ -29,6 +29,10 @@ pytest = "^9.0.3"
 ruff = "^0.15.13"
 tox = "^4.54.0"
 vcrpy = "^8.1.1"
+filelock = [
+    {version = ">=4.2.1", python = ">=3.11"},
+    {version = "<3.30.0", python = "<3.11"}
+]
 
 mkdocs-material = "9.7.7"
 mike = "2.2.0"

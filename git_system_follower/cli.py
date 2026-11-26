@@ -22,7 +22,7 @@ from git_system_follower.plugins.cli.packages.specs import HookSpec
 from git_system_follower.typings.cli import ExtraParam
 from git_system_follower.typings.registry import RegistryTypes, RegistryInfo
 from git_system_follower.utils.cli import (
-    Package, ExtraParamTuple, ExternalExtraParamTuple, resolve_credentials,
+    Package, ExtraParamTuple, ExternalExtraParamTuple, ExtraCommand, ExpandedType, resolve_credentials,
     add_options, get_gears)
 from git_system_follower.utils.output import banner, display_params
 from git_system_follower.git_api.utils import get_config
@@ -118,7 +118,7 @@ def download_command(
     download(gears, directory, is_deps_first=True, registry=registry)
 
 
-@click.command(name='install')
+@click.command(name='install', cls=ExtraCommand)
 @click.argument('gears', nargs=-1, type=Package)
 @click.option(
     '-r', '--repo', 'repo', type=str, required=True,
@@ -134,18 +134,27 @@ def download_command(
 )
 @click.option(
     '--extra', 'extras', type=ExtraParamTuple([
-        click.STRING, click.STRING, click.Choice(['masked', 'no-masked'], case_sensitive=False)
+        click.STRING, click.STRING, click.Choice(['masked', 'no-masked'], case_sensitive=False),
+        ExpandedType()
     ]),
-    multiple=True, help='Extra parameters to be passed to the package API: variable name, value, masked/no-masked',
-    metavar='<NAME VALUE CHOICE>...'
+    multiple=True,
+    help=(
+        'Extra parameters to be passed to the package API: variable name, '
+        'value, masked/no-masked, [expanded/no-expanded] (default: depends on GitLab version)'
+    ),
+    metavar='<NAME VALUE MASKED [EXPANDED]>...'
 )
 @click.option(
     '--extra-external', 'extras_external', type=ExternalExtraParamTuple([
-        click.STRING, click.STRING, click.Choice(['masked', 'no-masked'], case_sensitive=False)
+        click.STRING, click.STRING, click.Choice(['masked', 'no-masked'], case_sensitive=False),
+        ExpandedType()
     ]),
     multiple=True,
-    help='External Extra parameters to be passed to the package API: variable name, value, masked/no-masked',
-    metavar='<NAME VALUE CHOICE>...'
+    help=(
+        'External Extra parameters to be passed to the package API: variable name, '
+        'value, masked/no-masked, [expanded/no-expanded] (default: depends on GitLab version)'
+    ),
+    metavar='<NAME VALUE MASKED [EXPANDED]>...'
 )
 @click.option(
     '--message', type=str, default='Installed gear(s)',
@@ -282,7 +291,7 @@ def install_command(
     )
 
 
-@click.command(name='uninstall')
+@click.command(name='uninstall', cls=ExtraCommand)
 @click.argument('gears', nargs=-1, type=Package, required=False)
 @click.option(
     '-r', '--repo', 'repo', type=str, required=True,
@@ -302,18 +311,27 @@ def install_command(
 )
 @click.option(
     '--extra', 'extras', type=ExtraParamTuple([
-        click.STRING, click.STRING, click.Choice(['masked', 'no-masked'], case_sensitive=False)
+        click.STRING, click.STRING, click.Choice(['masked', 'no-masked'], case_sensitive=False),
+        ExpandedType()
     ]),
-    multiple=True, help='Extra parameters to be passed to the package API: variable name, value, masked/no-masked',
-    metavar='<NAME VALUE CHOICE>...'
+    multiple=True,
+    help=(
+        'Extra parameters to be passed to the package API: variable name, '
+        'value, masked/no-masked, [expanded/no-expanded] (default: depends on GitLab version)'
+    ),
+    metavar='<NAME VALUE MASKED [EXPANDED]>...'
 )
 @click.option(
     '--extra-external', 'extras_external', type=ExternalExtraParamTuple([
-        click.STRING, click.STRING, click.Choice(['masked', 'no-masked'], case_sensitive=False)
+        click.STRING, click.STRING, click.Choice(['masked', 'no-masked'], case_sensitive=False),
+        ExpandedType()
     ]),
     multiple=True,
-    help='External Extra parameters to be passed to the package API: variable name, value, masked/no-masked',
-    metavar='<NAME VALUE CHOICE>...'
+    help=(
+        'External Extra parameters to be passed to the package API: variable name, '
+        'value, masked/no-masked, [expanded/no-expanded] (default: depends on GitLab version)'
+    ),
+    metavar='<NAME VALUE MASKED [EXPANDED]>...'
 )
 @click.option(
     '--message', type=str, default='Uninstalled gear(s)',

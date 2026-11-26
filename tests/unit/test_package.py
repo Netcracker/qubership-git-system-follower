@@ -269,6 +269,6 @@ def test_external_extras(
         assert "TEST_E" in cicd_vars['managed_externally'], "Expected TEST_E in managed_externally list"
         assert "test1" in cicd_vars['managed_by_gsf'], "Expected test1 in managed_by_gsf"
         assert cicd_vars['hash'] == states[branch]._StateFile__get_hash(
-            [cicd_variables.CICDVariable(name='test1', value='1', env='*', masked=False)]
+            [cicd_variables.CICDVariable(name='test1', value='1', env='*', masked=False, expanded=False)]
             ) , "CICD Variables Hash Mismatch Found"
         uninstall_package(states, branch, package, is_force, project, extras)

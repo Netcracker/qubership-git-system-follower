@@ -87,10 +87,12 @@ class ExtraParam(NamedTuple):
     name: str
     value: str
     masked: bool
+    expanded: bool | None = None
     managed_by: str = 'gsf'
 
     def __str__(self):
-        return f"{self.name}={'*****' if self.masked else self.value}"
+        expanded_str = ' (expanded)' if self.expanded else ''
+        return f"{self.name}={'*****' if self.masked else self.value}{expanded_str}"
 
 
 class Credentials(NamedTuple):

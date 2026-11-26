@@ -46,11 +46,11 @@ CASSETTE_DIR = Path(__file__).parent / "cassettes"
 HOSTNAME = urlparse(ENV_VARS["GITLAB_URL"]).netloc
 
 # Utility Functions
-def build_extras(name, value, masked) -> list:
-    return [ExtraParam(name=name, value=value, masked=masked)] # managed_by defaults to gsf
+def build_extras(name, value, masked, expanded=False) -> list:
+    return [ExtraParam(name=name, value=value, masked=masked, expanded=expanded)] # managed_by defaults to gsf
 
-def build_extras_external(name, value, masked) -> list:
-    return [ExtraParam(name=name, value=value, masked=masked, managed_by='external')]
+def build_extras_external(name, value, masked, expanded=False) -> list:
+    return [ExtraParam(name=name, value=value, masked=masked, expanded=expanded, managed_by='external')]
 
 def get_package_details(path) -> PackageLocalData:
     with open(path / 'package.yaml', 'r', encoding='utf-8') as f:

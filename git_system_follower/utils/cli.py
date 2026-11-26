@@ -27,7 +27,7 @@ from git_system_follower.plugins.cli.packages.specs import HookSpec
 
 
 __all__ = [
-    'Package', 'PackageType', 'ExtraParamTuple',
+    'Package', 'PackageType', 'ExtraParamTuple', 'ExtraCommand', 'ExpandedType',
     'resolve_credentials',
     'add_options', 'get_gears'
 ]
@@ -48,6 +48,24 @@ class PackageType(click.ParamType):
 Package = PackageType()
 
 
+class ExpandedType(click.ParamType):
+    """ `expanded` / `no-expanded`; empty string means "not passed" (None) """
+    name = 'expanded_choice'
+
+    def get_metavar(self, param, ctx=None):
+        return '[expanded|no-expanded]'
+
+    def convert(self, value, param, ctx):
+        if value is None or isinstance(value, bool):
+            return value
+        lowered = str(value).lower()
+        if lowered == '':
+            return None
+        if lowered in _EXPANDED_CHOICES:
+            return lowered == 'expanded'
+        self.fail(f"{value!r} is not one of 'expanded', 'no-expanded'.", param, ctx)
+
+
 class ExtraParamTuple(click.Tuple):
     name = 'extra_param'
 
@@ -56,7 +74,12 @@ class ExtraParamTuple(click.Tuple):
 
     def convert(self, value, param, ctx):
         values = super().convert(value, param, ctx)
-        return ExtraParam(name=values[0], value=values[1], masked=True if values[2] == 'masked' else False)
+        return ExtraParam(
+            name=values[0],
+            value=values[1],
+            masked=True if values[2] == 'masked' else False,
+            expanded=values[3],
+        )
 
 class ExternalExtraParamTuple(click.Tuple):
     name = 'external_extra_param'
@@ -70,8 +93,51 @@ class ExternalExtraParamTuple(click.Tuple):
             name=values[0],
             value=values[1],
             masked=True if values[2] == 'masked' else False,
+            expanded=values[3],
             managed_by='external'
         )
+
+
+_EXTRA_FLAGS = ('--extra', '--extra-external')
+_EXPANDED_CHOICES = ('expanded', 'no-expanded')
+
+
+def _normalize_extra_args(args: list[str]) -> list[str]:
+    """ Make the 4th value of --extra/--extra-external optional: append an empty value when it is omitted """
+    result: list[str] = []
+    i = 0
+    while i < len(args):
+        arg = args[i]
+        result.append(arg)
+        i += 1
+        if arg not in _EXTRA_FLAGS:
+            continue
+        chunk = args[i:i + 3]
+        result.extend(chunk)
+        i += len(chunk)
+        if len(chunk) < 3:
+            continue
+        if i < len(args):
+            if args[i].startswith("-"):
+                result.append('')
+            elif args[i].lower() in _EXPANDED_CHOICES:
+                result.append(args[i])
+                i += 1
+            else:
+                raise click.BadParameter(
+                    f"{args[i]!r} is not one of 'expanded', 'no-expanded'.",
+                    param_hint='--extra/--extra-external expanded flag'
+                )
+        else:
+            result.append('')
+    return result
+
+
+class ExtraCommand(click.Command):
+    """ Command accepting `--extra NAME VALUE MASKED [EXPANDED]` (EXPANDED is optional) """
+
+    def parse_args(self, ctx, args):
+        return super().parse_args(ctx, _normalize_extra_args(list(args)))
 
 
 def resolve_credentials(cli_username: str | None, cli_password: str | None) -> Credentials | None:
